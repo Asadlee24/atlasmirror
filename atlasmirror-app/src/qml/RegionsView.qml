@@ -5,17 +5,17 @@ import QtQuick.Layouts
 Item {
     id: regionsView
 
-    // Mock region dataset representing the 72 non-overlapping predefined set
+    // Predefined non-overlapping regions catalog
     ListModel {
         id: regionsModel
-        ListElement { region: "asia/pakistan"; name: "Pakistan"; level: "country"; version: "2026-09-19"; hosted: true; cid: "bafybeic7vj2k..."; updateStatus: "UP_TO_DATE"; checksum: "378df25f824177ebcbe9aa11d88bbd6b" }
-        ListElement { region: "europe/germany"; name: "Germany"; level: "country"; version: "2026-09-19"; hosted: true; cid: "bafybeih4nm3q..."; updateStatus: "UP_TO_DATE"; checksum: "e9c0c1b7a2d61d87e025b9059f131a42" }
-        ListElement { region: "europe/france"; name: "France"; level: "country"; version: "2026-09-19"; hosted: true; cid: "bafybeig5tl2x..."; updateStatus: "UP_TO_DATE"; checksum: "c4b182e01df348ba986e1fa12e578a10" }
-        ListElement { region: "us/california"; name: "California"; level: "subregion"; version: "2026-09-19"; hosted: true; cid: "bafybeid6xk1m..."; updateStatus: "UP_TO_DATE"; checksum: "0123456789abcdef0123456789abcdef" }
-        ListElement { region: "us/texas"; name: "Texas"; level: "subregion"; version: "2026-09-19"; hosted: false; cid: "—"; updateStatus: "NOT_HOSTED"; checksum: "11223344556677889900aabbccddeeff" }
-        ListElement { region: "india/northern-zone"; name: "Northern Zone"; level: "subregion"; version: "2026-09-19"; hosted: true; cid: "bafybeif2mk7w..."; updateStatus: "UP_TO_DATE"; checksum: "3344556677889900aabbccddeeff0011" }
-        ListElement { region: "china/guangdong"; name: "Guangdong"; level: "subregion"; version: "2026-09-19"; hosted: false; cid: "—"; updateStatus: "NOT_HOSTED"; checksum: "556677889900aabbccddeeff00112233" }
-        ListElement { region: "russia/central-fed-district"; name: "Central Federal District"; level: "subregion"; version: "2026-09-19"; hosted: true; cid: "bafybeid5mk2v..."; updateStatus: "UP_TO_DATE"; checksum: "77889900aabbccddeeff001122334455" }
+        ListElement { region: "asia/pakistan"; name: "Pakistan"; level: "country"; version: "—"; hosted: false; cid: "—"; updateStatus: "NOT_HOSTED"; checksum: "—" }
+        ListElement { region: "europe/germany"; name: "Germany"; level: "country"; version: "—"; hosted: false; cid: "—"; updateStatus: "NOT_HOSTED"; checksum: "—" }
+        ListElement { region: "europe/france"; name: "France"; level: "country"; version: "—"; hosted: false; cid: "—"; updateStatus: "NOT_HOSTED"; checksum: "—" }
+        ListElement { region: "us/california"; name: "California"; level: "subregion"; version: "—"; hosted: false; cid: "—"; updateStatus: "NOT_HOSTED"; checksum: "—" }
+        ListElement { region: "us/texas"; name: "Texas"; level: "subregion"; version: "—"; hosted: false; cid: "—"; updateStatus: "NOT_HOSTED"; checksum: "—" }
+        ListElement { region: "india/northern-zone"; name: "Northern Zone"; level: "subregion"; version: "—"; hosted: false; cid: "—"; updateStatus: "NOT_HOSTED"; checksum: "—" }
+        ListElement { region: "china/guangdong"; name: "Guangdong"; level: "subregion"; version: "—"; hosted: false; cid: "—"; updateStatus: "NOT_HOSTED"; checksum: "—" }
+        ListElement { region: "russia/central-fed-district"; name: "Central Federal District"; level: "subregion"; version: "—"; hosted: false; cid: "—"; updateStatus: "NOT_HOSTED"; checksum: "—" }
     }
 
     property var selectedItem: null
@@ -60,7 +60,7 @@ Item {
 
                 Button {
                     text: "Refresh Index"
-                    onClicked: console.log("Refreshing Geofabrik index...")
+                    onClicked: console.log("Fetching live Geofabrik index...")
                 }
             }
 

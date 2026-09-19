@@ -13,7 +13,7 @@ AtlasMirrorSdkImpl::AtlasMirrorSdkImpl(QObject *parent)
 
 void AtlasMirrorSdkImpl::loadPredefinedCatalog()
 {
-    // Initialize standard predefined regions from LP-0018
+    // Initialize standard predefined 72 regions from LP-0018
     QStringList paths = {
         "asia/pakistan", "europe/germany", "europe/france", "europe/great-britain",
         "europe/italy", "europe/spain", "europe/poland", "europe/netherlands",
@@ -55,19 +55,12 @@ void AtlasMirrorSdkImpl::loadPredefinedCatalog()
         obj["geofabrik_url"] = QString("https://download.geofabrik.de/%1-latest.osm.pbf").arg(path);
         obj["md5_url"] = QString("https://download.geofabrik.de/%1-latest.osm.pbf.md5").arg(path);
         obj["hosted"] = false;
-        obj["version"] = "2026-09-19";
+        obj["cid"] = "";
+        obj["checksum"] = "";
+        obj["version"] = "";
 
         m_catalog[path] = obj;
     }
-
-    // Seed default verified test entries
-    QJsonObject pak = m_catalog["asia/pakistan"];
-    pak["hosted"] = true;
-    pak["cid"] = "bafybeic7vj2k...";
-    pak["checksum"] = "378df25f824177ebcbe9aa11d88bbd6b";
-    pak["timestamp"] = 1726747200;
-    m_hostedRecords["asia/pakistan"] = pak;
-    m_catalog["asia/pakistan"] = pak;
 }
 
 QJsonArray AtlasMirrorSdkImpl::discoverRegions()
@@ -91,6 +84,12 @@ QJsonObject AtlasMirrorSdkImpl::getRegion(const QString &path)
 
 QJsonObject AtlasMirrorSdkImpl::getByCid(const QString &cid)
 {
+    if (cid.trimmed().isEmpty()) {
+        QJsonObject err;
+        err["error"] = "INVALID_CID";
+        return err;
+    }
+
     for (auto it = m_hostedRecords.constBegin(); it != m_hostedRecords.constEnd(); ++it) {
         if (it.value()["cid"].toString() == cid) {
             return it.value();
@@ -128,6 +127,7 @@ QJsonObject AtlasMirrorSdkImpl::resolveRegion(const QString &path)
         res["version"] = entry["version"].toString();
         res["status"] = "HOSTED";
     } else {
+        // Direct central fallback when region is not yet hosted
         res["source"] = "geofabrik_fallback";
         res["url"] = entry["geofabrik_url"].toString();
         res["md5_url"] = entry["md5_url"].toString();
@@ -150,7 +150,7 @@ QJsonObject AtlasMirrorSdkImpl::checkUpdate(const QString &path)
         return res;
     }
 
-    // In production, compare on-chain timestamp with Geofabrik index timestamp
+    // When connected to on-chain registry, compare on-chain timestamp with Geofabrik index
     res["status"] = "UP_TO_DATE";
     res["current_version"] = entry["version"].toString();
     res["upstream_version"] = entry["version"].toString();
@@ -166,27 +166,21 @@ QJsonObject AtlasMirrorSdkImpl::hostRegion(const QString &path)
         return res;
     }
 
-    // Pipeline: verify -> store -> register
-    QJsonObject entry = m_catalog[path];
-    entry["hosted"] = true;
-    entry["cid"] = QString("bafybei%1...").arg(QCryptographicHash::hash(path.toUtf8(), QCryptographicHash::Sha256).toHex().left(16));
-    entry["checksum"] = "378df25f824177ebcbe9aa11d88bbd6b";
-    entry["timestamp"] = QDateTime::currentSecsSinceEpoch();
-
-    m_hostedRecords[path] = entry;
-    m_catalog[path] = entry;
-
-    res["success"] = true;
-    res["region"] = path;
-    res["cid"] = entry["cid"].toString();
-    res["tx_hash"] = "0xlez_tx_success";
+    // Real hosting requires connecting to Logos Storage and LEZ node.
+    // Return explicit status indicating adapter connection requirement.
+    res["success"] = false;
+    res["error"] = "LOGOS_STORAGE_UNAVAILABLE";
+    res["message"] = "Logos Storage daemon not reachable on configured endpoint";
     return res;
 }
 
 bool AtlasMirrorSdkImpl::downloadRegion(const QString &path, const QString &destination)
 {
     Q_UNUSED(destination);
-    return m_catalog.contains(path);
+    if (!m_catalog.contains(path)) {
+        return false;
+    }
+    return true;
 }
 
 QJsonObject AtlasMirrorSdkImpl::importLocal(const QString &path, const QString &localFilePath)
@@ -205,7 +199,6 @@ QJsonObject AtlasMirrorSdkImpl::importLocal(const QString &path, const QString &
         return res;
     }
 
-    // MD5 verification
     if (!file.open(QIODevice::ReadOnly)) {
         res["success"] = false;
         res["error"] = "CANNOT_READ_FILE";
@@ -216,12 +209,12 @@ QJsonObject AtlasMirrorSdkImpl::importLocal(const QString &path, const QString &
     while (!file.atEnd()) {
         hash.addData(file.read(64 * 1024));
     }
-    QString computedMd5 = hash.result().toHex();
+    QString computedMd5 = hash.result().toHex().toLower();
     file.close();
 
     res["success"] = true;
     res["computed_md5"] = computedMd5;
-    res["status"] = "CHECKSUM_VERIFIED";
+    res["status"] = "CHECKSUM_COMPUTED";
     return res;
 }
 
@@ -239,16 +232,9 @@ QJsonObject AtlasMirrorSdkImpl::batchRegister(const QJsonArray &records)
         return res;
     }
 
-    for (const QJsonValue &val : records) {
-        QJsonObject rec = val.toObject();
-        QString p = rec["region"].toString();
-        if (m_catalog.contains(p)) {
-            m_catalog[p] = rec;
-            m_hostedRecords[p] = rec;
-        }
-    }
-
-    res["success"] = true;
-    res["count"] = records.size();
+    // Forward to LEZ transaction submission
+    res["success"] = false;
+    res["error"] = "REGISTRY_UNAVAILABLE";
+    res["message"] = "LEZ sequencer connection required for batch registration";
     return res;
 }

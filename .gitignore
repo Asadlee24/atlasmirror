@@ -37,6 +37,11 @@ generated_code/
 *.secret
 credentials.json
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
 # IDE and OS files
 .DS_Store
 Thumbs.db
@@ -45,3 +50,4 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
