@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  format-and-lint:
+    name: Format & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Check Rust formatting
+        run: |
+          cd atlasmirror-cli && cargo fmt --all -- --check
+          cd ../osm-registry && cargo fmt --all -- --check
+      - name: Clippy checks
+        run: |
+          cd atlasmirror-cli && cargo clippy --all-targets -- -D warnings
+          cd ../osm-registry && cargo clippy --all-targets -- -D warnings
+
+  test-linux:
+    name: Unit & Integration Tests (Linux x86_64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Run CLI Tests
+        run: |
+          cd atlasmirror-cli
+          cargo test --verbose
+      - name: Run Registry Tests
+        run: |
+          cd osm-registry
+          cargo test --verbose
+      - name: Verify IDL Freshness
+        run: |
+          cd osm-registry
+          cargo run --bin generate_idl
+          git diff --exit-code idl/osm_registry.json
+
+  test-macos:
+    name: Build & Test (macOS Apple Silicon)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build CLI
+        run: |
+          cd atlasmirror-cli
+          cargo build --verbose
+      - name: Test CLI
+        run: |
+          cd atlasmirror-cli
+          cargo test --verbose

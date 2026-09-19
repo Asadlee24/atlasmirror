@@ -1,0 +1,22 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release-modules:
+    name: Package & Publish Modules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v25
+      - name: Build Modules
+        run: |
+          nix build .#atlasmirror-sdk
+          nix build .#atlasmirror-app
+      - name: Publish to Module Catalog
+        uses: logos-co/logos-modules-release-action@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
