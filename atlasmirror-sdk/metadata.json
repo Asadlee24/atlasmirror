@@ -1,0 +1,23 @@
+{
+  "name": "atlasmirror_sdk",
+  "display_name": "AtlasMirror OSM Registry SDK",
+  "version": "0.1.0",
+  "type": "core",
+  "interface": "universal",
+  "category": "geospatial",
+  "description": "Logos Core SDK module for decentralized OpenStreetMap snapshot discovery, hosting, and retrieval",
+  "main": "atlasmirror_sdk_plugin",
+  "dependencies": [],
+
+  "nix": {
+    "packages": {
+      "build": ["pkg-config", "cmake"],
+      "runtime": ["openssl", "curl"]
+    },
+    "external_libraries": [],
+    "cmake": {
+      "find_packages": ["Qt6Core", "Qt6Network"],
+      "extra_sources": []
+    }
+  }
+}
