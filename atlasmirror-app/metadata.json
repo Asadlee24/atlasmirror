@@ -1,0 +1,23 @@
+{
+  "name": "atlasmirror_app",
+  "display_name": "AtlasMirror",
+  "version": "0.1.0",
+  "type": "ui_qml",
+  "category": "geospatial",
+  "description": "Logos Basecamp application for decentralized OpenStreetMap snapshot distribution",
+  "view": "src/qml/Main.qml",
+  "main": "atlasmirror_app_backend",
+  "dependencies": ["atlasmirror_sdk"],
+
+  "nix": {
+    "packages": {
+      "build": ["pkg-config", "cmake"],
+      "runtime": ["qt6.qtdeclarative", "qt6.qtquickcontrols2", "qt6.qtremoteobjects"]
+    },
+    "external_libraries": [],
+    "cmake": {
+      "find_packages": ["Qt6Core", "Qt6Quick", "Qt6Qml", "Qt6RemoteObjects"],
+      "extra_sources": []
+    }
+  }
+}
