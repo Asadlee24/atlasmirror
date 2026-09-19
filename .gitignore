@@ -1,0 +1,47 @@
+# OpenStreetMap files (never commit heavy binary map snapshots)
+*.osm.pbf
+*.osm
+*.osm.bz2
+*.osm.gz
+*.part
+*.tmp
+*.download
+
+# Build artifacts
+target/
+build/
+bin/
+lib/
+cmake-build-*/
+result
+result-*
+*.lgx
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+
+# Generated files
+generated_code/
+*.lidl.cpp
+*.lidl.h
+
+# Environment and secrets
+.env
+.env.*
+*.key
+*.pem
+*.secret
+credentials.json
+
+# IDE and OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
