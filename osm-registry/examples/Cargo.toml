@@ -1,0 +1,12 @@
+[package]
+name = "osm-registry-examples"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+osm-registry-core = { path = "../registry_core" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
