@@ -1,73 +1,77 @@
 # Local LEZ Sequencer & SPEL Registry Evidence
 
-This document details the environment, tooling, pinned upstream revisions, commands, and current execution status for running the SPEL OSM Registry on a local Logos Execution Zone (LEZ) standalone sequencer.
+This document details the upstream tooling, build and deployment workflow, and current execution status for running the SPEL OSM Registry against the Logos Execution Zone (LEZ) standalone sequencer.
 
 ---
 
 ## 1. Upstream Frameworks & Revisions
 
-| Component | Repository | Pinned Branch/Tag | Description |
-|---|---|---|---|
-| **SPEL Framework** | [`logos-co/spel`](https://github.com/logos-co/spel) | `main` | Smart contract framework for Logos Execution Zone (RISC Zero zkVM based) |
-| **LEZ Sequencer** | [`logos-blockchain/logos-execution-zone`](https://github.com/logos-blockchain/logos-execution-zone) | `main` | Execution engine and standalone sequencer service |
+| Component | Repository | Source Reference |
+|---|---|---|
+| **SPEL Framework** | [`logos-co/spel`](https://github.com/logos-co/spel) | `scripts/smoke-test.sh`, `scripts/init-e2e-test.sh` |
+| **LEZ Sequencer** | [`logos-blockchain/logos-execution-zone`](https://github.com/logos-blockchain/logos-execution-zone) | `lez/sequencer/service/configs/debug` |
 
 ---
 
-## 2. Program Build & Deployment Commands
+## 2. Official SPEL Build, Deploy & Execution Workflow
 
-### Step 1: Build the SPEL OSM Registry Program
-```bash
-cd osm-registry
-# Builds the RISC Zero guest binary and core crate
-cargo build --release
-# Generates the official SPEL IDL
-cargo run --bin generate_idl
-```
+All interaction is handled through the SPEL build tooling and generated CLI rather than custom REST endpoints.
 
-### Step 2: Start the Standalone LEZ Sequencer
+### Step 1: Start the LEZ Standalone Sequencer
 ```bash
 git clone https://github.com/logos-blockchain/logos-execution-zone.git
 cd logos-execution-zone
-RUST_LOG=info cargo run --features standalone -p sequencer_service lez/sequencer/service/configs/debug
-# Sequencer listens on http://127.0.0.1:9944
+RUST_LOG=info cargo run --features standalone -p sequencer_service \
+  lez/sequencer/service/configs/debug
 ```
 
-### Step 3: Deploy the Program to Sequencer
+### Step 2: Build Guest Binary & Generate SPEL IDL
 ```bash
 cd osm-registry
-# Using SPEL deployment CLI
-spel-cli deploy \
+make build
+make idl
+# Produces: idl/osm_registry.json
+```
+
+### Step 3: Deploy Program via SPEL Tooling
+```bash
+# Deploys compiled guest binary to sequencer and captures returned Program ID
+spel deploy \
   --sequencer-url http://127.0.0.1:9944 \
-  --program-binary target/riscv32im-risc0-zkvm-elf/release/osm_registry \
   --keypair ~/.logos/dev-keypair.json
 ```
 
-### Step 4: Submit Initialize & Register Transactions
+### Step 4: Execute Transactions via Generated SPEL CLI
 ```bash
-# Initialize registry
-spel-cli tx call \
-  --sequencer-url http://127.0.0.1:9944 \
-  --program-id <DEPLOYED_PROGRAM_ID> \
-  --instruction initialize
+# Initialize Registry
+spel --idl idl/osm_registry.json -p <PROGRAM_ID> -- \
+  initialize
 
-# Register region
-spel-cli tx call \
-  --sequencer-url http://127.0.0.1:9944 \
-  --program-id <DEPLOYED_PROGRAM_ID> \
-  --instruction register_region \
-  --args '{"region":"asia/pakistan","parent":null,"level":"country","cid":"bafybei...","source_url":"https://download.geofabrik.de/asia/pakistan-latest.osm.pbf","checksum":"59227227dab323be9d50da2fbdef2c64","version":"2026-09-18","timestamp":1726700000}'
+# Register Region
+spel --idl idl/osm_registry.json -p <PROGRAM_ID> -- \
+  register-region \
+  --region "china/henan" \
+  --level "subregion" \
+  --cid "bafybei..." \
+  --source-url "https://download.geofabrik.de/china/henan-latest.osm.pbf" \
+  --checksum "49134316..." \
+  --version "2026-09-19" \
+  --timestamp 1726700000
+
+# Query On-Chain Registry Account / State
+spel inspect --program-id <PROGRAM_ID> --account <REGISTRY_PDA>
 ```
 
 ---
 
-## 3. Current Execution Status & Environment Blockers
+## 3. Current Execution Status
 
 > [!WARNING]
-> **Status: NOT_VERIFIED (LEZ Sequencer Absent)**
-> In the current execution environment (Windows host without an active background LEZ sequencer process):
-> - The LEZ standalone sequencer service is **not running**.
-> - The SPEL deployment CLI (`spel-cli`) is not connected to a live node.
-> - Therefore, **no blockchain transaction IDs or live program IDs are claimed**.
-> - Tests in `tests/integration/test_lez_registry_real.py` will report `BLOCKED` with exit code 2 until a live sequencer is started.
+> **Status: BLOCKED**
+> The LEZ standalone sequencer service is not currently running, and the `spel` CLI is not installed in the local environment.
+> Consequently:
+> - Program ID: **BLOCKED** (no deploy transaction executed)
+> - Transaction ID: **BLOCKED** (no sequencer transaction submitted)
+> - Queried on-chain state: **BLOCKED** (no on-chain account state exists)
 >
-> Simulation is strictly prohibited. Transaction IDs will only be populated when captured from a genuine live LEZ sequencer run.
+> In accordance with LP-0018 rules, no simulated transaction IDs (`0xlez_tx_...`) or fake program IDs are generated.

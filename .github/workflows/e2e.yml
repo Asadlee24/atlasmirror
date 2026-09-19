@@ -3,7 +3,15 @@ name: E2E Pipeline
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
+    inputs:
+      run_real_integration:
+        description: "Execute real integration with live logoscore & LEZ"
+        required: true
+        type: boolean
+        default: false
 
 jobs:
   unit-verification:
@@ -23,8 +31,9 @@ jobs:
           python tests/unit/test_registry_model.py
 
   real-e2e-integration:
-    name: Real Infrastructure Integration (Logos Storage & LEZ)
+    name: Real Infrastructure Integration (logoscore & LEZ)
     runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.run_real_integration == 'true' }}
     needs: unit-verification
     steps:
       - uses: actions/checkout@v4
@@ -34,12 +43,4 @@ jobs:
       - name: Run Real E2E Test (Fails if Logos daemons absent)
         run: |
           chmod +x scripts/*.sh
-          # Note: Exits with status 2 if live Logos daemons are not running
-          python tests/integration/test_e2e_real.py || exit_code=$?
-          if [ ${exit_code:-0} -eq 2 ]; then
-            echo "Integration preflight: Real Logos Storage / LEZ daemons not running in CI runner."
-            echo "Real E2E is skipped until live runner daemons are configured."
-          elif [ ${exit_code:-0} -ne 0 ]; then
-            echo "Real E2E failed with error code $exit_code"
-            exit $exit_code
-          fi
+          python tests/integration/test_e2e_real.py
