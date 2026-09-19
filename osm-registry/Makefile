@@ -1,36 +1,33 @@
 # SPEL OSM Registry Makefile
-# Reference: https://github.com/logos-co/spel
+# Reference: https://github.com/logos-co/spel and official SPEL project scaffold
 
+PROGRAM_BIN ?= target/riscv32im-risc0-zkvm-elf/release/osm_registry
 SEQUENCER_URL ?= http://127.0.0.1:9944
-KEYPAIR ?= ~/.logos/dev-keypair.json
 
-.PHONY: all build idl deploy cli clean
+.PHONY: all build idl deploy clean
 
 all: build idl
 
 build:
-	@echo "Building SPEL OSM Registry guest binary..."
-	cargo build --release
+	@echo "Building RISC Zero guest binary via cargo risczero..."
+	@if ! command -v cargo-risczero >/dev/null 2>&1; then \
+		echo "[BLOCKED] 'cargo-risczero' not found. Install via: cargo install cargo-risczero"; \
+		exit 2; \
+	fi
+	cargo risczero build --manifest-path methods/guest/Cargo.toml
 
 idl:
-	@echo "Generating SPEL IDL..."
+	@echo "Generating SPEL IDL from annotated #[lez_program] source..."
 	cargo run --bin generate_idl
 	@echo "SPEL IDL generated at idl/osm_registry.json"
 
 deploy:
-	@echo "Deploying OSM Registry to LEZ Sequencer at $(SEQUENCER_URL)..."
-	@if ! command -v spel >/dev/null 2>&1 && ! command -v spel-cli >/dev/null 2>&1; then \
-		echo "[BLOCKED] 'spel' CLI not found. Please install from https://github.com/logos-co/spel"; \
+	@echo "Deploying OSM Registry to LEZ Sequencer via wallet..."
+	@if ! command -v wallet >/dev/null 2>&1; then \
+		echo "[BLOCKED] 'wallet' CLI not found. Please install LEZ wallet tooling from https://github.com/logos-blockchain/logos-execution-zone"; \
 		exit 2; \
 	fi
-	spel deploy --sequencer-url $(SEQUENCER_URL) --keypair $(KEYPAIR)
-
-cli:
-	@if ! command -v spel >/dev/null 2>&1 && ! command -v spel-cli >/dev/null 2>&1; then \
-		echo "[BLOCKED] 'spel' CLI not found. Please install from https://github.com/logos-co/spel"; \
-		exit 2; \
-	fi
-	spel --idl idl/osm_registry.json $(ARGS)
+	wallet deploy-program $(PROGRAM_BIN)
 
 clean:
 	cargo clean

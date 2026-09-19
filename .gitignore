@@ -15,6 +15,13 @@ lib/
 cmake-build-*/
 result
 result-*
+logos
+lgpm
+storage-lgx
+modules/
+storage-data/
+storage-data-*/
+config*.json
 *.lgx
 *.o
 *.obj
@@ -23,6 +30,7 @@ result-*
 *.dll
 *.a
 *.lib
+
 
 # Generated files
 generated_code/

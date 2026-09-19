@@ -9,13 +9,13 @@ This document details the upstream tooling, build and deployment workflow, and c
 | Component | Repository | Source Reference |
 |---|---|---|
 | **SPEL Framework** | [`logos-co/spel`](https://github.com/logos-co/spel) | `scripts/smoke-test.sh`, `scripts/init-e2e-test.sh` |
-| **LEZ Sequencer** | [`logos-blockchain/logos-execution-zone`](https://github.com/logos-blockchain/logos-execution-zone) | `lez/sequencer/service/configs/debug` |
+| **LEZ Sequencer & Wallet** | [`logos-blockchain/logos-execution-zone`](https://github.com/logos-blockchain/logos-execution-zone) | `lez/sequencer/service/configs/debug`, `wallet` CLI |
 
 ---
 
 ## 2. Official SPEL Build, Deploy & Execution Workflow
 
-All interaction is handled through the SPEL build tooling and generated CLI rather than custom REST endpoints.
+Follows `logos-co/spel/scripts/smoke-test.sh` and the official SPEL project scaffold:
 
 ### Step 1: Start the LEZ Standalone Sequencer
 ```bash
@@ -25,20 +25,20 @@ RUST_LOG=info cargo run --features standalone -p sequencer_service \
   lez/sequencer/service/configs/debug
 ```
 
-### Step 2: Build Guest Binary & Generate SPEL IDL
+### Step 2: Build RISC0 Guest Binary & Generate SPEL IDL
 ```bash
 cd osm-registry
-make build
-make idl
+# Builds the guest binary via cargo-risczero
+cargo risczero build --manifest-path methods/guest/Cargo.toml
+# Generates IDL from #[lez_program] annotations
+cargo run --bin generate_idl
 # Produces: idl/osm_registry.json
 ```
 
-### Step 3: Deploy Program via SPEL Tooling
+### Step 3: Deploy Program via LEZ Wallet
 ```bash
-# Deploys compiled guest binary to sequencer and captures returned Program ID
-spel deploy \
-  --sequencer-url http://127.0.0.1:9944 \
-  --keypair ~/.logos/dev-keypair.json
+wallet deploy-program target/riscv32im-risc0-zkvm-elf/release/osm_registry
+# Captures returned Program ID
 ```
 
 ### Step 4: Execute Transactions via Generated SPEL CLI
@@ -52,9 +52,9 @@ spel --idl idl/osm_registry.json -p <PROGRAM_ID> -- \
   register-region \
   --region "china/henan" \
   --level "subregion" \
-  --cid "bafybei..." \
+  --cid "<REAL_CID>" \
   --source-url "https://download.geofabrik.de/china/henan-latest.osm.pbf" \
-  --checksum "49134316..." \
+  --checksum "<COMPUTED_MD5>" \
   --version "2026-09-19" \
   --timestamp 1726700000
 
@@ -68,7 +68,7 @@ spel inspect --program-id <PROGRAM_ID> --account <REGISTRY_PDA>
 
 > [!WARNING]
 > **Status: BLOCKED**
-> The LEZ standalone sequencer service is not currently running, and the `spel` CLI is not installed in the local environment.
+> The LEZ standalone sequencer service is not currently running, and `cargo-risczero`, `wallet`, and `spel` are not installed in the local environment.
 > Consequently:
 > - Program ID: **BLOCKED** (no deploy transaction executed)
 > - Transaction ID: **BLOCKED** (no sequencer transaction submitted)
