@@ -15,6 +15,7 @@ lib/
 cmake-build-*/
 result
 result-*
+lez-wallet
 logos
 lgpm
 storage-lgx

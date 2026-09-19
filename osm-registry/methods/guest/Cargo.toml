@@ -9,3 +9,8 @@ license.workspace = true
 osm-registry-core = { path = "../../registry_core" }
 borsh = { workspace = true }
 serde = { workspace = true }
+
+[[bin]]
+name = "osm_registry"
+path = "src/bin/osm_registry.rs"
+test = false
