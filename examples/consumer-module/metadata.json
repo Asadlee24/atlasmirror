@@ -1,0 +1,17 @@
+{
+  "name": "consumer_module",
+  "display_name": "AtlasMirror Consumer Example",
+  "version": "0.1.0",
+  "type": "ui_qml",
+  "category": "examples",
+  "description": "Minimal independent Logos Basecamp module proving third-party integration of atlasmirror_sdk in under 15 minutes",
+  "view": "src/consumer_view.qml",
+  "dependencies": ["atlasmirror_sdk"],
+
+  "nix": {
+    "packages": {
+      "build": ["cmake", "pkg-config"],
+      "runtime": ["qt6.qtdeclarative"]
+    }
+  }
+}
