@@ -44,6 +44,8 @@ generated_code/
 *.key
 *.pem
 *.secret
+*_signing_key
+rocksdb-*
 credentials.json
 
 # Python

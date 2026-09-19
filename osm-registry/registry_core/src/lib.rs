@@ -201,6 +201,25 @@ pub struct GlobalRegistryState {
     pub last_updated: u64,
 }
 
+/// Complete on-chain registry state stored in the program's account shard.
+#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
+pub struct RegistryState {
+    /// Total number of unique registered regions.
+    pub total_regions: u64,
+    /// Timestamp of last registration.
+    pub last_updated: u64,
+    /// Collection of all registered region records.
+    pub records: Vec<RegionRecord>,
+}
+
+/// Instructions supported by the OSM Registry guest program.
+#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum RegistryInstruction {
+    Initialize,
+    RegisterRegion(RegisterRegionArgs),
+    BatchRegister(BatchRegisterArgs),
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

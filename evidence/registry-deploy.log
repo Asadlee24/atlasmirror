@@ -1,0 +1,20 @@
+=== LEZ On-Chain Guest Program Deployment ===
+Date: 2026-09-20 00:54:04 UTC
+Binary: osm-registry/target/riscv32im-risc0-zkvm-elf/release/osm_registry.bin (338 KB)
+Program ID: [1335955290, 2377200224, 441259996, 2070535360, 243394879, 4288740759, 1849673142, 6245295]
+Header Account: VKQRV4yUWzmHuCJsPaCDNq5cZWo1FXdy4HRSieQetYV
+Segments:
+  - 3fKoqVWseoTaxP9fY7Ru4sEdiquhZUHnT8Sh67DD5nwJ
+  - 5o4VkUguDiqMmrMn26jvFShsjfmr4UNUKTUKEWgJjT1m
+  - 6uLr9dVvHeTZ9n55WKbsYmTSRxw1xDBsKBtQKj77BkPV
+  - 9LpTwU1DWgVmnZ8neFLhcMPfzNT4hVN87zjA33scM27B
+Fee Payer: Public/6iArKUXxhUJqS7kCaPNhwMWt3ro71PDyBj7jwAyE2VQV (Initial Balance: 10000000000000)
+
+Deployment Command:
+wallet program-loader deploy --elf /mnt/c/Users/Aftab/Desktop/atlasmirror/osm-registry/target/riscv32im-risc0-zkvm-elf/release/osm_registry.bin --header Public/VKQRV4yUWzmHuCJsPaCDNq5cZWo1FXdy4HRSieQetYV --segments Public/3fKoqVWseoTaxP9fY7Ru4sEdiquhZUHnT8Sh67DD5nwJ Public/5o4VkUguDiqMmrMn26jvFShsjfmr4UNUKTUKEWgJjT1m Public/6uLr9dVvHeTZ9n55WKbsYmTSRxw1xDBsKBtQKj77BkPV Public/9LpTwU1DWgVmnZ8neFLhcMPfzNT4hVN87zjA33scM27B --payer Public/6iArKUXxhUJqS7kCaPNhwMWt3ro71PDyBj7jwAyE2VQV
+
+Deployment Result:
+Transaction hash is 60bb58c4e20d484b647268a6385eca029c8a6faf6f747fe8087b88f9d74d6c0a
+Transaction is included in block 113
+Program deployed. Header account id: VKQRV4yUWzmHuCJsPaCDNq5cZWo1FXdy4HRSieQetYV
+Status: CONFIRMED ON LIVE LEZ SEQUENCER

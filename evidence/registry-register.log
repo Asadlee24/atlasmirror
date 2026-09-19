@@ -1,0 +1,32 @@
+=== LEZ On-Chain Transaction Execution: Initialize & RegisterRegion ===
+Program Header Account: VKQRV4yUWzmHuCJsPaCDNq5cZWo1FXdy4HRSieQetYV
+Program ID: [1335955290, 2377200224, 441259996, 2070535360, 243394879, 4288740759, 1849673142, 6245295]
+Fee Payer: Public/6iArKUXxhUJqS7kCaPNhwMWt3ro71PDyBj7jwAyE2VQV
+
+--- 1. Initialize Instruction ---
+Instruction: RegistryInstruction::Initialize
+Command: run_osm_registry osm_registry.bin VKQRV4yUWzmHuCJsPaCDNq5cZWo1FXdy4HRSieQetYV initialize
+Program ID: [1335955290, 2377200224, 441259996, 2070535360, 243394879, 4288740759, 1849673142, 6245295]
+Building Initialize instruction...
+Submitting transaction to LEZ sequencer...
+Transaction confirmed! Response: 2962442ef6e7d8dc548c9a868593e0be16c7875b0ef16e5bc4c34be648552612
+Status: SETTLED IN BLOCK
+
+--- 2. RegisterRegion Instruction ---
+Instruction: RegistryInstruction::RegisterRegion
+Arguments:
+  Region: pakistan
+  Level: Country
+  CID: zDvZRwzm4FBsSGJRftqqYev7aNBEcEUcwDBxCSREXGo1qCnNR5U4
+  Source URL: https://download.geofabrik.de/asia/pakistan-latest.osm.pbf
+  Checksum: 378df25f824177ebcbe9aa11d88bbd6b
+  Version: 2026-09-19
+  Timestamp: 1726747200
+  Hosted: true
+
+Command: run_osm_registry osm_registry.bin VKQRV4yUWzmHuCJsPaCDNq5cZWo1FXdy4HRSieQetYV register pakistan zDvZRwzm4FBsSGJRftqqYev7aNBEcEUcwDBxCSREXGo1qCnNR5U4 378df25f824177ebcbe9aa11d88bbd6b https://download.geofabrik.de/asia/pakistan-latest.osm.pbf 2026-09-19 1726747200
+Program ID: [1335955290, 2377200224, 441259996, 2070535360, 243394879, 4288740759, 1849673142, 6245295]
+Building RegisterRegion instruction for region: pakistan
+Submitting transaction to LEZ sequencer...
+Transaction confirmed! Response: 4eee91eb6e0d643db65b52d1402fbfb1a2fb6e536feb739db834984acbc060c2
+Status: SETTLED IN BLOCK
