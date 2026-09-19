@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AtlasMirrorRegionCatalog",
+  "description": "Schema for the closed, non-overlapping predefined region catalog defined by Logos λPrize LP-0018",
+  "type": "object",
+  "required": ["version", "regions"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Catalog schema version"
+    },
+    "regions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "name", "parent", "level", "enabled"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Unique canonical region path (e.g. 'asia/pakistan', 'us/california')"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable display name"
+          },
+          "parent": {
+            "type": ["string", "null"],
+            "description": "Parent region identifier (null for country level, parent country for subregions)"
+          },
+          "level": {
+            "type": "string",
+            "enum": ["country", "subregion"],
+            "description": "Hierarchy level in the non-overlapping region tree"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether this region is enabled in the active catalog"
+          },
+          "geofabrik_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Canonical Geofabrik download URL for the .osm.pbf snapshot"
+          },
+          "md5_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Canonical Geofabrik published MD5 checksum URL"
+          }
+        }
+      }
+    }
+  }
+}
