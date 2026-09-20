@@ -22,6 +22,8 @@ storage-lgx
 modules/
 storage-data/
 storage-data-*/
+test_data/
+test_nodes/
 config*.json
 *.lgx
 *.o

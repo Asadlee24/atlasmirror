@@ -1,0 +1,20 @@
+================================================================================
+LOGOS STORAGE PHASE B: REPLICA SURVIVAL EVIDENCE
+================================================================================
+Target Dataset:      china/henan (henan-latest.osm.pbf)
+Target CID:          zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny
+Network:             logos.test (official Logos storage testnet)
+Origin Node 1:       STOPPED / OFFLINE (proven inactive)
+Surviving Replica:   Node 2 (PeerID=16Uiu2HAmKyBosksfyQiZmsT75o9ezhtQa8NcWsDdU1pxi9bhy96K, Port=8072, Network=logos.test)
+Consumer Node 3:     Fresh Node 3 (PeerID=16Uiu2HAm7cevCx94GuQEMTLpQvCqJ9rFCJGKit8s6RCcv7ba9TMD, Port=8073, Network=logos.test)
+Node 2 SPR:          spr:CiUIAhIhA2yrOBWZ82vKMDzKO8N_zHSR10q4ncEpV9HoMKZh08JUEgIDARpHCicAJQgCEiEDbKs4FZnza8owPMo7w3_MdJHXSridwSlX0egwpmHTwlQQk76-1QYaCgoIBH8AAAEGH4gaCgoIBKwW31wGH4gqRzBFAiEAzYD5jZ-pGoig0UB_sMJEXKedsGpCr6uZpIufMaxp2QMCIBHJunx8rB1dCpk4IUILk4VfccuTppYNT8nDSFWvrZoN
+Node 3 SPR:          spr:CiUIAhIhArUcbm-kN3LoqFt23w3ddGOrtnm0nDHQ55SB4SKNxvTMEgIDARo7CicAJQgCEiECtRxub6Q3cuioW3bfDd10Y6u2ebScMdDnlIHhIo3G9MwQxb6-1QYaCgoIBH8AAAEGH4kqRjBEAiA4g6sPvZxJdNZj-p_wRNv7NeISb5PAvq4luFv9WuFWmAIgc1cPwcdlgvS-v81ajW6EZKTkjjsHTmMdyg2R1NkN-io
+P2P Dial:            Direct bootstrap via Node 2 SPR (/ip4/127.0.0.1/tcp/8072)
+Manifest Event:      storageDownloadManifestDone received successfully from Node 2
+Block Retrieval:     downloadToUrl(CID, dest, local=false, 262144) -> storageDownloadDone
+Retrieved Size:      49157919 bytes (Expected: 49157919) -> EXACT MATCH
+Retrieved MD5:       0055ebfc7f14585c56d53a88062d5814 (Expected: 0055ebfc7f14585c56d53a88062d5814) -> EXACT MATCH
+Retrieved SHA256:    4522a8a6f8ff1e25a269e760f12cc97dff804f288cb449319b3c2065d1d53c46 (Expected: 4522a8a6f8ff1e25a269e760f12cc97dff804f288cb449319b3c2065d1d53c46) -> EXACT MATCH
+Gate Result:         SUCCESS GATE B PASSED (Replica survival proven with origin offline)
+Verification Time:   2026-09-20 08:54:46Z
+================================================================================

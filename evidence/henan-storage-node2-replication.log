@@ -1,0 +1,19 @@
+================================================================================
+LOGOS STORAGE PHASE A: ORIGIN ONLINE REPLICATION EVIDENCE
+================================================================================
+Target Dataset:      china/henan (henan-latest.osm.pbf)
+Target CID:          zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny
+Network:             logos.test (official Logos storage testnet)
+Node 1 (Origin):     PeerID=16Uiu2HAkzxuwAnk3nPx6h3SWpWevNszYbSo563PABB83W3isoGqr, Port=8071, Status=ONLINE (hosting origin)
+Node 2 (Replica):    PeerID=16Uiu2HAmKyBosksfyQiZmsT75o9ezhtQa8NcWsDdU1pxi9bhy96K, Port=8072, Status=ONLINE (clean data-dir)
+Node 1 SPR:          spr:CiUIAhIhAlJLN-m9C64VAiozvHNalH3pzOsBx3oVh8uxjAhPY6QdEgIDARpHCicAJQgCEiECUks36b0LrhUCKjO8c1qUfenM6wHHehWHy7GMCE9jpB0Qg76-1QYaCgoIBH8AAAEGH4caCgoIBKwW31wGH4cqRjBEAiAxnNkGp2BvYsVrQ0C2Ap_TsCUNrvptO3FOycIm6p0fhQIgLdX7M0tTPH7TZUaaW4I5doN5mFgzlKgctqmU50B9rTk
+Node 2 SPR:          spr:CiUIAhIhA2yrOBWZ82vKMDzKO8N_zHSR10q4ncEpV9HoMKZh08JUEgIDARpHCicAJQgCEiEDbKs4FZnza8owPMo7w3_MdJHXSridwSlX0egwpmHTwlQQk76-1QYaCgoIBH8AAAEGH4gaCgoIBKwW31wGH4gqRzBFAiEAzYD5jZ-pGoig0UB_sMJEXKedsGpCr6uZpIufMaxp2QMCIBHJunx8rB1dCpk4IUILk4VfccuTppYNT8nDSFWvrZoN
+P2P Dial:            Direct bootstrap via Node 1 SPR (/ip4/127.0.0.1/tcp/8071)
+Manifest Retrieval:  SUCCESS (storageDownloadManifestDone received)
+Block Retrieval:     downloadToUrl(CID, dest, local=false, 262144) -> storageDownloadDone
+Retrieved Size:      49157919 bytes (Expected: 49157919) -> EXACT MATCH
+Retrieved MD5:       0055ebfc7f14585c56d53a88062d5814 (Expected: 0055ebfc7f14585c56d53a88062d5814) -> EXACT MATCH
+Retrieved SHA256:    4522a8a6f8ff1e25a269e760f12cc97dff804f288cb449319b3c2065d1d53c46 (Expected: 4522a8a6f8ff1e25a269e760f12cc97dff804f288cb449319b3c2065d1d53c46) -> EXACT MATCH
+Gate Result:         SUCCESS GATE A PASSED (100% byte-for-byte replica created)
+Verification Time:   2026-09-20 08:54:21Z
+================================================================================
