@@ -257,7 +257,7 @@ def main():
 
     # 7. Register/update china/henan on Canonical Public LEZ Testnet
     print("\n--- Step 7: Registering Henan on Canonical Public LEZ Testnet ---", flush=True)
-    update_timestamp = 1726833600  # Strictly > 1726747200
+    update_timestamp = 1789905600  # 2026-09-20 Unix Timestamp
     reg_cmd = (
         f"export LEE_WALLET_HOME_DIR=/root/.lee/wallet-testnet-compatible && "
         f"{LD_PREFIX} {RUNNER_BIN} {BIN_PATH} {STATE_ACCOUNT} register china/henan "
@@ -319,7 +319,9 @@ def main():
         f"PBF File Size:      {local_size} bytes\n"
         f"Real Storage CID:   {real_cid}\n"
         f"Storage Roundtrip:  CONFIRMED (100% byte-for-byte equality)\n"
-        f"LEZ Testnet Deploy: Block 16907, Tx eb12cd28cd4358aa77bf5c617b94f220e36317742d30701bd1c6e7dbf2cee758\n"
+        f"LEZ Testnet Deploy: Block 16926, Tx aeb52c595c860392504e790e32d41e8bb84be03141bfea514405465873f5badd\n"
+        f"Program ID:         bcdc104271bd670da3b1afddcb758286c619de87365d6488c9c2f563947f8b4f\n"
+        f"State Account:      Public/T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci\n"
         f"LEZ Testnet Update: Block {block_num}, Tx {tx_hash}\n"
         f"On-Chain Verified:  CONFIRMED (CID and MD5 match real file)\n"
         f"Audit Timestamp:    {time.strftime('%Y-%m-%d %H:%M:%SZ', time.gmtime())}\n"

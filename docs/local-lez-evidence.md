@@ -73,24 +73,24 @@ spel inspect --program-id <PROGRAM_ID> --account <REGISTRY_PDA>
 The AtlasMirror `osm_registry` program has been compiled, wrapped into a `ProgramBinary`, deployed to the canonical Logos testnet, and verified with an on-chain registration transaction and state query.
 
 ### Verified Deployment Receipt
-- **Program ID (u32 Array)**: `[347481232, 1299102719, 2328279976, 197338152, 796010409, 3372189242, 412881757, 1852548037]`
-- **Program ID (Hex)**: `9024b614ffbb6e4da8bbc68a2824c30ba927722f3a86ffc85d139c18c5a36b6e`
-- **Deployment Transaction Hash**: `eb12cd28cd4358aa77bf5c617b94f220e36317742d30701bd1c6e7dbf2cee758`
-- **Included in Block**: `16907`
+- **Program ID (u32 Array)**: `[1108401340, 224902513, 3719279011, 2256696779, 2279479750, 2288278838, 1677050569, 1334542228]`
+- **Program ID (Hex)**: `bcdc104271bd670da3b1afddcb758286c619de87365d6488c9c2f563947f8b4f`
+- **Deployment Transaction Hash**: `aeb52c595c860392504e790e32d41e8bb84be03141bfea514405465873f5badd`
+- **Included in Block**: `16926`
 
 ### Verified Region Registration Transaction
-- **Target State Account**: `Public/4CSAM4M1GtrF1tGMJmnCaipbkHH3kYjsMNmWYs6jJHJQ`
+- **Target State Account**: `Public/T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci`
 - **Registered Region**: `china/henan` (Subregion under `china`)
-- **Transaction Hash**: `8c59838b2b516df84bad7a6086658c37d3ac1ba1bc79c9b53555a971782a7b34`
-- **Included in Block**: `16908`
+- **Transaction Hash**: `dbf2fd2af1c54454d50613bbe9b57e6db2f06a311f774249cd77943078c8e487`
+- **Included in Block**: `16927`
 - **Status**: `TransactionExecuted` (Finalized)
 
 ### Verified On-Chain State Query
-- **Program Owner**: `9024b614ffbb6e4da8bbc68a2824c30ba927722f3a86ffc85d139c18c5a36b6e`
+- **Program Owner**: `bcdc104271bd670da3b1afddcb758286c619de87365d6488c9c2f563947f8b4f`
 - **Total Registered Regions**: `1`
-- **Last Updated Timestamp**: `1726747200`
+- **Last Updated Timestamp**: `1789905600`
 - **State Data**:
   ```text
-  REGION_RECORD: region=china/henan, parent=Some("china"), level=Subregion, cid=zDvZRwzm4FBsSGJRftqqYev7aNBEcEUcwDBxCSREXGo1qCnNR5U4, source_url=https://download.geofabrik.de/asia/china/henan-latest.osm.pbf, checksum=378df25f824177ebcbe9aa11d88bbd6b, version=2026-09-19, hosted=true, timestamp=1726747200
+  REGION_RECORD: region=china/henan, parent=Some("china"), level=Subregion, cid=zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny, source_url=https://download.geofabrik.de/asia/china/henan-latest.osm.pbf, checksum=0055ebfc7f14585c56d53a88062d5814, version=2026-09-20, hosted=true, timestamp=1789905600
   ```
-Full audit log is preserved at [evidence/testnet-deployment-and-registration.log](file:///c:/Users/Aftab/Desktop/atlasmirror/evidence/testnet-deployment-and-registration.log).
+Full audit log is preserved at [evidence/henan-e2e.log](file:///c:/Users/Aftab/Desktop/atlasmirror/evidence/henan-e2e.log) and [evidence/henan-testnet-query.log](file:///c:/Users/Aftab/Desktop/atlasmirror/evidence/henan-testnet-query.log).

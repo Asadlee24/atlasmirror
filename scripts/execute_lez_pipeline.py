@@ -64,13 +64,14 @@ def main():
         sys.exit(1)
         
     print("=== 4. Initializing wallet ===")
+    wallet_pass = os.environ.get("WALLET_PASSWORD", "")
     env = f"export LEE_WALLET_HOME_DIR='{WALLET_DIR}'"
-    run_wsl(f"{env} && echo 'atlasmirror' | /usr/local/bin/wallet account list || true")
+    run_wsl(f"{env} && echo '{wallet_pass}' | /usr/local/bin/wallet account list || true")
     
     print("=== 5. Creating 1 Header + 4 Segment Accounts ===")
     accounts = []
     for i in range(5):
-        ret, out, err = run_wsl(f"{env} && echo 'atlasmirror' | /usr/local/bin/wallet account new public")
+        ret, out, err = run_wsl(f"{env} && echo '{wallet_pass}' | /usr/local/bin/wallet account new public")
         # Find 32-byte base58 account id from output
         # Output usually contains account id
         print(f"Account {i} output: {out}")

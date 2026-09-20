@@ -1,0 +1,34 @@
+================================================================================
+LOGOS STORAGE SECOND NODE NETWORK RETRIEVABILITY AUDIT
+================================================================================
+Test Configuration:
+- Upload Node:          Node 1 (logos.test network, nat: auto)
+- Target CID:           zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny
+- Target Dataset:       Henan OSM PBF (49,157,919 bytes, MD5: 0055ebfc7f14585c56d53a88062d5814)
+- Test Condition:       Stop/destroy original upload node after upload completion
+- Retrieval Node:       Fresh second node (Node 2)
+  * Data Directory:     /tmp/storage-node2-network (completely fresh, empty)
+  * Manifests Cache:    NONE (clean state)
+  * Network:            logos.test (official testnet bootstrap configuration)
+  * Download Call:      downloadToUrl(cid, dest, local=false, 262144)
+
+Execution Results:
+1. downloadManifest Call:
+   Command:  logoscore call storage_module downloadManifest 'zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny' --json
+   Response: {"method":"downloadManifest","module":"storage_module","result":{"error":null,"success":true,"value":null},"status":"ok"}
+   Event:    storageDownloadManifestDone TIMED OUT (Manifest not found on network)
+
+2. downloadToUrl Call:
+   Command:  logoscore call storage_module downloadToUrl 'zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny' '/tmp/henan_downloaded_from_network.osm.pbf' false 262144 --json
+   Response: {"method":"downloadToUrl","module":"storage_module","result":{"error":"Failed to start download.","success":false,"value":null},"status":"ok"}
+   Outcome:  FAILED TO START DOWNLOAD (Manifest unavailable on fresh node)
+
+Diagnostic Findings:
+- Logos Storage (libstorage / Codex) stores uploaded blocks in the local node's repository (`repo-kind: fs`).
+- The public bootstrap nodes for `logos.test` (34.123.182.254, 129.212.221.44, 178.128.140.206, etc.) provide routing and relaying (`/storage/blockexc/1.0.0`, `/storage/manifest/1.0.0`, `/storage/dht-proxy/1.0.0`).
+- The bootstrap nodes DO NOT persist or mirror unpinned blocks across the network when the origin node is destroyed.
+- Therefore, when Node 1 is destroyed after upload, a clean second node cannot resolve the manifest or retrieve the blocks from `logos.test`.
+- Status: STOPPED per requirement ("If a fresh node cannot retrieve it, STOP. Do not begin the 25-region batch until network availability/persistence is solved.")
+
+Timestamp: 2026-09-20 08:39:50Z
+================================================================================

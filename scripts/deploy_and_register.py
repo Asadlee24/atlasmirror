@@ -1,3 +1,4 @@
+import os
 import subprocess
 import json
 import time
@@ -7,7 +8,7 @@ import re
 WALLET_DIR = "/tmp/atlasmirror_wallet"
 BIN_PATH = "/mnt/c/Users/Aftab/Desktop/atlasmirror/osm-registry/target/riscv32im-risc0-zkvm-elf/release/osm_registry.bin"
 EVIDENCE_DIR = "/mnt/c/Users/Aftab/Desktop/atlasmirror/evidence"
-CID = "zDvZRwzm4FBsSGJRftqqYev7aNBEcEUcwDBxCSREXGo1qCnNR5U4"
+CID = "zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny"
 
 CONFIG_CONTENT = {
     "sequencers": [{
@@ -34,23 +35,25 @@ def main():
     
     env = f"export LEE_WALLET_HOME_DIR='{WALLET_DIR}' && export PATH='/root/.risc0/toolchains/v1.97.0-rust-x86_64-unknown-linux-gnu/bin:/usr/bin:/bin:$PATH'"
     
+    WALLET_PASS = os.environ.get("WALLET_PASSWORD", "")
+    FUNDED_PAYER = os.environ.get("FUNDED_PAYER", "Public/6iArKUXxhUJqS7kCaPNhwMWt3ro71PDyBj7jwAyE2VQV")
+    FUNDED_KEY_HEX = os.environ.get("FUNDED_KEY_HEX", "")
     print("=== 2. Initializing wallet persistent storage ===")
-    ret, out, err = run_wsl(f"{env} && echo 'atlasmirror' | /usr/local/bin/wallet account list || true")
+    ret, out, err = run_wsl(f"{env} && echo '{WALLET_PASS}' | /usr/local/bin/wallet account list || true")
     print("Init output:", out, err)
     
     print("=== 3. Checking wallet health ===")
     ret, out, err = run_wsl(f"{env} && /usr/local/bin/wallet check-health || true")
     print("Health output:", out, err)
     
-    FUNDED_PAYER = "Public/6iArKUXxhUJqS7kCaPNhwMWt3ro71PDyBj7jwAyE2VQV"
-    FUNDED_KEY_HEX = "10a26a9aec7d34b82364eeae45c5294dbb0a764b000b94eeb9b58511dc487c4d"
     print("=== 4. Importing funded payer and creating accounts ===")
-    run_wsl(f"{env} && echo 'atlasmirror' | /usr/local/bin/wallet account import public --private-key {FUNDED_KEY_HEX} || true")
+    if FUNDED_KEY_HEX:
+        run_wsl(f"{env} && echo '{WALLET_PASS}' | /usr/local/bin/wallet account import public --private-key {FUNDED_KEY_HEX} || true")
 
     accounts = []
     # Create 5 accounts: 1 header + 4 segments
     for i in range(5):
-        ret, out, err = run_wsl(f"{env} && echo 'atlasmirror' | /usr/local/bin/wallet account new public")
+        ret, out, err = run_wsl(f"{env} && echo '{WALLET_PASS}' | /usr/local/bin/wallet account new public")
         print(f"Create account {i} out:\n{out}")
         matches = re.findall(r'Public/[1-9A-HJ-NP-Za-km-z]{32,44}', out)
         for m in matches:
@@ -80,7 +83,7 @@ def main():
     
     print("=== 5. Deploying osm_registry.bin ===")
     segs_arg = " ".join(seg_ids)
-    deploy_cmd = f"{env} && echo 'atlasmirror' | /usr/local/bin/wallet program-loader deploy --elf {BIN_PATH} --header {header_id} --segments {segs_arg} --payer {FUNDED_PAYER}"
+    deploy_cmd = f"{env} && echo '{WALLET_PASS}' | /usr/local/bin/wallet program-loader deploy --elf {BIN_PATH} --header {header_id} --segments {segs_arg} --payer {FUNDED_PAYER}"
     print("Running deploy command:", deploy_cmd)
     ret, deploy_out, deploy_err = run_wsl(deploy_cmd)
     deploy_log = f"{deploy_out}\n{deploy_err}"
@@ -109,7 +112,7 @@ def main():
         f.write(register_log)
         
     print("=== 7. Querying On-Chain State ===")
-    query_cmd = f"{env} && echo 'atlasmirror' | /usr/local/bin/wallet account get --account-id {header_id} --scope {raw_header_id} --raw"
+    query_cmd = f"{env} && echo '{WALLET_PASS}' | /usr/local/bin/wallet account get --account-id {header_id} --scope {raw_header_id} --raw"
     ret, query_out, query_err = run_wsl(query_cmd)
     query_log = f"{query_out}\n{query_err}"
     print("Query output:\n", query_log)

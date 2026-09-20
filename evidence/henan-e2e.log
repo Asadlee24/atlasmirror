@@ -8,7 +8,9 @@ Local SHA256:       4522a8a6f8ff1e25a269e760f12cc97dff804f288cb449319b3c2065d1d5
 PBF File Size:      49157919 bytes
 Real Storage CID:   zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny
 Storage Roundtrip:  CONFIRMED (100% byte-for-byte equality)
-LEZ Testnet Deploy: Block 16907, Tx eb12cd28cd4358aa77bf5c617b94f220e36317742d30701bd1c6e7dbf2cee758
+LEZ Testnet Deploy: Block 16926, Tx aeb52c595c860392504e790e32d41e8bb84be03141bfea514405465873f5badd
+Program ID:         bcdc104271bd670da3b1afddcb758286c619de87365d6488c9c2f563947f8b4f
+State Account:      Public/T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci
 LEZ Testnet Update: Block 16927, Tx dbf2fd2af1c54454d50613bbe9b57e6db2f06a311f774249cd77943078c8e487
 On-Chain Verified:  CONFIRMED (CID and MD5 match real file)
 Audit Timestamp:    2026-09-20 08:15:04Z

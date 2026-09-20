@@ -2,7 +2,7 @@
 ATLASMIRROR OSM REGISTRY - LOGOS TESTNET DEPLOYMENT & TRANSACTION EVIDENCE
 Network: Testnet v0.3 release environment with the currently documented LEZ CLI compatibility path targeting v0.2.2
 Sequencer URL: https://testnet.lez.logos.co
-Timestamp: 2026-09-20T07:55:58Z
+Timestamp: 2026-09-20T08:37:00Z
 ================================================================================
 
 1. RISC-V Guest ELF Wrapping
@@ -17,55 +17,55 @@ Successfully wrapped ELF (363648 bytes) into ProgramBinary (396072 bytes)
 Command:
 wallet deploy-program /mnt/c/Users/Aftab/Desktop/atlasmirror/osm-registry/target/riscv32im-risc0-zkvm-elf/release/osm_registry.bin
 Output:
-Transaction hash: eb12cd28cd4358aa77bf5c617b94f220e36317742d30701bd1c6e7dbf2cee758
-Included in Block: 16907
+Transaction hash: aeb52c595c860392504e790e32d41e8bb84be03141bfea514405465873f5badd
+Included in Block: 16926
 Transaction data: ProgramDeployment(ProgramDeploymentTransaction { message: Message { bytecode: <396072 bytes> } })
 
-Program ID (u32 array): [347481232, 1299102719, 2328279976, 197338152, 796010409, 3372189242, 412881757, 1852548037]
-Program ID (hex): 9024b614ffbb6e4da8bbc68a2824c30ba927722f3a86ffc85d139c18c5a36b6e
+Program ID (u32 array): [1108401340, 224902513, 3719279011, 2256696779, 2279479750, 2288278838, 1677050569, 1334542228]
+Program ID (hex): bcdc104271bd670da3b1afddcb758286c619de87365d6488c9c2f563947f8b4f
 
 3. Region Registration Transaction
 --------------------------------------------------------------------------------
-Target State Account: Public/4CSAM4M1GtrF1tGMJmnCaipbkHH3kYjsMNmWYs6jJHJQ (pk: 48bc4180971902ca4f8174567c7ae9a2b489b631cf3bda8ee599589ff70bf439)
+Target State Account: Public/T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci
 Instruction: RegisterRegionArgs {
     region: "china/henan",
     parent: Some("china"),
     level: Subregion,
-    cid: "zDvZRwzm4FBsSGJRftqqYev7aNBEcEUcwDBxCSREXGo1qCnNR5U4",
+    cid: "zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny",
     source_url: "https://download.geofabrik.de/asia/china/henan-latest.osm.pbf",
-    checksum: "378df25f824177ebcbe9aa11d88bbd6b",
-    version: "2026-09-19",
+    checksum: "0055ebfc7f14585c56d53a88062d5814",
+    version: "2026-09-20",
     hosted: true,
-    timestamp: 1726747200
+    timestamp: 1789905600
 }
 
-Transaction hash: 8c59838b2b516df84bad7a6086658c37d3ac1ba1bc79c9b53555a971782a7b34
-Included in Block: 16908
-Transaction Finalization: TransactionExecuted { tx_hash: 8c59838b2b516df84bad7a6086658c37d3ac1ba1bc79c9b53555a971782a7b34 }
+Transaction hash: 32652959bf18a43a2c1e7dcb170804a397fe8c9fe111fcd9159d812a67e94018
+Included in Block: 16949
+Transaction Finalization: TransactionExecuted { tx_hash: 32652959bf18a43a2c1e7dcb170804a397fe8c9fe111fcd9159d812a67e94018 }
 
 4. On-Chain State Verification (Query)
 --------------------------------------------------------------------------------
 Command:
-run_osm_registry osm_registry.bin 4CSAM4M1GtrF1tGMJmnCaipbkHH3kYjsMNmWYs6jJHJQ query
+run_osm_registry osm_registry.bin T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci query
 
 Account View:
 Account {
-    program_owner: "9024b614ffbb6e4da8bbc68a2824c30ba927722f3a86ffc85d139c18c5a36b6e",
+    program_owner: "bcdc104271bd670da3b1afddcb758286c619de87365d6488c9c2f563947f8b4f",
     balance: 0,
-    data: Data([1, 0, 0, 0, 0, 0, 0, 0, 64, 18, 236, 102, 0, 0, 0, 0, 1, 0, 0, 0, 11, 0, 0, 0, 99, 104, 105, 110, 97, 47, 104, 101, 110, 97, 110, 1, 5, 0, 0, 0, 99, 104, 105, 110, 97, 1, 52, 0, 0, 0, 122, 68, 118, 90, 82, 119, 122, 109, 52, 70, 66, 115, 83, 71, 74, 82, 102, 116, 113, 113, 89, 101, 118, 55, 97, 78, 66, 69, 99, 69, 85, 99, 119, 68, 66, 120, 67, 83, 82, 69, 88, 71, 111, 49, 113, 67, 110, 78, 82, 53, 85, 52, 61, 0, 0, 0, 104, 116, 116, 112, 115, 58, 47, 47, 100, 111, 119, 110, 108, 111, 97, 100, 46, 103, 101, 111, 102, 97, 98, 114, 105, 107, 46, 100, 101, 47, 97, 115, 105, 97, 47, 99, 104, 105, 110, 97, 47, 104, 101, 110, 97, 110, 45, 108, 97, 116, 101, 115, 116, 46, 111, 115, 109, 46, 112, 98, 102, 32, 0, 0, 0, 51, 55, 56, 100, 102, 50, 53, 102, 56, 50, 52, 49, 55, 55, 101, 98, 99, 98, 101, 57, 97, 97, 49, 49, 100, 56, 56, 98, 98, 100, 54, 98, 10, 0, 0, 0, 50, 48, 50, 54, 45, 48, 57, 45, 49, 57, 1, 64, 18, 236, 102, 0, 0, 0, 0]),
-    nonce: Nonce(1)
+    data: Data([1, 0, 0, 0, 0, 0, 0, 0, 192, 202, 175, 106, 0, 0, 0, 0, 1, 0, 0, 0, 11, 0, 0, 0, 99, 104, 105, 110, 97, 47, 104, 101, 110, 97, 110, 1, 5, 0, 0, 0, 99, 104, 105, 110, 97, 1, 52, 0, 0, 0, 122, 68, 118, 90, 82, 119, 122, 109, 52, 105, 54, 99, 83, 89, 70, 78, 69, 65, 85, 122, 121, 69, 71, 84, 74, 66, 114, 111, 72, 50, 69, 74, 106, 99, 51, 70, 74, 78, 109, 98, 104, 111, 75, 82, 119, 97, 103, 83, 90, 49, 110, 121, 61, 0, 0, 0, 104, 116, 116, 112, 115, 58, 47, 47, 100, 111, 119, 110, 108, 111, 97, 100, 46, 103, 101, 111, 102, 97, 98, 114, 105, 107, 46, 100, 101, 47, 97, 115, 105, 97, 47, 99, 104, 105, 110, 97, 47, 104, 101, 110, 97, 110, 45, 108, 97, 116, 101, 115, 116, 46, 111, 115, 109, 46, 112, 98, 102, 32, 0, 0, 0, 48, 48, 53, 53, 101, 98, 102, 99, 55, 102, 49, 52, 53, 56, 53, 99, 53, 54, 100, 53, 51, 97, 56, 56, 48, 54, 50, 100, 53, 56, 49, 52, 10, 0, 0, 0, 50, 48, 50, 54, 45, 48, 57, 45, 50, 48, 1, 192, 202, 175, 106, 0, 0, 0, 0]),
+    nonce: Nonce(2)
 }
 
 Decoded Registry State:
 total_regions: 1
-last_updated: 1726747200
+last_updated: 1789905600
 Records:
 - region: china/henan
   parent: Some("china")
   level: Subregion
-  cid: zDvZRwzm4FBsSGJRftqqYev7aNBEcEUcwDBxCSREXGo1qCnNR5U4
+  cid: zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny
   source_url: https://download.geofabrik.de/asia/china/henan-latest.osm.pbf
-  checksum: 378df25f824177ebcbe9aa11d88bbd6b
-  version: 2026-09-19
+  checksum: 0055ebfc7f14585c56d53a88062d5814
+  version: 2026-09-20
   hosted: true
-  timestamp: 1726747200
+  timestamp: 1789905600

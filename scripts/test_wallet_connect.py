@@ -21,12 +21,13 @@ def main():
         cat << 'EOF' > {WALLET_DIR}/wallet_config.json
 {json.dumps(CONFIG_CONTENT, indent=4)}
 EOF
+        WALLET_PASS = os.environ.get("WALLET_PASSWORD", "")
         export LEE_WALLET_HOME_DIR='{WALLET_DIR}'
         echo "=== Checking wallet health ==="
         /usr/local/bin/wallet check-health || true
         
         echo "=== Listing accounts ==="
-        echo 'atlasmirror' | /usr/local/bin/wallet account list || true
+        echo "$WALLET_PASS" | /usr/local/bin/wallet account list || true
         """
     ]
     res = subprocess.run(cmd, capture_output=True, text=True)

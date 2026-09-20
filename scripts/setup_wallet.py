@@ -22,26 +22,27 @@ def main():
         cat << 'EOF' > {WALLET_DIR}/wallet_config.json
 {json.dumps(CONFIG_CONTENT, indent=4)}
 EOF
+        WALLET_PASS = os.environ.get("WALLET_PASSWORD", "")
         export LEE_WALLET_HOME_DIR="{WALLET_DIR}"
         
         # Initialize storage if not already initialized
         if [ ! -f "{WALLET_DIR}/persistent_storage.json" ]; then
             echo "Initializing wallet persistent storage..."
-            echo "atlasmirror" | /usr/local/bin/wallet account list || true
+            echo "$WALLET_PASS" | /usr/local/bin/wallet account list || true
         fi
         
         echo "Creating accounts..."
-        header_raw=$(echo "atlasmirror" | /usr/local/bin/wallet account new public)
+        header_raw=$(echo "$WALLET_PASS" | /usr/local/bin/wallet account new public)
         echo "Header account output: $header_raw"
         
         # Create 4 segment accounts
-        seg0=$(echo "atlasmirror" | /usr/local/bin/wallet account new public)
-        seg1=$(echo "atlasmirror" | /usr/local/bin/wallet account new public)
-        seg2=$(echo "atlasmirror" | /usr/local/bin/wallet account new public)
-        seg3=$(echo "atlasmirror" | /usr/local/bin/wallet account new public)
+        seg0=$(echo "$WALLET_PASS" | /usr/local/bin/wallet account new public)
+        seg1=$(echo "$WALLET_PASS" | /usr/local/bin/wallet account new public)
+        seg2=$(echo "$WALLET_PASS" | /usr/local/bin/wallet account new public)
+        seg3=$(echo "$WALLET_PASS" | /usr/local/bin/wallet account new public)
         
         echo "=== ALL ACCOUNTS IN WALLET ==="
-        echo "atlasmirror" | /usr/local/bin/wallet account list
+        echo "$WALLET_PASS" | /usr/local/bin/wallet account list
         """
     ]
     res = subprocess.run(cmd, capture_output=True, text=True)

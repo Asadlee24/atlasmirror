@@ -100,12 +100,12 @@ async fn main() {
             RegistryInstruction::Initialize
         }
         "register" => {
-            let region = args.get(4).cloned().unwrap_or_else(|| "pakistan".to_string());
-            let cid = args.get(5).cloned().unwrap_or_else(|| "zDvZRwzm4FBsSGJRftqqYev7aNBEcEUcwDBxCSREXGo1qCnNR5U4".to_string());
-            let checksum = args.get(6).cloned().unwrap_or_else(|| "378df25f824177ebcbe9aa11d88bbd6b".to_string());
-            let source_url = args.get(7).cloned().unwrap_or_else(|| "https://download.geofabrik.de/asia/pakistan-latest.osm.pbf".to_string());
-            let version = args.get(8).cloned().unwrap_or_else(|| "2026-09-19".to_string());
-            let timestamp: u64 = args.get(9).and_then(|s| s.parse().ok()).unwrap_or(1726747200);
+            let region = args.get(4).cloned().unwrap_or_else(|| "china/henan".to_string());
+            let cid = args.get(5).cloned().unwrap_or_else(|| "zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny".to_string());
+            let checksum = args.get(6).cloned().unwrap_or_else(|| "0055ebfc7f14585c56d53a88062d5814".to_string());
+            let source_url = args.get(7).cloned().unwrap_or_else(|| "https://download.geofabrik.de/asia/china/henan-latest.osm.pbf".to_string());
+            let version = args.get(8).cloned().unwrap_or_else(|| "2026-09-20".to_string());
+            let timestamp: u64 = args.get(9).and_then(|s| s.parse().ok()).unwrap_or(1789905600);
 
             let (parent, level) = if region.contains('/') {
                 let parts: Vec<&str> = region.split('/').collect();

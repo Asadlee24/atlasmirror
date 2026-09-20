@@ -10,7 +10,7 @@ WRAP_BIN = "/root/lez-testnet-compatible/target/release/wrap_elf"
 
 ELF_PATH = "/mnt/c/Users/Aftab/Desktop/atlasmirror/osm-registry/target/riscv32im-risc0-zkvm-elf/release/osm_registry"
 BIN_PATH = "/mnt/c/Users/Aftab/Desktop/atlasmirror/osm-registry/target/riscv32im-risc0-zkvm-elf/release/osm_registry.bin"
-STATE_ACCOUNT = "4CSAM4M1GtrF1tGMJmnCaipbkHH3kYjsMNmWYs6jJHJQ"
+STATE_ACCOUNT = "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
 
 def run_wsl(cmd_str):
     print(f"\n[RUNNING] {cmd_str}")
@@ -37,8 +37,8 @@ def main():
     reg_cmd = (
         f"export LEE_WALLET_HOME_DIR=/root/.lee/wallet-testnet-compatible && "
         f"{LD_PREFIX} {RUNNER_BIN} {BIN_PATH} {STATE_ACCOUNT} register china/henan "
-        f"zDvZRwzm4FBsSGJRftqqYev7aNBEcEUcwDBxCSREXGo1qCnNR5U4 378df25f824177ebcbe9aa11d88bbd6b "
-        f"https://download.geofabrik.de/asia/china/henan-latest.osm.pbf 2026-09-19 1726747200"
+        f"zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny 0055ebfc7f14585c56d53a88062d5814 "
+        f"https://download.geofabrik.de/asia/china/henan-latest.osm.pbf 2026-09-20 1789905600"
     )
     reg_out = run_wsl(reg_cmd)
 
