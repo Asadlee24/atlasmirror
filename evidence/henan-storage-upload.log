@@ -1,0 +1,8 @@
+LOGOS STORAGE UPLOAD EVIDENCE
+File:        /tmp/henan_e2e/henan-latest.osm.pbf
+File Size:   49157919 bytes
+SHA256:      4522a8a6f8ff1e25a269e760f12cc97dff804f288cb449319b3c2065d1d53c46
+MD5:         0055ebfc7f14585c56d53a88062d5814
+Real CID:    zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny
+Upload Call: {"method":"uploadUrl","module":"storage_module","result":{"error":null,"success":true,"value":"0"},"status":"ok"}
+Timestamp:   2026-09-20 08:13:04Z

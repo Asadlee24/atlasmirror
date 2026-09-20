@@ -1,0 +1,14 @@
+LOGOS TESTNET REGION REGISTRATION EVIDENCE
+Network:        Testnet v0.3 release environment with LEZ CLI targeting v0.2.2
+Sequencer URL:  https://testnet.lez.logos.co
+Target Account: T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci
+Region:         china/henan
+Real CID:       zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny
+Published MD5:  0055ebfc7f14585c56d53a88062d5814
+Source URL:     https://download.geofabrik.de/asia/china/henan-latest.osm.pbf
+Version:        2026-09-20
+Timestamp:      1726833600
+Tx Hash:        dbf2fd2af1c54454d50613bbe9b57e6db2f06a311f774249cd77943078c8e487
+Block Number:   16927
+Status:         TransactionExecuted (Finalized)
+Timestamp:      2026-09-20 08:15:02Z

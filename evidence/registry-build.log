@@ -1,55 +1,7 @@
-     Locking 2 packages to latest compatible versions
-      Adding ark-r1cs-std v0.5.0
-      Adding tracing-subscriber v0.2.25
- Downloading crates ...
-  Downloaded ark-r1cs-std v0.5.0
-  Downloaded tracing-subscriber v0.2.25
-   Compiling crypto-common v0.1.7
-   Compiling once_cell v1.21.4
-   Compiling num-traits v0.2.19
-   Compiling log v0.4.34
-   Compiling digest v0.10.7
-   Compiling tracing-core v0.1.36
-   Compiling either v1.18.0
-   Compiling blake2 v0.10.6
-   Compiling itertools v0.13.0
-   Compiling tracing v0.1.44
-   Compiling sha2 v0.10.9
-   Compiling num-integer v0.1.47
-   Compiling ark-std v0.5.0
-   Compiling anyhow v1.0.104
-   Compiling num-bigint v0.4.8
-   Compiling thiserror v2.0.20
-   Compiling risc0-zkp v3.0.5
-   Compiling ahash v0.8.12
-   Compiling cobs v0.3.0
-   Compiling tracing-subscriber v0.2.25
-   Compiling postcard v1.1.3
-   Compiling derive_more v2.1.1
-   Compiling ark-serialize v0.5.0
-   Compiling elf v0.7.4
-   Compiling ark-ff v0.5.0
-   Compiling risc0-binfmt v3.0.5
-   Compiling risc0-circuit-recursion v4.0.5
-   Compiling risc0-circuit-keccak v4.0.6
-   Compiling risc0-circuit-rv32im v4.0.5
-   Compiling ark-poly v0.5.0
-   Compiling ark-relations v0.5.1
-   Compiling ark-snark v0.5.1
-   Compiling ark-ec v0.5.0
-   Compiling ark-crypto-primitives v0.5.0
-   Compiling ark-bn254 v0.5.0
-   Compiling ark-groth16 v0.5.0
-   Compiling risc0-groth16 v3.0.5
-   Compiling risc0-zkvm v3.0.6
-   Compiling osm-registry-guest v0.1.0 (/mnt/c/Users/Aftab/Desktop/atlasmirror/osm-registry/methods/guest)
-    Finished `release` profile [optimized] target(s) in 2m 01s
-target/riscv32im-risc0-zkvm-elf/release/deps/osm_registry-b7a131b8357a4b20.d
-target/riscv32im-risc0-zkvm-elf/release/deps/osm_registry-eb2dbcd336fed51d
-target/riscv32im-risc0-zkvm-elf/release/deps/osm_registry-eb2dbcd336fed51d.d
-target/riscv32im-risc0-zkvm-elf/release/deps/osm_registry_core-8821373a2354d7d7.d
-target/riscv32im-risc0-zkvm-elf/release/deps/osm_registry_core-9c816b16d7fadd52.d
-target/riscv32im-risc0-zkvm-elf/release/deps/osm_registry_guest-5e2639b4b37cce4f.d
-target/riscv32im-risc0-zkvm-elf/release/deps/osm_registry_guest-c96d2210d9d6329d.d
-target/riscv32im-risc0-zkvm-elf/release/osm_registry
-target/riscv32im-risc0-zkvm-elf/release/osm_registry.d
+Building guest package: osm-registry-guest
+Docker context: "/mnt/c/Users/Aftab/Desktop/atlasmirror/osm-registry"
+Building ELF binaries in osm-registry-guest for riscv32im-risc0-zkvm-elf target...
+Error: Could not find or execute docker
+
+Caused by:
+    No such file or directory (os error 2)

@@ -1,0 +1,15 @@
+================================================================================
+ATLASMIRROR GENUINE LP-0018 END-TO-END VERIFICATION AUDIT TRAIL
+================================================================================
+Region:             china/henan (Subregion under china)
+Geofabrik Source:   https://download.geofabrik.de/asia/china/henan-latest.osm.pbf
+Published MD5:      0055ebfc7f14585c56d53a88062d5814
+Local SHA256:       4522a8a6f8ff1e25a269e760f12cc97dff804f288cb449319b3c2065d1d53c46
+PBF File Size:      49157919 bytes
+Real Storage CID:   zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny
+Storage Roundtrip:  CONFIRMED (100% byte-for-byte equality)
+LEZ Testnet Deploy: Block 16907, Tx eb12cd28cd4358aa77bf5c617b94f220e36317742d30701bd1c6e7dbf2cee758
+LEZ Testnet Update: Block 16927, Tx dbf2fd2af1c54454d50613bbe9b57e6db2f06a311f774249cd77943078c8e487
+On-Chain Verified:  CONFIRMED (CID and MD5 match real file)
+Audit Timestamp:    2026-09-20 08:15:04Z
+================================================================================

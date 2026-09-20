@@ -10,7 +10,7 @@ osm-registry-core = { path = "../../registry_core" }
 borsh = { workspace = true }
 serde = { workspace = true }
 risc0-zkvm = { version = "3.0", default-features = false, features = ["std"] }
-lee_core = { path = "/tmp/lez/lee/state_machine/core" }
+lee_core = { path = "/root/lez-testnet-compatible/lee/state_machine/core" }
 
 [[bin]]
 name = "osm_registry"
