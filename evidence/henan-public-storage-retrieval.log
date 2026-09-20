@@ -6,7 +6,7 @@ VPS Listen Port:     8070 (Firewall open, 0.0.0.0 bind)
 VPS Node PeerID:     16Uiu2HAmH2Fa2Zy1iuAgWGZJUEVJsBFY3GjeXepuHthyuDyC3Nak
 VPS Node SPR:        spr:CiUIAhIhA0DhJ1C6-HZQW8dqk8k90jLwB4qsts-jvsA5oZyT__uZEgIDARo7CicAJQgCEiEDQOEnULr4dlBbx2qTyT3SMvAHiqy2z6O-wDmhnJP_-5kQ5pC_1QYaCgoIBMfnu2EGH4YqRzBFAiEA0O2lV6gW-tLhJmE15wCm_opryeLRCPoJrSu7A3au9g0CIEKO9mxr71IPapg5-eO8bf55xfC1jCPNjQv95_y6tD1-
 VPS Network:         logos.test (NAT: extip:199.231.187.97)
-VPS Node Status:     ONLINE & PERSISTENT (Hosting 24/7)
+VPS Node Status:     ONLINE & PERSISTENT (configured as a persistent systemd service with automatic boot restart)
 Target Dataset:      china/henan (henan-latest.osm.pbf)
 Target CID:          zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny
 External Client:     Independent client (16Uiu2HAmNHNqmRba3pHLp2j5cJZK3c9g5t87HmYiVUzVCgeMDCtr, separate clean data-dir)

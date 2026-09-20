@@ -1,0 +1,22 @@
+================================================================================
+LOGOS STORAGE PUBLIC NODE HARDENING & REBOOT SURVIVAL EVIDENCE
+================================================================================
+Public VPS Host:       199.231.187.97 (KVM Linux VPS, Ubuntu 24.04 x86_64)
+SSH Authentication:    Ed25519 Key Authentication ONLY (No passwords)
+Service Architecture:  systemd managed service (logos-storage.service)
+Automatic Boot Start:  CONFIRMED (systemctl enable logos-storage.service)
+Persistent Data Dir:   /root/logos_storage_data (Preserved across reboot)
+Listen Port:           8070 (0.0.0.0 bind, NAT: extip:199.231.187.97)
+Post-Reboot PeerID:    16Uiu2HAmH2Fa2Zy1iuAgWGZJUEVJsBFY3GjeXepuHthyuDyC3Nak
+Post-Reboot SPR:       spr:CiUIAhIhA0DhJ1C6-HZQW8dqk8k90jLwB4qsts-jvsA5oZyT__uZEgIDARo7CicAJQgCEiEDQOEnULr4dlBbx2qTyT3SMvAHiqy2z6O-wDmhnJP_-5kQ3aK_1QYaCgoIBMfnu2EGH4YqRjBEAiBrYs92NXdsIS86eixykjMp0yEuisU7PzTPXCWzgZRhrQIgZpjPLyYRDJxwOdxFElJOoBFl1TvqJ846NKJMIWQnBqc
+Post-Reboot Status:    ACTIVE (systemctl is-active == active)
+Post-Reboot Manifest:  CID zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny PRESENT & VALID
+Ambient Discovery:     TIMED_OUT (Expected on isolated testnet without ambient DHT rendezvous; falling back honestly to explicit bootstrap)
+Bootstrap Retrieval:   CONFIRMED via public VPS SPR
+Retrieved Dataset:     china/henan (henan-latest.osm.pbf)
+Retrieved Size:        49157919 bytes (Expected: 49157919) -> EXACT MATCH
+Retrieved MD5:         0055ebfc7f14585c56d53a88062d5814 (Expected: 0055ebfc7f14585c56d53a88062d5814) -> EXACT MATCH
+Retrieved SHA256:      4522a8a6f8ff1e25a269e760f12cc97dff804f288cb449319b3c2065d1d53c46 (Expected: 4522a8a6f8ff1e25a269e760f12cc97dff804f288cb449319b3c2065d1d53c46) -> EXACT MATCH
+Reboot Proof Result:   PASSED (Node survives reboot and autonomously serves replica)
+Evidence Timestamp:    2026-09-20 12:31:28Z
+================================================================================

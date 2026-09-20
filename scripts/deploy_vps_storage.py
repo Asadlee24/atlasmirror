@@ -11,7 +11,7 @@ REPO_ROOT = Path("/mnt/c/Users/Aftab/Desktop/atlasmirror")
 EVIDENCE_DIR = REPO_ROOT / "evidence"
 VPS_IP = "199.231.187.97"
 VPS_USER = "root"
-VPS_PASS = os.environ.get("VPS_PASS", "")
+SSH_KEY = Path.home() / ".ssh" / "id_ed25519"
 VPS_PORT = 8070
 
 HENAN_PBF = REPO_ROOT / "test_data" / "henan-latest.osm.pbf"
@@ -21,7 +21,7 @@ EXPECTED_MD5 = "0055ebfc7f14585c56d53a88062d5814"
 EXPECTED_SHA256 = "4522a8a6f8ff1e25a269e760f12cc97dff804f288cb449319b3c2065d1d53c46"
 
 def run_ssh(cmd, check=True):
-    full_cmd = f"sshpass -p '{VPS_PASS}' ssh -o StrictHostKeyChecking=no -o ConnectTimeout=25 {VPS_USER}@{VPS_IP} '{cmd}'"
+    full_cmd = f"ssh -i {SSH_KEY} -o StrictHostKeyChecking=no -o ConnectTimeout=25 {VPS_USER}@{VPS_IP} '{cmd}'"
     print(f"\n[VPS SSH] {cmd}", flush=True)
     res = subprocess.run(full_cmd, shell=True, capture_output=True, text=True)
     print(res.stdout, flush=True)
@@ -33,7 +33,7 @@ def run_ssh(cmd, check=True):
     return res
 
 def run_scp(src, dst):
-    full_cmd = f"sshpass -p '{VPS_PASS}' scp -o StrictHostKeyChecking=no {src} {VPS_USER}@{VPS_IP}:{dst}"
+    full_cmd = f"scp -i {SSH_KEY} -o StrictHostKeyChecking=no {src} {VPS_USER}@{VPS_IP}:{dst}"
     print(f"\n[SCP] {src} -> {VPS_IP}:{dst}", flush=True)
     res = subprocess.run(full_cmd, shell=True, capture_output=True, text=True)
     if res.returncode != 0:
@@ -266,7 +266,7 @@ def main():
         f"VPS Node PeerID:     {peer_id}\n"
         f"VPS Node SPR:        {spr}\n"
         f"VPS Network:         logos.test (NAT: extip:{VPS_IP})\n"
-        f"VPS Node Status:     ONLINE & PERSISTENT (Hosting 24/7)\n"
+        f"VPS Node Status:     ONLINE & PERSISTENT (configured as a persistent systemd service with automatic boot restart)\n"
         f"Target Dataset:      china/henan (henan-latest.osm.pbf)\n"
         f"Target CID:          {CID}\n"
         f"External Client:     Independent client (separate clean data-dir, no local data)\n"

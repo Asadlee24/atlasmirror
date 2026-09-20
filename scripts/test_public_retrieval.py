@@ -187,7 +187,7 @@ def main():
         f"VPS Node PeerID:     {VPS_PEER_ID}\n"
         f"VPS Node SPR:        {VPS_SPR}\n"
         f"VPS Network:         logos.test (NAT: extip:{VPS_IP})\n"
-        f"VPS Node Status:     ONLINE & PERSISTENT (Hosting 24/7)\n"
+        f"VPS Node Status:     ONLINE & PERSISTENT (configured as a persistent systemd service with automatic boot restart)\n"
         f"Target Dataset:      china/henan (henan-latest.osm.pbf)\n"
         f"Target CID:          {CID}\n"
         f"External Client:     Independent client ({client_peer_id}, separate clean data-dir)\n"
