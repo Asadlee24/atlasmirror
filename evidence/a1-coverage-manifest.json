@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 17:48:50Z",
+  "timestamp": "2026-09-21 17:55:18Z",
   "summary": {
-    "total_verified_entries": 16,
-    "represented_countries": 16,
+    "total_verified_entries": 17,
+    "represented_countries": 17,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -312,6 +312,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 36190818,
         "retrieved_md5": "eca5b331009acc4887d324fdb956554a"
+      }
+    },
+    {
+      "region": "europe/cyprus",
+      "parent": null,
+      "level": "country",
+      "country": "Cyprus",
+      "source_url": "https://download.geofabrik.de/europe/cyprus-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 37394174,
+      "geofabrik_md5": "a70236ddae865b51ca75a318320033f2",
+      "cid": "zDvZRwzmDHgovpf7wPvvWDfwVHiQWzUzW4cwaz6mgYRY1DNH9jzv",
+      "registry_tx": "8a8fb7ea96b428b4ce7fb246fffde2d334af5c56b3f2978ed873d4da2dba5737",
+      "block": 18942,
+      "timestamp": 1790013221,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 37394174,
+        "retrieved_md5": "a70236ddae865b51ca75a318320033f2"
       }
     }
   ]
