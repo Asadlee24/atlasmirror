@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 11:42:40Z",
+  "timestamp": "2026-09-21 11:47:04Z",
   "summary": {
-    "total_verified_entries": 10,
-    "represented_countries": 10,
+    "total_verified_entries": 11,
+    "represented_countries": 11,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -198,6 +198,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 18262587,
         "retrieved_md5": "871fd979e6f5112d2fdadd578b0ecd3d"
+      }
+    },
+    {
+      "region": "europe/macedonia",
+      "parent": null,
+      "level": "country",
+      "country": "North Macedonia",
+      "source_url": "https://download.geofabrik.de/europe/macedonia-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 29716707,
+      "geofabrik_md5": "10ccfc90c9d91cb2f913d289c51bbb0e",
+      "cid": "zDvZRwzmAnj1vZ5wsTrts84vhLyANg5QDA9pwr2AHJXMiZK3zKSp",
+      "registry_tx": "78ea87dd2cf1e3bb86d67b7774763f87874d5af7a0c0a16f4f5f4333ec0ded7d",
+      "block": 18575,
+      "timestamp": 1789991178,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 29716707,
+        "retrieved_md5": "10ccfc90c9d91cb2f913d289c51bbb0e"
       }
     }
   ]

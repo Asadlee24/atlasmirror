@@ -28,8 +28,9 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | 8 | `asia/malaysia-singapore-brunei` | country | null | Malaysia | 251,169,608 | `203cebee0dbaa4e8464b777cd10698e6` | `zDvZRwzkxgamWxqXcSCp2m8Z5WicCRd79MVy8B3duQ8gCZJSc11Y` | 18481 | **VERIFIED** |
 | 9 | `europe/malta` | country | null | Malta | 8,914,777 | `7315b7284ffe89c8286882398eb2394b` | `zDvZRwzm66tTqLYiHoTD3VTiAgRQZhEjEsFdXqSFyPdvzkp57Wi3` | 18549 | **VERIFIED** |
 | 10 | `central-america/belize` | country | null | Belize | 18,262,587 | `871fd979e6f5112d2fdadd578b0ecd3d` | `zDvZRwzm7Z6itHsGr4c8SuTbvo7ehQQefCrZdvMasJk3FmL8fQez` | 18570 | **VERIFIED** |
+| 11 | `europe/macedonia` | country | null | North Macedonia | 29,716,707 | `10ccfc90c9d91cb2f913d289c51bbb0e` | `zDvZRwzmAnj1vZ5wsTrts84vhLyANg5QDA9pwr2AHJXMiZK3zKSp` | 18575 | **VERIFIED** |
 
-*Pipeline status: In progress (10/25 regions verified across 10/15 countries).*
+*Pipeline status: In progress (11/25 regions verified across 11/15 countries).*
 
 ---
 
