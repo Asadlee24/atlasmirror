@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 07:50:01Z",
+  "timestamp": "2026-09-21 08:04:23Z",
   "summary": {
-    "total_verified_entries": 4,
-    "represented_countries": 4,
+    "total_verified_entries": 5,
+    "represented_countries": 5,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -84,6 +84,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 174092672,
         "retrieved_md5": "25801cfabc5bfe8e1ae56ded0fa5ed13"
+      }
+    },
+    {
+      "region": "africa/egypt",
+      "parent": null,
+      "level": "country",
+      "country": "Egypt",
+      "source_url": "https://download.geofabrik.de/africa/egypt-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 178421161,
+      "geofabrik_md5": "04a4d557c902a5f29ba0e7a1394e0232",
+      "cid": "zDvZRwzmDbJCqSLbyt1Fw4mSvrGFkJGBLaBAogpw8VF66wA469mm",
+      "registry_tx": "5279d9b21fc2833281a2502acb6a7c031b4f2ab9ee4fc40445ed8eb31b2e6ea9",
+      "block": 18353,
+      "timestamp": 1789977848,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 178421161,
+        "retrieved_md5": "04a4d557c902a5f29ba0e7a1394e0232"
       }
     }
   ]

@@ -22,8 +22,9 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | 2 | `africa/ethiopia` | country | null | Ethiopia | 139,741,759 | `c2e00ecddf7ae4ed89bf05bf104d3f10` | `zDvZRwzm7o1JcgDFrsC8zYrEYnhPkY52qThJLjojMvswjj8pVjPX` | 18252 | **VERIFIED** |
 | 3 | `asia/pakistan` | country | null | Pakistan | 156,230,629 | `d63c9409c20924d0813b81266eb2f5ad` | `zDvZRwzm9WQQrvAZL4NavbFXjmbHTFNyho68zPMxKsCvfGEn2LbD` | 18293 | **VERIFIED** |
 | 4 | `europe/bulgaria` | country | null | Bulgaria | 174,092,672 | `25801cfabc5bfe8e1ae56ded0fa5ed13` | `zDvZRwzm72Y7GBdMzdT7ibQWieQSmUhvk54VHfhcsUDcqnPhma51` | 18337 | **VERIFIED** |
+| 5 | `africa/egypt` | country | null | Egypt | 178,421,161 | `04a4d557c902a5f29ba0e7a1394e0232` | `zDvZRwzmDbJCqSLbyt1Fw4mSvrGFkJGBLaBAogpw8VF66wA469mm` | 18353 | **VERIFIED** |
 
-*Pipeline status: In progress (4/25 regions verified across 4/15 countries).*
+*Pipeline status: In progress (5/25 regions verified across 5/15 countries).*
 
 ---
 
