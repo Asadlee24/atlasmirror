@@ -19,8 +19,9 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | # | Region Path | Level | Parent | Country | Size (Bytes) | Published Geofabrik MD5 | Logos Storage CID | Testnet Block | Status |
 |---|---|---|---|---|---|---|---|---|---|
 | 1 | `china/henan` | subregion | china | China | 49,157,919 | `0055ebfc7f14585c56d53a88062d5814` | `zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny` | 16949 | **VERIFIED** |
+| 2 | `africa/ethiopia` | country | null | Ethiopia | 139,741,759 | `c2e00ecddf7ae4ed89bf05bf104d3f10` | `zDvZRwzm7o1JcgDFrsC8zYrEYnhPkY52qThJLjojMvswjj8pVjPX` | 18252 | **VERIFIED** |
 
-*Pipeline status: In progress (1/25 regions verified across 1/15 countries).*
+*Pipeline status: In progress (2/25 regions verified across 2/15 countries).*
 
 ---
 
