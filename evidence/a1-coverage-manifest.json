@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 11:11:48Z",
+  "timestamp": "2026-09-21 11:20:58Z",
   "summary": {
-    "total_verified_entries": 8,
-    "represented_countries": 8,
+    "total_verified_entries": 9,
+    "represented_countries": 9,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -160,6 +160,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 251169608,
         "retrieved_md5": "203cebee0dbaa4e8464b777cd10698e6"
+      }
+    },
+    {
+      "region": "europe/malta",
+      "parent": null,
+      "level": "country",
+      "country": "Malta",
+      "source_url": "https://download.geofabrik.de/europe/malta-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 8914777,
+      "geofabrik_md5": "7315b7284ffe89c8286882398eb2394b",
+      "cid": "zDvZRwzm66tTqLYiHoTD3VTiAgRQZhEjEsFdXqSFyPdvzkp57Wi3",
+      "registry_tx": "26d58d5f214bee2d87ee3cd33576679750a39a798f5d942392e26f782805b263",
+      "block": 18549,
+      "timestamp": 1789989616,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 8914777,
+        "retrieved_md5": "7315b7284ffe89c8286882398eb2394b"
       }
     }
   ]
