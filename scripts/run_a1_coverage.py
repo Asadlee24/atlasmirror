@@ -615,7 +615,7 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
             client_cfg = CLIENT_DIR / "cfg"
             client_data = CLIENT_DIR / "data"
             subprocess.run(["killall", "-9", "logoscore"], capture_output=True)
-            time.sleep(1)
+            time.sleep(2)
             if CLIENT_DIR.exists():
                 subprocess.run(["rm", "-rf", str(CLIENT_DIR)])
             client_cfg.mkdir(parents=True, exist_ok=True)
@@ -633,41 +633,29 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
             (client_data / "config.json").write_text(json.dumps(config, indent=2))
 
             subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} -D -m {MODULES_DIR} > {client_data}/daemon.log 2>&1 &", shell=True)
-            time.sleep(2)
+            
+            # Wait for daemon client config socket to be ready
+            daemon_ready = False
+            for _ in range(20):
+                if (client_cfg / "client" / "config.json").exists():
+                    daemon_ready = True
+                    break
+                time.sleep(0.5)
+            if not daemon_ready:
+                print(f"[WARN] Daemon not ready after 10s on attempt {dl_attempt}. Retrying...")
+                continue
+
+            time.sleep(1)
             subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} load-module storage_module", shell=True)
             subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module init @{client_data / 'config.json'} --json", shell=True)
             subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module start --json", shell=True)
             time.sleep(4)
 
-            # 4a. Fetch manifest
-            dl_m_event = client_data / "dl-manifest-event.json"
-            dl_m_event.touch()
-            w_m = subprocess.Popen(
-                f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} watch storage_module --event storageDownloadManifestDone --json > {dl_m_event} 2>&1",
-                shell=True
-            )
-            time.sleep(1)
+            # Prefetch manifest
             subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module downloadManifest '{cid}' --json", shell=True)
-            manifest_ok = False
-            for _ in range(45):
-                if dl_m_event.stat().st_size > 0:
-                    ev_text = dl_m_event.read_text()
-                    if '"success":true' in ev_text:
-                        manifest_ok = True
-                        break
-                    elif '"success":false' in ev_text:
-                        print(f"[WARN] Manifest fetch returned failure: {ev_text.strip()}")
-                        break
-                time.sleep(1)
-            w_m.kill()
+            time.sleep(3)
 
-            if not manifest_ok:
-                print(f"[WARN] Manifest download failed on attempt {dl_attempt}. Retrying with fresh daemon...")
-                subprocess.run(["killall", "-9", "logoscore"], capture_output=True)
-                time.sleep(3)
-                continue
-
-            # 4b. Fetch data chunks
+            # Fetch data chunks to URL
             dl_ev = client_data / "dl.json"
             dl_ev.touch()
             w_dl = subprocess.Popen(
@@ -675,7 +663,8 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
                 shell=True
             )
             time.sleep(1)
-            subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module downloadToUrl '{cid}' '{retrieved_file}' false 262144 --json", shell=True)
+            res_dl = subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module downloadToUrl '{cid}' '{retrieved_file}' false 262144 --json", shell=True, capture_output=True, text=True)
+            print(res_dl.stdout.strip())
 
             last_reported = 0
             for i in range(600):
