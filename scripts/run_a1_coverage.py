@@ -551,150 +551,59 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
         print(f"[{idx}/25] Processing Region: {reg_name} ({c_name})")
         print(f"================================================================================")
 
-        # Query on-chain state to check if this region is already registered
-        onchain_last_ts, onchain_records, _ = get_onchain_registry_state()
-        is_onchain = reg_name in onchain_records
+        # 1. Fetch truthful live published MD5 and source snapshot version from Geofabrik
+        published_md5, source_version = fetch_geofabrik_metadata(pbf_url, md5_url)
+        expected_md5 = published_md5
 
-        if is_onchain:
-            rec = onchain_records[reg_name]
-            cid = rec["cid"]
-            expected_md5 = rec["checksum"]
-            source_version = rec["version"]
-            reg_ts = int(rec["timestamp"])
-            tx_hash = "ON_CHAIN_PRE_VERIFIED"
-            block_num = 16949
-            print(f"Region {reg_name} is already registered on-chain:")
-            print(f"  CID:       {cid}")
-            print(f"  Checksum:  {expected_md5}")
-            print(f"  Version:   {source_version}")
-            print(f"  Timestamp: {reg_ts}")
-
-            # Verify if this CID is hosted on VPS Logos Storage
-            manifests = get_vps_manifests()
-            vps_manifest = next((m for m in manifests if m.get("cid") == cid), None)
-            if vps_manifest:
-                f_size = vps_manifest["datasetSize"]
-                print(f"Verified CID {cid} is hosted in VPS Logos Storage ({f_size} bytes).")
+        # 2. Download authentic PBF and verify published MD5
+        if local_pbf.exists() and local_pbf.stat().st_size > 0:
+            print(f"Checking existing local PBF {local_pbf}...")
+            f_size, f_md5, _ = compute_hashes(local_pbf)
+            if f_md5 == published_md5:
+                print("✅ Existing local PBF matches live published MD5! Skipping download.")
             else:
-                print(f"CID {cid} missing from VPS manifests. Downloading authentic PBF and uploading...")
-                # Download authentic PBF matching expected_md5
-                if not local_pbf.exists() or local_pbf.stat().st_size == 0:
-                    urllib.request.urlretrieve(pbf_url, local_pbf)
-                f_size, f_md5, _ = compute_hashes(local_pbf)
-                assert f_md5 == expected_md5, f"PBF MD5 mismatch for {reg_name}!"
-                run_scp(local_pbf, vps_dest)
-                run_ssh(f"export LOGOSCORE_CONFIG_DIR=/root/atlasmirror_vps/cfg && /root/atlasmirror_vps/bin/logoscore call storage_module uploadUrl '{vps_dest}' 262144 --json")
-                time.sleep(5)
-                manifests = get_vps_manifests()
-                vps_manifest = next((m for m in manifests if m.get("cid") == cid), None)
-                assert vps_manifest, f"Upload did not yield on-chain CID {cid}!"
-                f_size = vps_manifest["datasetSize"]
-                run_ssh(f"rm -f {vps_dest}")
-        else:
-            # Region not yet registered on-chain: Execute full upload & registration lifecycle
-            published_md5, source_version = fetch_geofabrik_metadata(pbf_url, md5_url)
-            expected_md5 = published_md5
-
-            # Download PBF with MD5 verification
-            if local_pbf.exists() and local_pbf.stat().st_size > 0:
-                print(f"Local PBF {local_pbf} exists, verifying MD5...")
-                f_size, f_md5, _ = compute_hashes(local_pbf)
-                if f_md5 == published_md5:
-                    print("✅ Existing local PBF matches published MD5! Skipping download.")
-                else:
-                    print("Existing local PBF MD5 mismatch, re-downloading...")
-                    t0 = time.time()
-                    urllib.request.urlretrieve(pbf_url, local_pbf)
-                    print(f"Download finished in {time.time() - t0:.1f}s")
-                    f_size, f_md5, _ = compute_hashes(local_pbf)
-            else:
-                print(f"Downloading {pbf_url}...")
+                print(f"Local PBF MD5 mismatch (got {f_md5}, published {published_md5}), re-downloading...")
                 t0 = time.time()
                 urllib.request.urlretrieve(pbf_url, local_pbf)
                 print(f"Download finished in {time.time() - t0:.1f}s")
                 f_size, f_md5, _ = compute_hashes(local_pbf)
+        else:
+            print(f"Downloading {pbf_url}...")
+            t0 = time.time()
+            urllib.request.urlretrieve(pbf_url, local_pbf)
+            print(f"Download finished in {time.time() - t0:.1f}s")
+            f_size, f_md5, _ = compute_hashes(local_pbf)
 
-            print(f"Downloaded Size: {f_size} bytes ({f_size / (1024*1024):.2f} MB)")
-            print(f"Computed MD5:    {f_md5}")
-            assert f_md5 == published_md5, f"MD5 mismatch for {reg_name}! Published: {published_md5}, Computed: {f_md5}"
-            print("✅ Geofabrik MD5 verified!")
+        print(f"Downloaded Size: {f_size} bytes ({f_size / (1024*1024):.2f} MB)")
+        print(f"Computed MD5:    {f_md5}")
+        assert f_md5 == published_md5, f"MD5 mismatch for {reg_name}! Published: {published_md5}, Computed: {f_md5}"
+        print("✅ Geofabrik MD5 verified!")
 
-            # Transfer to VPS
+        # 3. Host on VPS Logos Storage and obtain candidate CID
+        manifests = get_vps_manifests()
+        candidate_m = next((m for m in manifests if m.get("filename") == vps_dest_filename and m.get("datasetSize") == f_size), None)
+        cid = candidate_m.get("cid") if candidate_m else None
+        if cid:
+            print(f"Found existing VPS manifest matching {vps_dest_filename} ({f_size} bytes): Candidate CID {cid}")
+        else:
             print(f"Transferring to VPS: {vps_dest}...")
             run_scp(local_pbf, vps_dest)
-
-            # Upload to Logos Storage
             print("Uploading to VPS Logos Storage...")
-            manifests = get_vps_manifests()
-            candidate_m = next((m for m in manifests if m.get("filename") == vps_dest_filename and m.get("datasetSize") == f_size), None)
-            cid = None
-            if candidate_m:
-                cid = candidate_m.get("cid")
-                print(f"Found existing matching manifest for {vps_dest_filename}: CID {cid}")
-
-            if not cid:
-                run_ssh(f"export LOGOSCORE_CONFIG_DIR=/root/atlasmirror_vps/cfg && /root/atlasmirror_vps/bin/logoscore call storage_module uploadUrl '{vps_dest}' 262144 --json")
-                for _ in range(40):
-                    time.sleep(3)
-                    manifests = get_vps_manifests()
-                    candidate_m = next((m for m in manifests if m.get("filename") == vps_dest_filename and m.get("datasetSize") == f_size), None)
-                    if candidate_m:
-                        cid = candidate_m.get("cid")
-                        break
-
-            assert cid, f"Failed to obtain real Logos Storage CID for {reg_name}!"
-            print(f"✅ Logos Storage CID: {cid}")
-
-            # Clean staging file on VPS
+            run_ssh(f"export LOGOSCORE_CONFIG_DIR=/root/atlasmirror_vps/cfg && /root/atlasmirror_vps/bin/logoscore call storage_module uploadUrl '{vps_dest}' 262144 --json")
+            for _ in range(50):
+                time.sleep(3)
+                manifests = get_vps_manifests()
+                candidate_m = next((m for m in manifests if m.get("filename") == vps_dest_filename and m.get("datasetSize") == f_size), None)
+                if candidate_m:
+                    cid = candidate_m.get("cid")
+                    break
             run_ssh(f"rm -f {vps_dest}")
 
-            # Calculate truthful monotonic timestamp
-            now_ts = int(time.time())
-            onchain_last_ts, _, _ = get_onchain_registry_state()
-            reg_ts = max(now_ts, onchain_last_ts + 60)
-            print(f"Canonical Testnet registration timestamp: {reg_ts} (monotonic, current UTC)")
+        assert cid, f"Failed to obtain Logos Storage candidate CID for {reg_name}!"
+        print(f"Candidate Logos Storage CID: {cid}")
 
-            # Register on Canonical Logos Testnet
-            print(f"Registering {reg_name} on Canonical Logos Testnet (account {STATE_ACCOUNT})...")
-            reg_cmd = (
-                f"export LEE_WALLET_HOME_DIR=/root/.lee/wallet-testnet-compatible && "
-                f"{LD_PREFIX} {RUNNER_BIN} {BIN_PATH} {STATE_ACCOUNT} register {reg_name} "
-                f"{cid} {published_md5} {pbf_url} {source_version} {reg_ts}"
-            )
-            q_cmd = (
-                f"export LEE_WALLET_HOME_DIR=/root/.lee/wallet-testnet-compatible && "
-                f"{LD_PREFIX} {RUNNER_BIN} {BIN_PATH} {STATE_ACCOUNT} query"
-            )
-
-            tx_hash = None
-            block_num = None
-            for attempt in range(1, 4):
-                print(f"Registration attempt {attempt}/3 for {reg_name}...")
-                reg_res = subprocess.run(["bash", "-c", reg_cmd], capture_output=True, text=True)
-                print(reg_res.stdout)
-                if reg_res.stderr:
-                    print("[STDERR]", reg_res.stderr, file=sys.stderr)
-
-                for line in reg_res.stdout.splitlines():
-                    if "Transaction submitted! Hash:" in line:
-                        tx_hash = line.split("Hash:")[1].strip()
-                    if "Transaction is included in block" in line:
-                        block_num = int(line.split("block")[1].strip())
-
-                time.sleep(3)
-                q_res = subprocess.run(["bash", "-c", q_cmd], capture_output=True, text=True)
-                if cid in q_res.stdout and published_md5 in q_res.stdout:
-                    print(f"✅ On-chain registration confirmed! Tx: {tx_hash}, Block: {block_num}")
-                    break
-                print(f"Attempt {attempt} not yet reflected on-chain, waiting 15s before retry...")
-                time.sleep(15)
-
-            assert cid in q_res.stdout, f"CID {cid} not found in on-chain query for {reg_name}!"
-            assert published_md5 in q_res.stdout, f"MD5 {published_md5} not found in on-chain query for {reg_name}!"
-            print("✅ On-chain query verified!")
-
-        # G. Fresh External Retrieval from VPS (Cryptographic MD5 and retrievability proof)
-        print(f"\nExecuting fresh external retrieval for CID {cid}...")
+        # 4. Mandatory Cryptographic Proof: Independent External Retrieval BEFORE on-chain registration
+        print(f"\n[Integrity Gate] Executing independent external retrieval for CID {cid} before on-chain registration...")
         client_cfg = CLIENT_DIR / "cfg"
         client_data = CLIENT_DIR / "data"
         subprocess.run(["killall", "-9", "logoscore"], capture_output=True)
@@ -722,7 +631,7 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
         subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module start --json", shell=True)
         time.sleep(3)
 
-        # 1. Fetch manifest
+        # 4a. Fetch manifest
         dl_m_event = client_data / "dl-manifest-event.json"
         dl_m_event.touch()
         w_m = subprocess.Popen(
@@ -737,7 +646,7 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
             time.sleep(1)
         w_m.kill()
 
-        # 2. Fetch data chunks
+        # 4b. Fetch data chunks
         retrieved_file = CLIENT_DIR / "retrieved.osm.pbf"
         dl_ev = client_data / "dl.json"
         dl_ev.touch()
@@ -753,7 +662,7 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
             if retrieved_file.exists():
                 cur_sz = retrieved_file.stat().st_size
                 if cur_sz == f_size:
-                    print(f"External retrieval download complete: {cur_sz}/{f_size} bytes ({i}s)")
+                    print(f"External retrieval complete: {cur_sz}/{f_size} bytes ({i}s)")
                     break
                 if cur_sz - last_reported >= 10 * 1024 * 1024 or i % 15 == 0:
                     pct = (cur_sz / f_size) * 100 if f_size else 0
@@ -765,18 +674,68 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
         assert retrieved_file.exists(), f"External retrieval failed: {retrieved_file} not created for {reg_name}!"
         r_size, r_md5, _ = compute_hashes(retrieved_file)
         print(f"Retrieved Size: {r_size} (Expected: {f_size})")
-        print(f"Retrieved MD5:  {r_md5} (Expected: {expected_md5})")
+        print(f"Retrieved MD5:  {r_md5} (Expected: {published_md5})")
         assert r_size == f_size, f"Retrieved size mismatch! Expected {f_size}, got {r_size}"
-        assert r_md5 == expected_md5, f"Retrieved MD5 mismatch! Expected {expected_md5}, got {r_md5}"
-        print(f"✅ 100% BYTE-FOR-BYTE EXTERNAL RETRIEVAL & MD5 MATCH CONFIRMED!")
+        assert r_md5 == published_md5, f"Retrieved MD5 mismatch! Expected {published_md5}, got {r_md5}"
+        print(f"✅ CID {cid} CRYPTOGRAPHICALLY PROVEN: 100% MD5 MATCH WITH GEOFABRIK!")
 
-        # Clean up local client
+        # Stop local client
         subprocess.run(f"{LOGOSCORE_BIN} call storage_module stop >/dev/null 2>&1 || true", shell=True)
         subprocess.run(f"{LOGOSCORE_BIN} stop >/dev/null 2>&1 || true", shell=True)
         subprocess.run(["killall", "-9", "logoscore"], capture_output=True)
-
         if retrieved_file.exists():
             retrieved_file.unlink()
+
+        # 5. On-Chain Registration or Genuine Update on Canonical Logos Testnet
+        onchain_last_ts, onchain_records, _ = get_onchain_registry_state()
+        now_ts = int(time.time())
+        reg_ts = max(now_ts, onchain_last_ts + 60)
+
+        print(f"\nRegistering/updating {reg_name} on Canonical Logos Testnet (account {STATE_ACCOUNT})...")
+        print(f"Registration parameters: CID={cid}, MD5={published_md5}, Version={source_version}, Timestamp={reg_ts}")
+
+        reg_cmd = (
+            f"export LEE_WALLET_HOME_DIR=/root/.lee/wallet-testnet-compatible && "
+            f"{LD_PREFIX} {RUNNER_BIN} {BIN_PATH} {STATE_ACCOUNT} register {reg_name} "
+            f"{cid} {published_md5} {pbf_url} {source_version} {reg_ts}"
+        )
+        q_cmd = (
+            f"export LEE_WALLET_HOME_DIR=/root/.lee/wallet-testnet-compatible && "
+            f"{LD_PREFIX} {RUNNER_BIN} {BIN_PATH} {STATE_ACCOUNT} query"
+        )
+
+        tx_hash = None
+        block_num = None
+        for attempt in range(1, 4):
+            print(f"On-chain submission attempt {attempt}/3 for {reg_name}...")
+            reg_res = subprocess.run(["bash", "-c", reg_cmd], capture_output=True, text=True)
+            print(reg_res.stdout)
+            if reg_res.stderr:
+                print("[STDERR]", reg_res.stderr, file=sys.stderr)
+
+            for line in reg_res.stdout.splitlines():
+                if "Transaction submitted! Hash:" in line:
+                    tx_hash = line.split("Hash:")[1].strip().strip("'\"()[]")
+                if "Transaction is included in block" in line:
+                    try:
+                        block_part = line.split("block")[1].strip().split()[0]
+                        block_num = int(block_part)
+                    except Exception as ex:
+                        print(f"[WARN] Failed parsing block number: {ex}")
+
+            time.sleep(3)
+            q_res = subprocess.run(["bash", "-c", q_cmd], capture_output=True, text=True)
+            if cid in q_res.stdout and published_md5 in q_res.stdout:
+                print(f"✅ On-chain registration/update confirmed! Tx: {tx_hash}, Block: {block_num}")
+                break
+            print(f"Attempt {attempt} not yet reflected on-chain, waiting 15s before retry...")
+            time.sleep(15)
+
+        assert tx_hash and tx_hash != "ON_CHAIN_PRE_VERIFIED", f"Missing or placeholder tx_hash for {reg_name}!"
+        assert block_num and isinstance(block_num, int), f"Missing or invalid block_num for {reg_name}!"
+        assert cid in q_res.stdout, f"CID {cid} not found in on-chain query for {reg_name}!"
+        assert published_md5 in q_res.stdout, f"MD5 {published_md5} not found in on-chain query for {reg_name}!"
+        print("✅ Canonical on-chain query verified!")
 
         entry = {
             "region": reg_name,
