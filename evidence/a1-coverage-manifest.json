@@ -1,11 +1,11 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 18:24:55Z",
+  "timestamp": "2026-09-21 18:29:52Z",
   "summary": {
-    "total_verified_entries": 24,
-    "represented_countries": 24,
-    "status": "A1_IN_PROGRESS",
+    "total_verified_entries": 25,
+    "represented_countries": 25,
+    "status": "A1_VERIFIED",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
   },
@@ -464,6 +464,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 54070075,
         "retrieved_md5": "6faf5f96aa14cc2b95b3bdf8d9f32f4d"
+      }
+    },
+    {
+      "region": "central-america/nicaragua",
+      "parent": null,
+      "level": "country",
+      "country": "Nicaragua",
+      "source_url": "https://download.geofabrik.de/central-america/nicaragua-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 61444052,
+      "geofabrik_md5": "982c1d47fdc6a103fbfb5ba63571ed16",
+      "cid": "zDvZRwzkxK4PdRtekurF3iKtn7YUKMSPiTDZzPTGnD4tcgvXZRgp",
+      "registry_tx": "c22992fb9b3c5db38b5ad7e533caefcab0a1168aa28afb90f5829fb312a8a7fc",
+      "block": 18977,
+      "timestamp": 1790015334,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 61444052,
+        "retrieved_md5": "982c1d47fdc6a103fbfb5ba63571ed16"
       }
     }
   ]

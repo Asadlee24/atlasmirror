@@ -42,8 +42,9 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | 22 | `asia/lebanon` | country | null | Lebanon | 52,497,605 | `cd65407fe4f0401175a2af6f680b68fa` | `zDvZRwzm1oidxJtpGW4zFTpWkte5KdmQDygUJNQBbfHu7yFEGRTF` | 18964 | **VERIFIED** |
 | 23 | `asia/armenia` | country | null | Armenia | 53,186,007 | `01c12d028cf539c789e327859dfef7bb` | `zDvZRwzmCRBHtCD5xRDh86525iUpW236xw4osztJpCes3xWxMyNK` | 18968 | **VERIFIED** |
 | 24 | `europe/albania` | country | null | Albania | 54,070,075 | `6faf5f96aa14cc2b95b3bdf8d9f32f4d` | `zDvZRwzkyMTaCuE8K9FP1r4YPs8i37Z91NGuycpCmhrtwupMRMHw` | 18972 | **VERIFIED** |
+| 25 | `central-america/nicaragua` | country | null | Nicaragua | 61,444,052 | `982c1d47fdc6a103fbfb5ba63571ed16` | `zDvZRwzkxK4PdRtekurF3iKtn7YUKMSPiTDZzPTGnD4tcgvXZRgp` | 18977 | **VERIFIED** |
 
-*Pipeline status: In progress (24/25 regions verified across 24/15 countries).*
+**A1 Status**: `VERIFIED` (25 regions across 25 countries, 100% retrievable and MD5 verified).
 
 ---
 
