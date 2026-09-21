@@ -604,72 +604,101 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 
         # 4. Mandatory Cryptographic Proof: Independent External Retrieval BEFORE on-chain registration
         print(f"\n[Integrity Gate] Executing independent external retrieval for CID {cid} before on-chain registration...")
-        client_cfg = CLIENT_DIR / "cfg"
-        client_data = CLIENT_DIR / "data"
-        subprocess.run(["killall", "-9", "logoscore"], capture_output=True)
-        time.sleep(1)
-        if CLIENT_DIR.exists():
-            subprocess.run(["rm", "-rf", str(CLIENT_DIR)])
-        client_cfg.mkdir(parents=True, exist_ok=True)
-        client_data.mkdir(parents=True, exist_ok=True)
-
-        config = {
-            "data-dir": str(client_data),
-            "log-level": "NOTICE",
-            "network": "logos.test",
-            "listen-ip": "0.0.0.0",
-            "listen-port": 8095,
-            "nat": "auto",
-            "bootstrap-node": [vps_spr]
-        }
-        (client_data / "config.json").write_text(json.dumps(config, indent=2))
-
-        subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} -D -m {MODULES_DIR} > {client_data}/daemon.log 2>&1 &", shell=True)
-        time.sleep(2)
-        subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} load-module storage_module", shell=True)
-        subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module init @{client_data / 'config.json'} --json", shell=True)
-        subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module start --json", shell=True)
-        time.sleep(3)
-
-        # 4a. Fetch manifest
-        dl_m_event = client_data / "dl-manifest-event.json"
-        dl_m_event.touch()
-        w_m = subprocess.Popen(
-            f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} watch storage_module --event storageDownloadManifestDone --json > {dl_m_event} 2>&1",
-            shell=True
-        )
-        time.sleep(1)
-        subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module downloadManifest '{cid}' --json", shell=True)
-        for _ in range(60):
-            if dl_m_event.stat().st_size > 0 and "storageDownloadManifestDone" in dl_m_event.read_text():
-                break
-            time.sleep(1)
-        w_m.kill()
-
-        # 4b. Fetch data chunks
         retrieved_file = CLIENT_DIR / "retrieved.osm.pbf"
-        dl_ev = client_data / "dl.json"
-        dl_ev.touch()
-        w_dl = subprocess.Popen(
-            f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} watch storage_module --event storageDownloadDone --json > {dl_ev} 2>&1",
-            shell=True
-        )
-        time.sleep(1)
-        subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module downloadToUrl '{cid}' '{retrieved_file}' false 262144 --json", shell=True)
+        download_success = False
 
-        last_reported = 0
-        for i in range(600):
-            if retrieved_file.exists():
-                cur_sz = retrieved_file.stat().st_size
-                if cur_sz == f_size:
-                    print(f"External retrieval complete: {cur_sz}/{f_size} bytes ({i}s)")
-                    break
-                if cur_sz - last_reported >= 10 * 1024 * 1024 or i % 15 == 0:
-                    pct = (cur_sz / f_size) * 100 if f_size else 0
-                    print(f"[{i}s] Download progress: {cur_sz / (1024*1024):.1f} MB / {f_size / (1024*1024):.1f} MB ({pct:.1f}%)", flush=True)
-                    last_reported = cur_sz
+        for dl_attempt in range(1, 4):
+            print(f"External retrieval attempt {dl_attempt}/3 for {reg_name} (CID: {cid})...")
+            live_spr = get_vps_spr()
+            print(f"Live VPS SPR: {live_spr[:60]}...")
+
+            client_cfg = CLIENT_DIR / "cfg"
+            client_data = CLIENT_DIR / "data"
+            subprocess.run(["killall", "-9", "logoscore"], capture_output=True)
             time.sleep(1)
-        w_dl.kill()
+            if CLIENT_DIR.exists():
+                subprocess.run(["rm", "-rf", str(CLIENT_DIR)])
+            client_cfg.mkdir(parents=True, exist_ok=True)
+            client_data.mkdir(parents=True, exist_ok=True)
+
+            config = {
+                "data-dir": str(client_data),
+                "log-level": "NOTICE",
+                "network": "logos.test",
+                "listen-ip": "0.0.0.0",
+                "listen-port": 8095,
+                "nat": "auto",
+                "bootstrap-node": [live_spr]
+            }
+            (client_data / "config.json").write_text(json.dumps(config, indent=2))
+
+            subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} -D -m {MODULES_DIR} > {client_data}/daemon.log 2>&1 &", shell=True)
+            time.sleep(2)
+            subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} load-module storage_module", shell=True)
+            subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module init @{client_data / 'config.json'} --json", shell=True)
+            subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module start --json", shell=True)
+            time.sleep(4)
+
+            # 4a. Fetch manifest
+            dl_m_event = client_data / "dl-manifest-event.json"
+            dl_m_event.touch()
+            w_m = subprocess.Popen(
+                f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} watch storage_module --event storageDownloadManifestDone --json > {dl_m_event} 2>&1",
+                shell=True
+            )
+            time.sleep(1)
+            subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module downloadManifest '{cid}' --json", shell=True)
+            manifest_ok = False
+            for _ in range(45):
+                if dl_m_event.stat().st_size > 0:
+                    ev_text = dl_m_event.read_text()
+                    if '"success":true' in ev_text:
+                        manifest_ok = True
+                        break
+                    elif '"success":false' in ev_text:
+                        print(f"[WARN] Manifest fetch returned failure: {ev_text.strip()}")
+                        break
+                time.sleep(1)
+            w_m.kill()
+
+            if not manifest_ok:
+                print(f"[WARN] Manifest download failed on attempt {dl_attempt}. Retrying with fresh daemon...")
+                subprocess.run(["killall", "-9", "logoscore"], capture_output=True)
+                time.sleep(3)
+                continue
+
+            # 4b. Fetch data chunks
+            dl_ev = client_data / "dl.json"
+            dl_ev.touch()
+            w_dl = subprocess.Popen(
+                f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} watch storage_module --event storageDownloadDone --json > {dl_ev} 2>&1",
+                shell=True
+            )
+            time.sleep(1)
+            subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module downloadToUrl '{cid}' '{retrieved_file}' false 262144 --json", shell=True)
+
+            last_reported = 0
+            for i in range(600):
+                if retrieved_file.exists():
+                    cur_sz = retrieved_file.stat().st_size
+                    if cur_sz == f_size:
+                        print(f"External retrieval complete: {cur_sz}/{f_size} bytes ({i}s)")
+                        download_success = True
+                        break
+                    if cur_sz - last_reported >= 10 * 1024 * 1024 or i % 15 == 0:
+                        pct = (cur_sz / f_size) * 100 if f_size else 0
+                        print(f"[{i}s] Download progress: {cur_sz / (1024*1024):.1f} MB / {f_size / (1024*1024):.1f} MB ({pct:.1f}%)", flush=True)
+                        last_reported = cur_sz
+                time.sleep(1)
+            w_dl.kill()
+
+            # Clean up local client
+            subprocess.run(f"{LOGOSCORE_BIN} call storage_module stop >/dev/null 2>&1 || true", shell=True)
+            subprocess.run(f"{LOGOSCORE_BIN} stop >/dev/null 2>&1 || true", shell=True)
+            subprocess.run(["killall", "-9", "logoscore"], capture_output=True)
+
+            if download_success and retrieved_file.exists() and retrieved_file.stat().st_size == f_size:
+                break
 
         assert retrieved_file.exists(), f"External retrieval failed: {retrieved_file} not created for {reg_name}!"
         r_size, r_md5, _ = compute_hashes(retrieved_file)
@@ -678,11 +707,6 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
         assert r_size == f_size, f"Retrieved size mismatch! Expected {f_size}, got {r_size}"
         assert r_md5 == published_md5, f"Retrieved MD5 mismatch! Expected {published_md5}, got {r_md5}"
         print(f"✅ CID {cid} CRYPTOGRAPHICALLY PROVEN: 100% MD5 MATCH WITH GEOFABRIK!")
-
-        # Stop local client
-        subprocess.run(f"{LOGOSCORE_BIN} call storage_module stop >/dev/null 2>&1 || true", shell=True)
-        subprocess.run(f"{LOGOSCORE_BIN} stop >/dev/null 2>&1 || true", shell=True)
-        subprocess.run(["killall", "-9", "logoscore"], capture_output=True)
         if retrieved_file.exists():
             retrieved_file.unlink()
 
