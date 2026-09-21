@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 18:16:49Z",
+  "timestamp": "2026-09-21 18:20:50Z",
   "summary": {
-    "total_verified_entries": 22,
-    "represented_countries": 22,
+    "total_verified_entries": 23,
+    "represented_countries": 23,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -426,6 +426,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 52497605,
         "retrieved_md5": "cd65407fe4f0401175a2af6f680b68fa"
+      }
+    },
+    {
+      "region": "asia/armenia",
+      "parent": null,
+      "level": "country",
+      "country": "Armenia",
+      "source_url": "https://download.geofabrik.de/asia/armenia-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 53186007,
+      "geofabrik_md5": "01c12d028cf539c789e327859dfef7bb",
+      "cid": "zDvZRwzmCRBHtCD5xRDh86525iUpW236xw4osztJpCes3xWxMyNK",
+      "registry_tx": "bba8f52c184c47f6abc6aec2c69e641cdbde3b24bf29b723464751badc1f2f95",
+      "block": 18968,
+      "timestamp": 1790014824,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 53186007,
+        "retrieved_md5": "01c12d028cf539c789e327859dfef7bb"
       }
     }
   ]
