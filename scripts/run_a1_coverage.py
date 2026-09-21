@@ -42,9 +42,9 @@ STATE_ACCOUNT = "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
 LOGOSCORE_BIN = REPO_ROOT / "logos" / "bin" / "logoscore"
 MODULES_DIR = REPO_ROOT / "modules"
 
-WORK_DIR = Path("/tmp/a1_work")
+WORK_DIR = REPO_ROOT / "test_data" / "a1_work"
 WORK_DIR.mkdir(parents=True, exist_ok=True)
-CLIENT_DIR = WORK_DIR / "client"
+CLIENT_DIR = Path("/root/a1_client")
 
 # 24 additional non-overlapping country-level regions + Henan (already verified) = 25 total entries / 25 countries
 REGIONS_PLAN = [
@@ -461,18 +461,13 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 """
         adoption_path.write_text(adoption_content)
 
-        # Auto-commit and push verified progress regularly
+        # Auto-commit verified progress regularly
         try:
             subprocess.run(["git", "add", str(manifest_file), str(adoption_path)], cwd=str(REPO_ROOT), check=False)
             commit_msg = f"feat(coverage): verified {len(manifest_entries)}/25 regions ({manifest_entries[-1]['region']})"
             c_res = subprocess.run(["git", "commit", "-m", commit_msg], cwd=str(REPO_ROOT), capture_output=True, text=True)
             if c_res.returncode == 0:
-                print(f"[GIT] Committed progress: {commit_msg}")
-                p_res = subprocess.run(["cmd.exe", "/c", "git push origin main"], cwd=str(REPO_ROOT), capture_output=True, text=True)
-                if p_res.returncode == 0:
-                    print(f"[GIT] Pushed verified progress to origin/main successfully!")
-                else:
-                    print(f"[GIT] Push warning: {p_res.stderr.strip() or p_res.stdout.strip()}")
+                print(f"[GIT] Committed progress locally: {commit_msg}")
         except Exception as e:
             print(f"[GIT] Progress auto-commit notice: {e}")
 
