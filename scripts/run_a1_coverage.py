@@ -457,9 +457,22 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | — | *(Pending external integration)* | Core Module | — | — | `PENDING` |
 | — | *(Pending external integration)* | CLI / Daemon | — | — | `PENDING` |
 
-**Current A2 Status**: `NOT_STARTED / PENDING` (awaiting real independent ecosystem consumer deployments).
-"""
         adoption_path.write_text(adoption_content)
+
+        # Auto-commit and push verified progress regularly
+        try:
+            subprocess.run(["git", "add", str(manifest_file), str(adoption_path)], cwd=str(REPO_ROOT), check=False)
+            commit_msg = f"feat(coverage): verified {len(manifest_entries)}/25 regions ({manifest_entries[-1]['region']})"
+            c_res = subprocess.run(["git", "commit", "-m", commit_msg], cwd=str(REPO_ROOT), capture_output=True, text=True)
+            if c_res.returncode == 0:
+                print(f"[GIT] Committed progress: {commit_msg}")
+                p_res = subprocess.run(["cmd.exe", "/c", "git push origin main"], cwd=str(REPO_ROOT), capture_output=True, text=True)
+                if p_res.returncode == 0:
+                    print(f"[GIT] Pushed verified progress to origin/main successfully!")
+                else:
+                    print(f"[GIT] Push warning: {p_res.stderr.strip() or p_res.stdout.strip()}")
+        except Exception as e:
+            print(f"[GIT] Progress auto-commit notice: {e}")
 
     save_progress()
     existing_regions = {e["region"] for e in manifest_entries}
