@@ -1,9 +1,9 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 19:04:57Z",
+  "timestamp": "2026-09-21 19:19:59Z",
   "summary": {
-    "total_valid_closed_set_entries": 13,
+    "total_valid_closed_set_entries": 14,
     "represented_closed_set_countries": 9,
     "total_extra_entries": 17,
     "required_entries": 25,
@@ -284,6 +284,27 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 109475020,
         "retrieved_md5": "3a5f6c22fd6788db1dd27ae8608c5e64"
+      }
+    },
+    {
+      "region": "china/guangdong",
+      "parent": "china",
+      "level": "subregion",
+      "country": "China",
+      "source_url": "https://download.geofabrik.de/asia/china/guangdong-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 172659077,
+      "geofabrik_md5": "930a06a95a4fd64700f8f120262ab59d",
+      "cid": "zDvZRwzmA1UEw2JURwzmYdaJea3jahUWw5m9RNtQ88GwQ7ChjjK8",
+      "registry_tx": "5b8f4e1e7e1ee90679140caa816e970604aa0435842c52dfbd50a069b3fd55d6",
+      "block": 19027,
+      "timestamp": 1790018361,
+      "in_closed_set": true,
+      "status": "A1_VERIFIED",
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 172659077,
+        "retrieved_md5": "930a06a95a4fd64700f8f120262ab59d"
       }
     },
     {

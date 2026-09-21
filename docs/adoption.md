@@ -33,9 +33,10 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | 11 | `china/zhejiang` | subregion | china | China | 90,165,971 | `be6f111217e76d8315735642914fef66` | `zDvZRwzm6VRRAPN1VQfLYrpWdZc3bXTXXddX5QeujuGq44hTYpfL` | 19000 | **A1_VERIFIED** |
 | 12 | `china/sichuan` | subregion | china | China | 106,797,061 | `285763504e474dac69ea3038798abdf6` | `zDvZRwzm5Nb3MUR3WojwiRmeogUg2UyUF6DPq4iY7cpRS51nLtk6` | 19006 | **A1_VERIFIED** |
 | 13 | `india/north-eastern-zone` | subregion | india | India | 109,475,020 | `3a5f6c22fd6788db1dd27ae8608c5e64` | `zDvZRwzm6t9DQrYk2doTwM4XsbtMtixxRMpJQfEiZ84c3zYF6xew` | 19012 | **A1_VERIFIED** |
+| 14 | `china/guangdong` | subregion | china | China | 172,659,077 | `930a06a95a4fd64700f8f120262ab59d` | `zDvZRwzmA1UEw2JURwzmYdaJea3jahUWw5m9RNtQ88GwQ7ChjjK8` | 19027 | **A1_VERIFIED** |
 
-**A1 Valid Closed-Set Count**: **13 / 25 entries** across **9 represented countries**.
-*Pipeline status: In progress (13/25 valid closed-set regions across 9/15 countries).*
+**A1 Valid Closed-Set Count**: **14 / 25 entries** across **9 represented countries**.
+*Pipeline status: In progress (14/25 valid closed-set regions across 9/15 countries).*
 
 #### Supplementary On-Chain & Storage Entries (Preserved, Marked `NON_COUNTING_EXTRA`)
 
