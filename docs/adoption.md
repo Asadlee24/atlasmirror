@@ -32,8 +32,9 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | 12 | `europe/kosovo` | country | null | Kosovo | 30,756,603 | `fcd283f004aa4c359d16110cbdfce275` | `zDvZRwzm3wzchHb9wx7nUsEpk84WiyU1HsnAhsn33swcJZSR94Cv` | 18869 | **VERIFIED** |
 | 13 | `asia/jordan` | country | null | Jordan | 31,025,485 | `55aed7483c97278ad17b73509481f916` | `zDvZRwzm6MwoW2D4XMndjWQf2LpJQBmiZZufCLdShbswbD3DE1NK` | 18879 | **VERIFIED** |
 | 14 | `europe/montenegro` | country | null | Montenegro | 34,401,613 | `5e5bee8aaf87b2a5241574b8cf3af1a9` | `zDvZRwzm7tnpibhnK3xXWXXSohtNrcDzAi1p7P1DMPEZEVEkw29L` | 18908 | **VERIFIED** |
+| 15 | `central-america/el-salvador` | country | null | El Salvador | 35,039,469 | `dd2cbf1297b18e404ec7ef192d953843` | `zDvZRwzm4zWDM9qx8xKLDeio9iQ6j5NSRBX5KTwjLisew5tqLAnR` | 18932 | **VERIFIED** |
 
-*Pipeline status: In progress (14/25 regions verified across 14/15 countries).*
+*Pipeline status: In progress (15/25 regions verified across 15/15 countries).*
 
 ---
 

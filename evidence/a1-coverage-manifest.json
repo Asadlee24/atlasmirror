@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 16:51:44Z",
+  "timestamp": "2026-09-21 17:44:47Z",
   "summary": {
-    "total_verified_entries": 14,
-    "represented_countries": 14,
+    "total_verified_entries": 15,
+    "represented_countries": 15,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -274,6 +274,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 34401613,
         "retrieved_md5": "5e5bee8aaf87b2a5241574b8cf3af1a9"
+      }
+    },
+    {
+      "region": "central-america/el-salvador",
+      "parent": null,
+      "level": "country",
+      "country": "El Salvador",
+      "source_url": "https://download.geofabrik.de/central-america/el-salvador-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 35039469,
+      "geofabrik_md5": "dd2cbf1297b18e404ec7ef192d953843",
+      "cid": "zDvZRwzm4zWDM9qx8xKLDeio9iQ6j5NSRBX5KTwjLisew5tqLAnR",
+      "registry_tx": "d9d38b88987c614c3b4ab103fcc64f38ffe326663ca9a9d778ac135629280d70",
+      "block": 18932,
+      "timestamp": 1790012657,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 35039469,
+        "retrieved_md5": "dd2cbf1297b18e404ec7ef192d953843"
       }
     }
   ]
