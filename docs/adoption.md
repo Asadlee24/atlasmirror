@@ -20,8 +20,9 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 |---|---|---|---|---|---|---|---|---|---|
 | 1 | `china/henan` | subregion | china | China | 49,157,919 | `0055ebfc7f14585c56d53a88062d5814` | `zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny` | 16949 | **VERIFIED** |
 | 2 | `africa/ethiopia` | country | null | Ethiopia | 139,741,759 | `c2e00ecddf7ae4ed89bf05bf104d3f10` | `zDvZRwzm7o1JcgDFrsC8zYrEYnhPkY52qThJLjojMvswjj8pVjPX` | 18252 | **VERIFIED** |
+| 3 | `asia/pakistan` | country | null | Pakistan | 156,230,629 | `d63c9409c20924d0813b81266eb2f5ad` | `zDvZRwzm9WQQrvAZL4NavbFXjmbHTFNyho68zPMxKsCvfGEn2LbD` | 18293 | **VERIFIED** |
 
-*Pipeline status: In progress (2/25 regions verified across 2/15 countries).*
+*Pipeline status: In progress (3/25 regions verified across 3/15 countries).*
 
 ---
 
