@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 08:25:32Z",
+  "timestamp": "2026-09-21 08:41:28Z",
   "summary": {
-    "total_verified_entries": 5,
-    "represented_countries": 5,
+    "total_verified_entries": 6,
+    "represented_countries": 6,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -103,6 +103,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 178421161,
         "retrieved_md5": "04a4d557c902a5f29ba0e7a1394e0232"
+      }
+    },
+    {
+      "region": "asia/iran",
+      "parent": null,
+      "level": "country",
+      "country": "Iran",
+      "source_url": "https://download.geofabrik.de/asia/iran-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 229501907,
+      "geofabrik_md5": "e503562d3826bec67e6f87b899da4098",
+      "cid": "zDvZRwzkybLEXZoEjDetaF4yKT73jszhgkMTboXedKCt4En1gUKV",
+      "registry_tx": "b0cc4522d8e4c77c85ae1e577f9c5ac65401898b53faf5c7f1acd57d4a419a59",
+      "block": 18390,
+      "timestamp": 1789980029,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 229501907,
+        "retrieved_md5": "e503562d3826bec67e6f87b899da4098"
       }
     }
   ]
