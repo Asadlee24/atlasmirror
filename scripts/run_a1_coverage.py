@@ -590,35 +590,24 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
             run_scp(local_pbf, vps_dest)
         else:
             print(f"Staging file already on VPS with exact size ({f_size} bytes). Skipping SCP.")
-        print("Uploading to VPS Logos Storage...")
-        run_ssh("rm -f /tmp/up_ev.json && touch /tmp/up_ev.json && nohup /root/atlasmirror_vps/bin/logoscore watch storage_module --event storageUploadDone --json > /tmp/up_ev.json 2>&1 &")
-        time.sleep(1)
-        run_ssh(f"export LOGOSCORE_CONFIG_DIR=/root/atlasmirror_vps/cfg && /root/atlasmirror_vps/bin/logoscore call storage_module uploadUrl '{vps_dest}' 262144 --json")
-        
-        cid = None
-        for _ in range(150):
-            time.sleep(2)
-            ev_out = run_ssh("cat /tmp/up_ev.json 2>/dev/null || true").stdout
-            if ev_out:
-                for line in ev_out.splitlines():
-                    try:
-                        ev_j = json.loads(line)
-                        if ev_j.get("event") == "storageUploadDone":
-                            inner = json.loads(ev_j["data"]["arg0"])
-                            if inner.get("success") is True and inner.get("cid"):
-                                cid = inner["cid"]
-                                break
-                    except Exception:
-                        pass
-            if cid:
-                break
+        # Check if already hosted on VPS
+        manifests = get_vps_manifests()
+        candidate_m = next((m for m in manifests if m.get("filename") == vps_dest_filename and m.get("datasetSize") == f_size), None)
+        cid = candidate_m.get("cid") if candidate_m else None
         
         if not cid:
-            # Fallback to manifests
-            manifests = get_vps_manifests()
-            candidate_m = next((m for m in manifests if m.get("filename") == vps_dest_filename and m.get("datasetSize") == f_size), None)
-            if candidate_m:
-                cid = candidate_m.get("cid")
+            print("Uploading to VPS Logos Storage...")
+            up_res = run_ssh(f"export LOGOSCORE_CONFIG_DIR=/root/atlasmirror_vps/cfg && /root/atlasmirror_vps/bin/logoscore call storage_module uploadUrl '{vps_dest}' 262144 --json").stdout
+            print(f"uploadUrl response: {up_res.strip()}")
+            
+            for _ in range(60):
+                time.sleep(3)
+                manifests = get_vps_manifests()
+                candidate_m = next((m for m in manifests if m.get("filename") == vps_dest_filename and m.get("datasetSize") == f_size), None)
+                if candidate_m:
+                    cid = candidate_m.get("cid")
+                    break
+            time.sleep(10)
 
         assert cid, f"Failed to obtain Logos Storage candidate CID for {reg_name}!"
         print(f"Candidate Logos Storage CID: {cid}")
