@@ -579,25 +579,38 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
         assert f_md5 == published_md5, f"MD5 mismatch for {reg_name}! Published: {published_md5}, Computed: {f_md5}"
         print("✅ Geofabrik MD5 verified!")
 
-        # 3. Host on VPS Logos Storage and obtain candidate CID
-        manifests = get_vps_manifests()
-        candidate_m = next((m for m in manifests if m.get("filename") == vps_dest_filename and m.get("datasetSize") == f_size), None)
-        cid = candidate_m.get("cid") if candidate_m else None
-        if cid:
-            print(f"Found existing VPS manifest matching {vps_dest_filename} ({f_size} bytes): Candidate CID {cid}")
-        else:
-            print(f"Transferring to VPS: {vps_dest}...")
-            run_scp(local_pbf, vps_dest)
-            print("Uploading to VPS Logos Storage...")
-            run_ssh(f"export LOGOSCORE_CONFIG_DIR=/root/atlasmirror_vps/cfg && /root/atlasmirror_vps/bin/logoscore call storage_module uploadUrl '{vps_dest}' 262144 --json")
-            for _ in range(50):
-                time.sleep(3)
-                manifests = get_vps_manifests()
-                candidate_m = next((m for m in manifests if m.get("filename") == vps_dest_filename and m.get("datasetSize") == f_size), None)
-                if candidate_m:
-                    cid = candidate_m.get("cid")
-                    break
-            run_ssh(f"rm -f {vps_dest}")
+        # 3. Host on VPS Logos Storage and obtain candidate CID via genuine upload completion
+        print(f"Transferring to VPS: {vps_dest}...")
+        run_scp(local_pbf, vps_dest)
+        print("Uploading to VPS Logos Storage...")
+        run_ssh("rm -f /tmp/up_ev.json && touch /tmp/up_ev.json && nohup /root/atlasmirror_vps/bin/logoscore watch storage_module --event storageUploadDone --json > /tmp/up_ev.json 2>&1 &")
+        time.sleep(1)
+        run_ssh(f"export LOGOSCORE_CONFIG_DIR=/root/atlasmirror_vps/cfg && /root/atlasmirror_vps/bin/logoscore call storage_module uploadUrl '{vps_dest}' 262144 --json")
+        
+        cid = None
+        for _ in range(150):
+            time.sleep(2)
+            ev_out = run_ssh("cat /tmp/up_ev.json 2>/dev/null || true")
+            if ev_out:
+                for line in ev_out.splitlines():
+                    try:
+                        ev_j = json.loads(line)
+                        if ev_j.get("event") == "storageUploadDone":
+                            inner = json.loads(ev_j["data"]["arg0"])
+                            if inner.get("success") is True and inner.get("cid"):
+                                cid = inner["cid"]
+                                break
+                    except Exception:
+                        pass
+            if cid:
+                break
+        
+        if not cid:
+            # Fallback to manifests
+            manifests = get_vps_manifests()
+            candidate_m = next((m for m in manifests if m.get("filename") == vps_dest_filename and m.get("datasetSize") == f_size), None)
+            if candidate_m:
+                cid = candidate_m.get("cid")
 
         assert cid, f"Failed to obtain Logos Storage candidate CID for {reg_name}!"
         print(f"Candidate Logos Storage CID: {cid}")
@@ -753,6 +766,7 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
         print(f"✅ CID {cid} CRYPTOGRAPHICALLY PROVEN: 100% MD5 MATCH WITH GEOFABRIK!")
         if retrieved_file.exists():
             retrieved_file.unlink()
+        run_ssh(f"rm -f {vps_dest}")
 
         # 5. On-Chain Registration or Genuine Update on Canonical Logos Testnet
         onchain_last_ts, onchain_records, _ = get_onchain_registry_state()
