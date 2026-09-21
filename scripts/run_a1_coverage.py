@@ -666,15 +666,24 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
             manifest_ok = False
             for _ in range(60):
                 if dl_m_event.stat().st_size > 0:
-                    ev_text = dl_m_event.read_text()
-                    if '"success":true' in ev_text or '"success": true' in ev_text:
-                        manifest_ok = True
-                        break
-                    elif '"success":false' in ev_text or '"success": false' in ev_text:
-                        print(f"[WARN] Manifest fetch returned failure: {ev_text.strip()}")
+                    try:
+                        for line in dl_m_event.read_text().splitlines():
+                            ev = json.loads(line)
+                            if ev.get("event") == "storageDownloadManifestDone":
+                                inner = json.loads(ev["data"]["arg0"])
+                                if inner.get("success") is True:
+                                    manifest_ok = True
+                                    break
+                                elif inner.get("success") is False:
+                                    print(f"[WARN] Manifest fetch returned error: {inner.get('error')}")
+                                    break
+                    except Exception:
+                        pass
+                    if manifest_ok:
                         break
                 time.sleep(1)
             w_m.kill()
+            time.sleep(2)
 
             if not manifest_ok:
                 print(f"[WARN] Manifest not ready on attempt {dl_attempt}. Retrying with fresh daemon...")
