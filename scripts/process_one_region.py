@@ -378,7 +378,8 @@ def process_region(region_name):
     download_success = False
     last_sz = 0
     last_progress_time = time.time()
-    for sec in range(300):
+    max_wait_secs = max(900, int(f_size / 150000))
+    for sec in range(max_wait_secs):
         if target_file.exists():
             cur_sz = target_file.stat().st_size
             if cur_sz == f_size:
