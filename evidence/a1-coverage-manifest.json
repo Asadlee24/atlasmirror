@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 18:08:48Z",
+  "timestamp": "2026-09-21 18:12:48Z",
   "summary": {
-    "total_verified_entries": 20,
-    "represented_countries": 20,
+    "total_verified_entries": 21,
+    "represented_countries": 21,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -388,6 +388,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 47554636,
         "retrieved_md5": "a7884df26736b305079389b193ff4211"
+      }
+    },
+    {
+      "region": "asia/tajikistan",
+      "parent": null,
+      "level": "country",
+      "country": "Tajikistan",
+      "source_url": "https://download.geofabrik.de/asia/tajikistan-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 48435989,
+      "geofabrik_md5": "b389057f1779bfd249b152e6bb1096d0",
+      "cid": "zDvZRwzmAynrFYf1f5MkJJFgK7Xn8pkTBUuHgUgR3fLW2zcvT6AP",
+      "registry_tx": "5c2912182adf6707b1e6cc3dd5e0768a4662e0a15d261e799171d25c623430c6",
+      "block": 18960,
+      "timestamp": 1790014320,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 48435989,
+        "retrieved_md5": "b389057f1779bfd249b152e6bb1096d0"
       }
     }
   ]
