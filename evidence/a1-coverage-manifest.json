@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 16:37:26Z",
+  "timestamp": "2026-09-21 16:41:35Z",
   "summary": {
-    "total_verified_entries": 11,
-    "represented_countries": 11,
+    "total_verified_entries": 12,
+    "represented_countries": 12,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -217,6 +217,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 29716707,
         "retrieved_md5": "10ccfc90c9d91cb2f913d289c51bbb0e"
+      }
+    },
+    {
+      "region": "europe/kosovo",
+      "parent": null,
+      "level": "country",
+      "country": "Kosovo",
+      "source_url": "https://download.geofabrik.de/europe/kosovo-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 30756603,
+      "geofabrik_md5": "fcd283f004aa4c359d16110cbdfce275",
+      "cid": "zDvZRwzm3wzchHb9wx7nUsEpk84WiyU1HsnAhsn33swcJZSR94Cv",
+      "registry_tx": "0b3ee7ea276bb096a10b260abaa41ee0e652e10c7598cf6af77501571602d971",
+      "block": 18869,
+      "timestamp": 1790008868,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 30756603,
+        "retrieved_md5": "fcd283f004aa4c359d16110cbdfce275"
       }
     }
   ]
