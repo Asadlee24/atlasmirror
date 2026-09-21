@@ -279,14 +279,16 @@ def run_ssh(cmd, check=True):
         f"{VPS_USER}@{VPS_IP}",
         cmd
     ]
-    for attempt in range(5):
+    res = None
+    for attempt in range(20):
         res = subprocess.run(full_cmd, capture_output=True, text=True)
         if res.returncode == 0 or not check:
             return res
-        print(f"[WARN] SSH attempt {attempt+1}/5 failed. Retrying in 5s...", file=sys.stderr)
-        time.sleep(5)
-    if check and res.returncode != 0:
-        print(f"[ERROR] SSH failed after 5 attempts: {res.stderr}", file=sys.stderr)
+        sleep_sec = min(5 + attempt * 2, 20)
+        print(f"[WARN] SSH attempt {attempt+1}/20 failed. Retrying in {sleep_sec}s...", file=sys.stderr)
+        time.sleep(sleep_sec)
+    if check and res and res.returncode != 0:
+        print(f"[ERROR] SSH failed after 20 attempts: {res.stderr}", file=sys.stderr)
         sys.exit(res.returncode)
     return res
 
@@ -298,14 +300,18 @@ def run_scp(src, dst):
         str(src),
         f"{VPS_USER}@{VPS_IP}:{dst}"
     ]
-    for attempt in range(5):
+    res = None
+    for attempt in range(20):
         res = subprocess.run(full_cmd, capture_output=True, text=True)
         if res.returncode == 0:
             return res
-        print(f"[WARN] SCP attempt {attempt+1}/5 failed. Retrying in 5s...", file=sys.stderr)
-        time.sleep(5)
-    print(f"[ERROR] SCP failed after 5 attempts: {res.stderr}", file=sys.stderr)
-    sys.exit(res.returncode)
+        sleep_sec = min(5 + attempt * 2, 20)
+        print(f"[WARN] SCP attempt {attempt+1}/20 failed. Retrying in {sleep_sec}s...", file=sys.stderr)
+        time.sleep(sleep_sec)
+    if res and res.returncode != 0:
+        print(f"[ERROR] SCP failed after 20 attempts: {res.stderr}", file=sys.stderr)
+        sys.exit(res.returncode)
+    return res
 
 def compute_hashes(file_path):
     md5 = hashlib.md5()
@@ -388,6 +394,16 @@ def fetch_geofabrik_metadata(pbf_url, md5_url):
 
     print(f"Truthful Source Version/Date: {version}")
     return published_md5, version
+
+def download_file_with_retry(url, path, max_retries=5):
+    for attempt in range(max_retries):
+        try:
+            urllib.request.urlretrieve(url, path)
+            return
+        except Exception as e:
+            print(f"[WARN] Download failed (attempt {attempt+1}/{max_retries}): {e}", file=sys.stderr)
+            time.sleep(3)
+    raise RuntimeError(f"Failed to download {url} after {max_retries} attempts!")
 
 def get_onchain_registry_state():
     """Query canonical Logos Testnet registry state and parse records."""
@@ -586,13 +602,13 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
             else:
                 print(f"Local PBF MD5 mismatch (got {f_md5}, published {published_md5}), re-downloading...")
                 t0 = time.time()
-                urllib.request.urlretrieve(pbf_url, local_pbf)
+                download_file_with_retry(pbf_url, local_pbf)
                 print(f"Download finished in {time.time() - t0:.1f}s")
                 f_size, f_md5, _ = compute_hashes(local_pbf)
         else:
             print(f"Downloading {pbf_url}...")
             t0 = time.time()
-            urllib.request.urlretrieve(pbf_url, local_pbf)
+            download_file_with_retry(pbf_url, local_pbf)
             print(f"Download finished in {time.time() - t0:.1f}s")
             f_size, f_md5, _ = compute_hashes(local_pbf)
 
