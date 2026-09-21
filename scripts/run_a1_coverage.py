@@ -338,28 +338,42 @@ def get_vps_manifests():
     raise RuntimeError("Failed to retrieve VPS manifests after restarts!")
 
 def fetch_geofabrik_metadata(pbf_url, md5_url):
-    """Fetch truthful published MD5 and real source snapshot version from Geofabrik."""
+    """Fetch truthful published MD5 and real source snapshot version from Geofabrik with retry."""
     print(f"Fetching published MD5 from {md5_url}...")
-    req_md5 = urllib.request.urlopen(md5_url, timeout=25)
-    published_md5 = req_md5.read().decode("utf-8").strip().split()[0].lower()
+    published_md5 = None
+    for attempt in range(5):
+        try:
+            req_md5 = urllib.request.urlopen(md5_url, timeout=30)
+            published_md5 = req_md5.read().decode("utf-8").strip().split()[0].lower()
+            if published_md5:
+                break
+        except Exception as e:
+            print(f"[WARN] Error fetching MD5 from {md5_url} (attempt {attempt+1}/5): {e}")
+            time.sleep(3)
+    if not published_md5:
+        raise RuntimeError(f"Failed to fetch published MD5 from {md5_url} after 5 attempts!")
     print(f"Published MD5: {published_md5}")
 
     version = None
-    try:
-        req_pbf = urllib.request.Request(pbf_url, method="HEAD")
-        res_pbf = urllib.request.urlopen(req_pbf, timeout=25)
-        final_url = res_pbf.geturl()
-        m = re.search(r"-(\d{2})(\d{2})(\d{2})\.osm\.pbf", final_url)
-        if m:
-            yy, mm, dd = m.groups()
-            version = f"20{yy}-{mm}-{dd}"
-        else:
-            last_mod = res_pbf.headers.get("Last-Modified")
-            if last_mod:
-                dt = email.utils.parsedate_to_datetime(last_mod)
-                version = dt.strftime("%Y-%m-%d")
-    except Exception as e:
-        print(f"[WARN] Could not retrieve HEAD for {pbf_url}: {e}")
+    for attempt in range(5):
+        try:
+            req_pbf = urllib.request.Request(pbf_url, method="HEAD")
+            res_pbf = urllib.request.urlopen(req_pbf, timeout=30)
+            final_url = res_pbf.geturl()
+            m = re.search(r"-(\d{2})(\d{2})(\d{2})\.osm\.pbf", final_url)
+            if m:
+                yy, mm, dd = m.groups()
+                version = f"20{yy}-{mm}-{dd}"
+            else:
+                last_mod = res_pbf.headers.get("Last-Modified")
+                if last_mod:
+                    dt = email.utils.parsedate_to_datetime(last_mod)
+                    version = dt.strftime("%Y-%m-%d")
+            if version:
+                break
+        except Exception as e:
+            print(f"[WARN] Error fetching HEAD for {pbf_url} (attempt {attempt+1}/5): {e}")
+            time.sleep(3)
 
     if not version:
         version = time.strftime("%Y-%m-%d", time.gmtime())
