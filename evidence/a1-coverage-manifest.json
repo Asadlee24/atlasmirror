@@ -3,8 +3,8 @@
   "standard": "LP-0018 A1 Coverage",
   "timestamp": "2026-09-21 16:51:44Z",
   "summary": {
-    "total_verified_entries": 13,
-    "represented_countries": 13,
+    "total_verified_entries": 14,
+    "represented_countries": 14,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -255,6 +255,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 31025485,
         "retrieved_md5": "55aed7483c97278ad17b73509481f916"
+      }
+    },
+    {
+      "region": "europe/montenegro",
+      "parent": null,
+      "level": "country",
+      "country": "Montenegro",
+      "source_url": "https://download.geofabrik.de/europe/montenegro-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 34401613,
+      "geofabrik_md5": "5e5bee8aaf87b2a5241574b8cf3af1a9",
+      "cid": "zDvZRwzm7tnpibhnK3xXWXXSohtNrcDzAi1p7P1DMPEZEVEkw29L",
+      "registry_tx": "4ecacce4561b58f772d8b632aaa66d6b4b20105c002333f9d3af63499a0d66ff",
+      "block": 18908,
+      "timestamp": 1790010900,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 34401613,
+        "retrieved_md5": "5e5bee8aaf87b2a5241574b8cf3af1a9"
       }
     }
   ]
