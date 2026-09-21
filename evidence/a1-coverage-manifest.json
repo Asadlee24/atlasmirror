@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "standard": "LP-0018 A1 Coverage",
+  "timestamp": "2026-09-21 05:43:46Z",
+  "summary": {
+    "total_verified_entries": 1,
+    "represented_countries": 1,
+    "status": "A1_IN_PROGRESS",
+    "vps_storage_host": "199.231.187.97:8070",
+    "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
+  },
+  "entries": [
+    {
+      "region": "china/henan",
+      "parent": "china",
+      "level": "subregion",
+      "country": "China",
+      "source_url": "https://download.geofabrik.de/asia/china/henan-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 49157919,
+      "geofabrik_md5": "0055ebfc7f14585c56d53a88062d5814",
+      "cid": "zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny",
+      "registry_tx": "32652959bf18a43a2c1e7dcb170804a397fe8c9fe111fcd9159d812a67e94018",
+      "block": 16949,
+      "timestamp": 1789905600,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 49157919,
+        "retrieved_md5": "0055ebfc7f14585c56d53a88062d5814"
+      }
+    }
+  ]
+}
