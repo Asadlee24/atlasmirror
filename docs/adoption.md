@@ -35,8 +35,9 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | 15 | `central-america/el-salvador` | country | null | El Salvador | 35,039,469 | `dd2cbf1297b18e404ec7ef192d953843` | `zDvZRwzm4zWDM9qx8xKLDeio9iQ6j5NSRBX5KTwjLisew5tqLAnR` | 18932 | **VERIFIED** |
 | 16 | `central-america/panama` | country | null | Panama | 36,190,818 | `eca5b331009acc4887d324fdb956554a` | `zDvZRwzm5WVgFx2S4UJibpBTc5hby1ApFCisoiaDxuXuzivGcbSf` | 18936 | **VERIFIED** |
 | 17 | `europe/cyprus` | country | null | Cyprus | 37,394,174 | `a70236ddae865b51ca75a318320033f2` | `zDvZRwzmDHgovpf7wPvvWDfwVHiQWzUzW4cwaz6mgYRY1DNH9jzv` | 18942 | **VERIFIED** |
+| 18 | `central-america/costa-rica` | country | null | Costa Rica | 38,970,721 | `743d23fafb6a85ddb9cee278f03cb702` | `zDvZRwzm6iHE4SCa6ZN1hf6jYxKRPJoTeUyoWsb85mPMYeFCnA4W` | 18948 | **VERIFIED** |
 
-*Pipeline status: In progress (17/25 regions verified across 17/15 countries).*
+*Pipeline status: In progress (18/25 regions verified across 18/15 countries).*
 
 ---
 

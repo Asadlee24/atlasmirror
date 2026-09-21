@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 17:55:18Z",
+  "timestamp": "2026-09-21 18:00:46Z",
   "summary": {
-    "total_verified_entries": 17,
-    "represented_countries": 17,
+    "total_verified_entries": 18,
+    "represented_countries": 18,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -331,6 +331,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 37394174,
         "retrieved_md5": "a70236ddae865b51ca75a318320033f2"
+      }
+    },
+    {
+      "region": "central-america/costa-rica",
+      "parent": null,
+      "level": "country",
+      "country": "Costa Rica",
+      "source_url": "https://download.geofabrik.de/central-america/costa-rica-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 38970721,
+      "geofabrik_md5": "743d23fafb6a85ddb9cee278f03cb702",
+      "cid": "zDvZRwzm6iHE4SCa6ZN1hf6jYxKRPJoTeUyoWsb85mPMYeFCnA4W",
+      "registry_tx": "b0fd6e1b5417d6604be791a5007eef7e24692a41a21bf519f963c60c29227d13",
+      "block": 18948,
+      "timestamp": 1790013625,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 38970721,
+        "retrieved_md5": "743d23fafb6a85ddb9cee278f03cb702"
       }
     }
   ]
