@@ -580,7 +580,7 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
         print("✅ Geofabrik MD5 verified!")
 
         # 3. Host on VPS Logos Storage and obtain candidate CID via genuine upload completion
-        vps_sz_str = run_ssh(f"stat -c %s '{vps_dest}' 2>/dev/null || echo 0")
+        vps_sz_str = run_ssh(f"stat -c %s '{vps_dest}' 2>/dev/null || echo 0").stdout
         try:
             vps_sz = int(vps_sz_str.strip().split()[-1])
         except Exception:
@@ -598,7 +598,7 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
         cid = None
         for _ in range(150):
             time.sleep(2)
-            ev_out = run_ssh("cat /tmp/up_ev.json 2>/dev/null || true")
+            ev_out = run_ssh("cat /tmp/up_ev.json 2>/dev/null || true").stdout
             if ev_out:
                 for line in ev_out.splitlines():
                     try:
