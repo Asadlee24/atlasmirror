@@ -621,7 +621,26 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
                 if candidate_m:
                     cid = candidate_m.get("cid")
                     break
-            time.sleep(10)
+            
+            # Wait for block ingestion to finish on VPS
+            print("Waiting for VPS block ingestion to complete...")
+            prev_cnt = -1
+            stable = 0
+            for _ in range(40):
+                time.sleep(3)
+                res_cnt = run_ssh("ls -1 /root/logos_storage_data/repo/blocks | wc -l").stdout.strip()
+                try:
+                    cur_cnt = int(res_cnt)
+                except Exception:
+                    cur_cnt = 0
+                if cur_cnt == prev_cnt and cur_cnt > 0:
+                    stable += 1
+                    if stable >= 3:
+                        break
+                else:
+                    stable = 0
+                    prev_cnt = cur_cnt
+            print(f"VPS block ingestion finished at {prev_cnt} blocks.")
 
         assert cid, f"Failed to obtain Logos Storage candidate CID for {reg_name}!"
         print(f"Candidate Logos Storage CID: {cid}")
@@ -673,11 +692,11 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
             subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} load-module storage_module", shell=True)
             subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module init @{client_data / 'config.json'} --json", shell=True)
             subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module start --json", shell=True)
-            time.sleep(8)
+            time.sleep(12)
 
             # 4a. Fetch manifest and await completion event
             manifest_ok = False
-            for m_retry in range(3):
+            for m_retry in range(5):
                 dl_m_event = client_data / "dl-manifest-event.json"
                 if dl_m_event.exists():
                     dl_m_event.unlink()
@@ -711,8 +730,8 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
                 time.sleep(1)
                 if manifest_ok:
                     break
-                print(f"[INFO] Manifest fetch attempt {m_retry+1}/3 failed, waiting 5s for DHT peer discovery...")
-                time.sleep(5)
+                print(f"[INFO] Manifest fetch attempt {m_retry+1}/5 failed, waiting 10s for DHT peer discovery...")
+                time.sleep(10)
 
             if not manifest_ok:
                 print(f"[WARN] Manifest not ready on attempt {dl_attempt}. Retrying with fresh daemon...")
