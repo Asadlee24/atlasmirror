@@ -28,9 +28,10 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | 6 | `asia/iran` | country | null | Iran | 229,501,907 | `e503562d3826bec67e6f87b899da4098` | `zDvZRwzkybLEXZoEjDetaF4yKT73jszhgkMTboXedKCt4En1gUKV` | 18390 | **A1_VERIFIED** |
 | 7 | `africa/morocco` | country | null | Morocco | 243,471,217 | `ac60aed8b36bac264f2c17c89a584b94` | `zDvZRwzmD3VCUxT9UqAh7mXpT4XmWarwKBFR6p2eRiY7PxjQg3kt` | 18444 | **A1_VERIFIED** |
 | 8 | `asia/malaysia-singapore-brunei` | country | null | Malaysia | 251,169,608 | `203cebee0dbaa4e8464b777cd10698e6` | `zDvZRwzkxgamWxqXcSCp2m8Z5WicCRd79MVy8B3duQ8gCZJSc11Y` | 18481 | **A1_VERIFIED** |
+| 9 | `china/shandong` | subregion | china | China | 71,270,272 | `694e3251c5bd24cc2d5a4a8051386808` | `zDvZRwzm7Yn6itgdZ4DLa6ExvHpy84ZwDwLTLNfaxZpqBzDx6d2S` | 18989 | **A1_VERIFIED** |
 
-**A1 Valid Closed-Set Count**: **8 / 25 entries** across **8 represented countries**.
-**Status**: `IN_PROGRESS_CLOSED_SET_REMEDIATION` (Active expansion underway to reach 25 valid closed-set entries across ≥15 countries).
+**A1 Valid Closed-Set Count**: **9 / 25 entries** across **8 represented countries**.
+*Pipeline status: In progress (9/25 valid closed-set regions across 8/15 countries).*
 
 #### Supplementary On-Chain & Storage Entries (Preserved, Marked `NON_COUNTING_EXTRA`)
 
