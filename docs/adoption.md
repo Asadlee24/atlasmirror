@@ -30,8 +30,9 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | 10 | `central-america/belize` | country | null | Belize | 18,262,587 | `871fd979e6f5112d2fdadd578b0ecd3d` | `zDvZRwzm7Z6itHsGr4c8SuTbvo7ehQQefCrZdvMasJk3FmL8fQez` | 18570 | **VERIFIED** |
 | 11 | `europe/macedonia` | country | null | North Macedonia | 29,716,707 | `10ccfc90c9d91cb2f913d289c51bbb0e` | `zDvZRwzmAnj1vZ5wsTrts84vhLyANg5QDA9pwr2AHJXMiZK3zKSp` | 18575 | **VERIFIED** |
 | 12 | `europe/kosovo` | country | null | Kosovo | 30,756,603 | `fcd283f004aa4c359d16110cbdfce275` | `zDvZRwzm3wzchHb9wx7nUsEpk84WiyU1HsnAhsn33swcJZSR94Cv` | 18869 | **VERIFIED** |
+| 13 | `asia/jordan` | country | null | Jordan | 31,025,485 | `55aed7483c97278ad17b73509481f916` | `zDvZRwzm6MwoW2D4XMndjWQf2LpJQBmiZZufCLdShbswbD3DE1NK` | 18879 | **VERIFIED** |
 
-*Pipeline status: In progress (12/25 regions verified across 12/15 countries).*
+*Pipeline status: In progress (13/25 regions verified across 13/15 countries).*
 
 ---
 

@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 16:41:35Z",
+  "timestamp": "2026-09-21 16:51:44Z",
   "summary": {
-    "total_verified_entries": 12,
-    "represented_countries": 12,
+    "total_verified_entries": 13,
+    "represented_countries": 13,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -236,6 +236,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 30756603,
         "retrieved_md5": "fcd283f004aa4c359d16110cbdfce275"
+      }
+    },
+    {
+      "region": "asia/jordan",
+      "parent": null,
+      "level": "country",
+      "country": "Jordan",
+      "source_url": "https://download.geofabrik.de/asia/jordan-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 31025485,
+      "geofabrik_md5": "55aed7483c97278ad17b73509481f916",
+      "cid": "zDvZRwzm6MwoW2D4XMndjWQf2LpJQBmiZZufCLdShbswbD3DE1NK",
+      "registry_tx": "847a774ec1b5b48a1ec33b81c5fb5cdf177de2f38fbf92c3d51a3655b757b87b",
+      "block": 18879,
+      "timestamp": 1790009451,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 31025485,
+        "retrieved_md5": "55aed7483c97278ad17b73509481f916"
       }
     }
   ]
