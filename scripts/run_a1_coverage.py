@@ -457,6 +457,8 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | — | *(Pending external integration)* | Core Module | — | — | `PENDING` |
 | — | *(Pending external integration)* | CLI / Daemon | — | — | `PENDING` |
 
+**Current A2 Status**: `NOT_STARTED / PENDING` (awaiting real independent ecosystem consumer deployments).
+"""
         adoption_path.write_text(adoption_content)
 
         # Auto-commit and push verified progress regularly
