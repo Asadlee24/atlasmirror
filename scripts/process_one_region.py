@@ -21,63 +21,28 @@ RUNNER_BIN = "/root/lez-testnet-compatible/target/release/run_osm_registry"
 BIN_PATH = "/mnt/c/Users/Aftab/Desktop/atlasmirror/osm_registry.bin"
 STATE_ACCOUNT = "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
 
-REGIONS_INFO = {
-    "central-america/el-salvador": {
-        "country": "El Salvador", "parent": None, "level": "country",
-        "pbf_url": "https://download.geofabrik.de/central-america/el-salvador-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/central-america/el-salvador-latest.osm.pbf.md5"
-    },
-    "central-america/panama": {
-        "country": "Panama", "parent": None, "level": "country",
-        "pbf_url": "https://download.geofabrik.de/central-america/panama-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/central-america/panama-latest.osm.pbf.md5"
-    },
-    "europe/cyprus": {
-        "country": "Cyprus", "parent": None, "level": "country",
-        "pbf_url": "https://download.geofabrik.de/europe/cyprus-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/europe/cyprus-latest.osm.pbf.md5"
-    },
-    "central-america/costa-rica": {
-        "country": "Costa Rica", "parent": None, "level": "country",
-        "pbf_url": "https://download.geofabrik.de/central-america/costa-rica-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/central-america/costa-rica-latest.osm.pbf.md5"
-    },
-    "asia/azerbaijan": {
-        "country": "Azerbaijan", "parent": None, "level": "country",
-        "pbf_url": "https://download.geofabrik.de/asia/azerbaijan-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/asia/azerbaijan-latest.osm.pbf.md5"
-    },
-    "europe/luxembourg": {
-        "country": "Luxembourg", "parent": None, "level": "country",
-        "pbf_url": "https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf.md5"
-    },
-    "asia/tajikistan": {
-        "country": "Tajikistan", "parent": None, "level": "country",
-        "pbf_url": "https://download.geofabrik.de/asia/tajikistan-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/asia/tajikistan-latest.osm.pbf.md5"
-    },
-    "asia/lebanon": {
-        "country": "Lebanon", "parent": None, "level": "country",
-        "pbf_url": "https://download.geofabrik.de/asia/lebanon-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/asia/lebanon-latest.osm.pbf.md5"
-    },
-    "asia/armenia": {
-        "country": "Armenia", "parent": None, "level": "country",
-        "pbf_url": "https://download.geofabrik.de/asia/armenia-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/asia/armenia-latest.osm.pbf.md5"
-    },
-    "europe/albania": {
-        "country": "Albania", "parent": None, "level": "country",
-        "pbf_url": "https://download.geofabrik.de/europe/albania-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/europe/albania-latest.osm.pbf.md5"
-    },
-    "central-america/nicaragua": {
-        "country": "Nicaragua", "parent": None, "level": "country",
-        "pbf_url": "https://download.geofabrik.de/central-america/nicaragua-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/central-america/nicaragua-latest.osm.pbf.md5"
+REGIONS_CATALOG_FILE = REPO_ROOT / "metadata" / "regions.json"
+CLOSED_SET_RAW = json.loads(REGIONS_CATALOG_FILE.read_text()).get("regions", [])
+
+REGIONS_INFO = {}
+for r in CLOSED_SET_RAW:
+    p = r["path"]
+    parent = r.get("parent")
+    level = r.get("level", "country")
+    if parent == "china": country = "China"
+    elif parent == "india": country = "India"
+    elif parent == "us": country = "United States"
+    elif parent == "russia": country = "Russia"
+    else: country = r["name"]
+    
+    REGIONS_INFO[p] = {
+        "country": country,
+        "parent": parent,
+        "level": level,
+        "pbf_url": r["geofabrik_url"],
+        "md5_url": r["md5_url"],
+        "name": r["name"]
     }
-}
 
 def run_ssh(cmd, check=True):
     full_cmd = [
@@ -128,32 +93,43 @@ def get_onchain_registry_state():
                 records[parts["region"]] = parts
     return last_updated, records, res.stdout
 
-def save_manifest_and_docs(manifest_entries):
-    unique_c = {e["country"] for e in manifest_entries}
-    total = len(manifest_entries)
+def save_manifest_and_docs(manifest_entries, new_region_name=None):
+    counting_entries = [e for e in manifest_entries if e.get("in_closed_set", False) or e.get("status") == "A1_VERIFIED"]
+    extra_entries = [e for e in manifest_entries if not e.get("in_closed_set", False) and e.get("status") == "NON_COUNTING_EXTRA"]
+    
+    unique_c = {e["country"] for e in counting_entries}
+    total = len(counting_entries)
     is_complete = total >= 25 and len(unique_c) >= 15
+    
     manifest_data = {
         "version": "1.0.0",
         "standard": "LP-0018 A1 Coverage",
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%SZ", time.gmtime()),
         "summary": {
-            "total_verified_entries": total,
-            "represented_countries": len(unique_c),
-            "status": "A1_VERIFIED" if is_complete else "A1_IN_PROGRESS",
+            "total_valid_closed_set_entries": total,
+            "represented_closed_set_countries": len(unique_c),
+            "total_extra_entries": len(extra_entries),
+            "required_entries": 25,
+            "required_countries": 15,
+            "status": "A1_VERIFIED" if is_complete else "IN_PROGRESS_CLOSED_SET_REMEDIATION",
             "vps_storage_host": f"{VPS_IP}:8070",
             "registry_account": STATE_ACCOUNT
         },
-        "entries": manifest_entries
+        "entries": counting_entries + extra_entries
     }
     MANIFEST_FILE.write_text(json.dumps(manifest_data, indent=2))
 
-    rows = []
-    for i, e in enumerate(manifest_entries, start=1):
-        rows.append(f"| {i} | `{e['region']}` | {e['level']} | {e.get('parent') or 'null'} | {e['country']} | {e['size']:,} | `{e['geofabrik_md5']}` | `{e['cid']}` | {e.get('block', '—')} | **VERIFIED** |")
+    rows_counting = []
+    for i, e in enumerate(counting_entries, start=1):
+        rows_counting.append(f"| {i} | `{e['region']}` | {e['level']} | {e.get('parent') or 'null'} | {e['country']} | {e['size']:,} | `{e['geofabrik_md5']}` | `{e['cid']}` | {e.get('block', '—')} | **A1_VERIFIED** |")
 
-    status_line = f"*Pipeline status: In progress ({total}/25 regions verified across {len(unique_c)}/15 countries).*"
+    rows_extra = []
+    for i, e in enumerate(extra_entries, start=1):
+        rows_extra.append(f"| E{i} | `{e['region']}` | {e['country']} | {e['size']:,} | `{e['cid']}` | {e.get('block', '—')} | `NON_COUNTING_EXTRA` |")
+
+    status_line = f"*Pipeline status: In progress ({total}/25 valid closed-set regions across {len(unique_c)}/15 countries).*"
     if is_complete:
-        status_line = f"**A1 Status**: `VERIFIED` ({total} regions across {len(unique_c)} countries, 100% retrievable and MD5 verified)."
+        status_line = f"**A1 Status**: `A1_VERIFIED` ({total} valid closed-set regions across {len(unique_c)} countries, 100% retrievable and MD5 verified)."
 
     adoption_content = f"""# Adoption, Coverage & Ecosystem Reuse
 
@@ -168,16 +144,27 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 - Minimum **25 verified region entries** covered across the set.
 - Each entry must be verified: byte-level hash matches Geofabrik's published MD5, real Logos Storage CID hosted, registered on canonical Logos Testnet, and 100% retrievable externally.
 
-### Current Verified Coverage Manifest
+### Current Verified Coverage Manifest (LP-0018 Closed Set Audit)
 
 > [!NOTE]
-> Only genuinely proven, on-chain verified, and externally retrieved entries are recorded below. All entries are backed by exact SHA256/MD5 match against upstream Geofabrik and queryable on the canonical Logos Testnet (`{STATE_ACCOUNT}`).
+> Coverage is strictly measured against the frozen **72 Predefined Regions closed set** specified in [LP-0018 Predefined Regions](#predefined-regions-closed-set). Entries outside this closed set are preserved in the ecosystem ledger as `NON_COUNTING_EXTRA` and excluded from official A1 totals.
+
+#### Officially Counting Closed-Set Entries (A1 Metric)
 
 | # | Region Path | Level | Parent | Country | Size (Bytes) | Published Geofabrik MD5 | Logos Storage CID | Testnet Block | Status |
 |---|---|---|---|---|---|---|---|---|---|
-""" + "\n".join(rows) + f"""
+""" + "\n".join(rows_counting) + f"""
 
+**A1 Valid Closed-Set Count**: **{total} / 25 entries** across **{len(unique_c)} represented countries**.
 {status_line}
+
+#### Supplementary On-Chain & Storage Entries (Preserved, Marked `NON_COUNTING_EXTRA`)
+
+> These genuine regions were uploaded, verified, and registered on Logos Testnet 0.3, but originate outside the official closed set (e.g. small European / Central American states). They are preserved on the Logos DHT and ledger, but do not contribute to the 25-entry A1 score.
+
+| # | Region Path | Country | Size (Bytes) | Logos Storage CID | Testnet Block | Status |
+|---|---|---|---|---|---|---|
+""" + "\n".join(rows_extra) + f"""
 
 ---
 
@@ -206,7 +193,8 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
     ADOPTION_FILE.write_text(adoption_content)
 
     subprocess.run(["git", "add", str(MANIFEST_FILE), str(ADOPTION_FILE)], cwd=str(REPO_ROOT), check=False)
-    commit_msg = f"feat(coverage): verified {total}/25 regions ({manifest_entries[-1]['region']})"
+    reg_label = new_region_name or (counting_entries[-1]['region'] if counting_entries else 'batch')
+    commit_msg = f"feat(coverage): verified closed-set {total}/25 regions ({reg_label})"
     subprocess.run(["git", "commit", "-m", commit_msg], cwd=str(REPO_ROOT), check=False)
     print(f"[GIT] Committed: {commit_msg}")
 
@@ -473,6 +461,8 @@ def process_region(region_name):
         "registry_tx": tx_hash,
         "block": block_num,
         "timestamp": reg_ts,
+        "in_closed_set": True,
+        "status": "A1_VERIFIED",
         "external_retrieval": {
             "status": "VERIFIED_EXACT_MATCH",
             "retrieved_size": f_size,
@@ -480,17 +470,18 @@ def process_region(region_name):
         }
     }
     manifest_entries.append(entry)
-    save_manifest_and_docs(manifest_entries)
+    save_manifest_and_docs(manifest_entries, new_region_name=region_name)
 
     # Clean up staging file on VPS to save disk space
     run_ssh(f"rm -f '{staging_file}'", check=False)
 
+    counting = [e for e in manifest_entries if e.get("in_closed_set", False) or e.get("status") == "A1_VERIFIED"]
     print("\n" + "="*70)
-    print(f"REGION_VERIFIED: {region_name} ({country})")
-    print(f"TOTAL_VERIFIED:  {len(manifest_entries)} / 25")
-    print(f"CID:             {cid}")
-    print(f"TX:              {tx_hash}")
-    print(f"BLOCK:           {block_num}")
+    print(f"REGION_VERIFIED:     {region_name} ({country})")
+    print(f"CLOSED_SET_VERIFIED: {len(counting)} / 25 (Countries: {len(set(e['country'] for e in counting))}/15)")
+    print(f"CID:                 {cid}")
+    print(f"TX:                  {tx_hash}")
+    print(f"BLOCK:               {block_num}")
     print("="*70 + "\n")
 
 if __name__ == "__main__":
