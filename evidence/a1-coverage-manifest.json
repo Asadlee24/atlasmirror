@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 18:58:56Z",
+  "timestamp": "2026-09-21 19:04:57Z",
   "summary": {
-    "total_valid_closed_set_entries": 12,
-    "represented_closed_set_countries": 8,
+    "total_valid_closed_set_entries": 13,
+    "represented_closed_set_countries": 9,
     "total_extra_entries": 17,
     "required_entries": 25,
     "required_countries": 15,
@@ -263,6 +263,27 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 106797061,
         "retrieved_md5": "285763504e474dac69ea3038798abdf6"
+      }
+    },
+    {
+      "region": "india/north-eastern-zone",
+      "parent": "india",
+      "level": "subregion",
+      "country": "India",
+      "source_url": "https://download.geofabrik.de/asia/india/north-eastern-zone-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 109475020,
+      "geofabrik_md5": "3a5f6c22fd6788db1dd27ae8608c5e64",
+      "cid": "zDvZRwzm6t9DQrYk2doTwM4XsbtMtixxRMpJQfEiZ84c3zYF6xew",
+      "registry_tx": "119217e7cad9652697ab2b4b223bc282a1562cc7465c27f66c82864025f0766d",
+      "block": 19012,
+      "timestamp": 1790017471,
+      "in_closed_set": true,
+      "status": "A1_VERIFIED",
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 109475020,
+        "retrieved_md5": "3a5f6c22fd6788db1dd27ae8608c5e64"
       }
     },
     {
