@@ -1,9 +1,9 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 19:19:59Z",
+  "timestamp": "2026-09-21 19:30:01Z",
   "summary": {
-    "total_valid_closed_set_entries": 14,
+    "total_valid_closed_set_entries": 15,
     "represented_closed_set_countries": 9,
     "total_extra_entries": 17,
     "required_entries": 25,
@@ -305,6 +305,27 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 172659077,
         "retrieved_md5": "930a06a95a4fd64700f8f120262ab59d"
+      }
+    },
+    {
+      "region": "india/western-zone",
+      "parent": "india",
+      "level": "subregion",
+      "country": "India",
+      "source_url": "https://download.geofabrik.de/asia/india/western-zone-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 220298079,
+      "geofabrik_md5": "6f243a3ece638da662db7354e2c4a9a7",
+      "cid": "zDvZRwzm46k96V6HTt6uGL1Pjyg13RDUbtNsJpfsrV6fckrBFRJF",
+      "registry_tx": "c4b78b9293321a0256de61b3412d4e086473e4dad306e68eb40c523d48f207d5",
+      "block": 19037,
+      "timestamp": 1790018975,
+      "in_closed_set": true,
+      "status": "A1_VERIFIED",
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 220298079,
+        "retrieved_md5": "6f243a3ece638da662db7354e2c4a9a7"
       }
     },
     {
