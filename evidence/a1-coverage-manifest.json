@@ -1,9 +1,9 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 18:41:53Z",
+  "timestamp": "2026-09-21 18:46:58Z",
   "summary": {
-    "total_valid_closed_set_entries": 9,
+    "total_valid_closed_set_entries": 10,
     "represented_closed_set_countries": 8,
     "total_extra_entries": 17,
     "required_entries": 25,
@@ -200,6 +200,27 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 71270272,
         "retrieved_md5": "694e3251c5bd24cc2d5a4a8051386808"
+      }
+    },
+    {
+      "region": "china/jiangsu",
+      "parent": "china",
+      "level": "subregion",
+      "country": "China",
+      "source_url": "https://download.geofabrik.de/asia/china/jiangsu-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 79532918,
+      "geofabrik_md5": "8570de9c1c339879171f9ade8fc0df8c",
+      "cid": "zDvZRwzky6qXkYQESyUvuWJ11ALPBtqVfQKdK95oK9fpzr8aBzBW",
+      "registry_tx": "bdf0e9df2d534b1bdb35ce5c69a872d29bce90d976f634cd2fccf72305fce1ce",
+      "block": 18994,
+      "timestamp": 1790016390,
+      "in_closed_set": true,
+      "status": "A1_VERIFIED",
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 79532918,
+        "retrieved_md5": "8570de9c1c339879171f9ade8fc0df8c"
       }
     },
     {
