@@ -650,8 +650,8 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
         retrieved_file = CLIENT_DIR / "retrieved.osm.pbf"
         download_success = False
 
-        for dl_attempt in range(1, 4):
-            print(f"External retrieval attempt {dl_attempt}/3 for {reg_name} (CID: {cid})...")
+        for dl_attempt in range(1, 6):
+            print(f"External retrieval attempt {dl_attempt}/5 for {reg_name} (CID: {cid})...")
             live_spr = get_vps_spr()
             print(f"Live VPS SPR: {live_spr[:60]}...")
 
@@ -734,6 +734,9 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
                 time.sleep(10)
 
             if not manifest_ok:
+                print(f"[WARN] Manifest not ready on attempt {dl_attempt}. Restarting VPS storage node...")
+                run_ssh("systemctl restart logos-storage")
+                time.sleep(8)
                 print(f"[WARN] Manifest not ready on attempt {dl_attempt}. Retrying with fresh daemon...")
                 continue
 
