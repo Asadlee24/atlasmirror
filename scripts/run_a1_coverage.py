@@ -279,9 +279,14 @@ def run_ssh(cmd, check=True):
         f"{VPS_USER}@{VPS_IP}",
         cmd
     ]
-    res = subprocess.run(full_cmd, capture_output=True, text=True)
+    for attempt in range(5):
+        res = subprocess.run(full_cmd, capture_output=True, text=True)
+        if res.returncode == 0 or not check:
+            return res
+        print(f"[WARN] SSH attempt {attempt+1}/5 failed. Retrying in 5s...", file=sys.stderr)
+        time.sleep(5)
     if check and res.returncode != 0:
-        print(f"[ERROR] SSH failed: {res.stderr}", file=sys.stderr)
+        print(f"[ERROR] SSH failed after 5 attempts: {res.stderr}", file=sys.stderr)
         sys.exit(res.returncode)
     return res
 
@@ -293,11 +298,14 @@ def run_scp(src, dst):
         str(src),
         f"{VPS_USER}@{VPS_IP}:{dst}"
     ]
-    res = subprocess.run(full_cmd, capture_output=True, text=True)
-    if res.returncode != 0:
-        print(f"[ERROR] SCP failed: {res.stderr}", file=sys.stderr)
-        sys.exit(res.returncode)
-    return res
+    for attempt in range(5):
+        res = subprocess.run(full_cmd, capture_output=True, text=True)
+        if res.returncode == 0:
+            return res
+        print(f"[WARN] SCP attempt {attempt+1}/5 failed. Retrying in 5s...", file=sys.stderr)
+        time.sleep(5)
+    print(f"[ERROR] SCP failed after 5 attempts: {res.stderr}", file=sys.stderr)
+    sys.exit(res.returncode)
 
 def compute_hashes(file_path):
     md5 = hashlib.md5()
