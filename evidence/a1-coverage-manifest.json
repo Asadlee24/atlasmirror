@@ -1,9 +1,9 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 18:52:54Z",
+  "timestamp": "2026-09-21 18:58:56Z",
   "summary": {
-    "total_valid_closed_set_entries": 11,
+    "total_valid_closed_set_entries": 12,
     "represented_closed_set_countries": 8,
     "total_extra_entries": 17,
     "required_entries": 25,
@@ -242,6 +242,27 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 90165971,
         "retrieved_md5": "be6f111217e76d8315735642914fef66"
+      }
+    },
+    {
+      "region": "china/sichuan",
+      "parent": "china",
+      "level": "subregion",
+      "country": "China",
+      "source_url": "https://download.geofabrik.de/asia/china/sichuan-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 106797061,
+      "geofabrik_md5": "285763504e474dac69ea3038798abdf6",
+      "cid": "zDvZRwzm5Nb3MUR3WojwiRmeogUg2UyUF6DPq4iY7cpRS51nLtk6",
+      "registry_tx": "fc5afd57cbaec16a308086b9ed16adc3d6d68c7a5645528f423c60a3ee0989bc",
+      "block": 19006,
+      "timestamp": 1790017106,
+      "in_closed_set": true,
+      "status": "A1_VERIFIED",
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 106797061,
+        "retrieved_md5": "285763504e474dac69ea3038798abdf6"
       }
     },
     {
