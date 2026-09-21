@@ -651,12 +651,41 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
             subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module start --json", shell=True)
             time.sleep(4)
 
-            # Prefetch manifest
+            # 4a. Fetch manifest and await completion event
+            dl_m_event = client_data / "dl-manifest-event.json"
+            if dl_m_event.exists():
+                dl_m_event.unlink()
+            dl_m_event.touch()
+            w_m = subprocess.Popen(
+                f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} watch storage_module --event storageDownloadManifestDone --json > {dl_m_event} 2>&1",
+                shell=True
+            )
+            time.sleep(1)
             subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module downloadManifest '{cid}' --json", shell=True)
-            time.sleep(3)
+            
+            manifest_ok = False
+            for _ in range(60):
+                if dl_m_event.stat().st_size > 0:
+                    ev_text = dl_m_event.read_text()
+                    if '"success":true' in ev_text or '"success": true' in ev_text:
+                        manifest_ok = True
+                        break
+                    elif '"success":false' in ev_text or '"success": false' in ev_text:
+                        print(f"[WARN] Manifest fetch returned failure: {ev_text.strip()}")
+                        break
+                time.sleep(1)
+            w_m.kill()
 
-            # Fetch data chunks to URL
+            if not manifest_ok:
+                print(f"[WARN] Manifest not ready on attempt {dl_attempt}. Retrying with fresh daemon...")
+                continue
+
+            print("✅ Manifest downloaded and verified in local cache!")
+
+            # 4b. Fetch data chunks to URL
             dl_ev = client_data / "dl.json"
+            if dl_ev.exists():
+                dl_ev.unlink()
             dl_ev.touch()
             w_dl = subprocess.Popen(
                 f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} watch storage_module --event storageDownloadDone --json > {dl_ev} 2>&1",
