@@ -1,9 +1,9 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 18:46:58Z",
+  "timestamp": "2026-09-21 18:52:54Z",
   "summary": {
-    "total_valid_closed_set_entries": 10,
+    "total_valid_closed_set_entries": 11,
     "represented_closed_set_countries": 8,
     "total_extra_entries": 17,
     "required_entries": 25,
@@ -221,6 +221,27 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 79532918,
         "retrieved_md5": "8570de9c1c339879171f9ade8fc0df8c"
+      }
+    },
+    {
+      "region": "china/zhejiang",
+      "parent": "china",
+      "level": "subregion",
+      "country": "China",
+      "source_url": "https://download.geofabrik.de/asia/china/zhejiang-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 90165971,
+      "geofabrik_md5": "be6f111217e76d8315735642914fef66",
+      "cid": "zDvZRwzm6VRRAPN1VQfLYrpWdZc3bXTXXddX5QeujuGq44hTYpfL",
+      "registry_tx": "f5952e0473aa7e44810cc9d4c4d3ff16e301d172a9957594e088351de08e1c68",
+      "block": 19000,
+      "timestamp": 1790016719,
+      "in_closed_set": true,
+      "status": "A1_VERIFIED",
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 90165971,
+        "retrieved_md5": "be6f111217e76d8315735642914fef66"
       }
     },
     {
