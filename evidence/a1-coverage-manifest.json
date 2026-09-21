@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 09:15:59Z",
+  "timestamp": "2026-09-21 09:35:41Z",
   "summary": {
-    "total_verified_entries": 6,
-    "represented_countries": 6,
+    "total_verified_entries": 7,
+    "represented_countries": 7,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -122,6 +122,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 229501907,
         "retrieved_md5": "e503562d3826bec67e6f87b899da4098"
+      }
+    },
+    {
+      "region": "africa/morocco",
+      "parent": null,
+      "level": "country",
+      "country": "Morocco",
+      "source_url": "https://download.geofabrik.de/africa/morocco-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 243471217,
+      "geofabrik_md5": "ac60aed8b36bac264f2c17c89a584b94",
+      "cid": "zDvZRwzmD3VCUxT9UqAh7mXpT4XmWarwKBFR6p2eRiY7PxjQg3kt",
+      "registry_tx": "511320378daf39ca57c6161fc9c52cd1053f29e59df9a6ae8e1c7648dad195b0",
+      "block": 18444,
+      "timestamp": 1789983272,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 243471217,
+        "retrieved_md5": "ac60aed8b36bac264f2c17c89a584b94"
       }
     }
   ]

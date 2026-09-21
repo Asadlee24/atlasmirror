@@ -24,8 +24,9 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | 4 | `europe/bulgaria` | country | null | Bulgaria | 174,092,672 | `25801cfabc5bfe8e1ae56ded0fa5ed13` | `zDvZRwzm72Y7GBdMzdT7ibQWieQSmUhvk54VHfhcsUDcqnPhma51` | 18337 | **VERIFIED** |
 | 5 | `africa/egypt` | country | null | Egypt | 178,421,161 | `04a4d557c902a5f29ba0e7a1394e0232` | `zDvZRwzmDbJCqSLbyt1Fw4mSvrGFkJGBLaBAogpw8VF66wA469mm` | 18353 | **VERIFIED** |
 | 6 | `asia/iran` | country | null | Iran | 229,501,907 | `e503562d3826bec67e6f87b899da4098` | `zDvZRwzkybLEXZoEjDetaF4yKT73jszhgkMTboXedKCt4En1gUKV` | 18390 | **VERIFIED** |
+| 7 | `africa/morocco` | country | null | Morocco | 243,471,217 | `ac60aed8b36bac264f2c17c89a584b94` | `zDvZRwzmD3VCUxT9UqAh7mXpT4XmWarwKBFR6p2eRiY7PxjQg3kt` | 18444 | **VERIFIED** |
 
-*Pipeline status: In progress (6/25 regions verified across 6/15 countries).*
+*Pipeline status: In progress (7/25 regions verified across 7/15 countries).*
 
 ---
 
