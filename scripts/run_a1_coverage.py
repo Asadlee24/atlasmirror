@@ -580,8 +580,16 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
         print("✅ Geofabrik MD5 verified!")
 
         # 3. Host on VPS Logos Storage and obtain candidate CID via genuine upload completion
-        print(f"Transferring to VPS: {vps_dest}...")
-        run_scp(local_pbf, vps_dest)
+        vps_sz_str = run_ssh(f"stat -c %s '{vps_dest}' 2>/dev/null || echo 0")
+        try:
+            vps_sz = int(vps_sz_str.strip().split()[-1])
+        except Exception:
+            vps_sz = 0
+        if vps_sz != f_size:
+            print(f"Transferring to VPS: {vps_dest}...")
+            run_scp(local_pbf, vps_dest)
+        else:
+            print(f"Staging file already on VPS with exact size ({f_size} bytes). Skipping SCP.")
         print("Uploading to VPS Logos Storage...")
         run_ssh("rm -f /tmp/up_ev.json && touch /tmp/up_ev.json && nohup /root/atlasmirror_vps/bin/logoscore watch storage_module --event storageUploadDone --json > /tmp/up_ev.json 2>&1 &")
         time.sleep(1)
