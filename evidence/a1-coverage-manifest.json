@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 09:35:41Z",
+  "timestamp": "2026-09-21 10:12:43Z",
   "summary": {
-    "total_verified_entries": 7,
-    "represented_countries": 7,
+    "total_verified_entries": 8,
+    "represented_countries": 8,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -141,6 +141,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 243471217,
         "retrieved_md5": "ac60aed8b36bac264f2c17c89a584b94"
+      }
+    },
+    {
+      "region": "asia/malaysia-singapore-brunei",
+      "parent": null,
+      "level": "country",
+      "country": "Malaysia",
+      "source_url": "https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 251169608,
+      "geofabrik_md5": "203cebee0dbaa4e8464b777cd10698e6",
+      "cid": "zDvZRwzkxgamWxqXcSCp2m8Z5WicCRd79MVy8B3duQ8gCZJSc11Y",
+      "registry_tx": "24653c4c49fe7394ec58dc9e87e4f2398b82557e98113e97f3e87264560fa378",
+      "block": 18481,
+      "timestamp": 1789985535,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 251169608,
+        "retrieved_md5": "203cebee0dbaa4e8464b777cd10698e6"
       }
     }
   ]
