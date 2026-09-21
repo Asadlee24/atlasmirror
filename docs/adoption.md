@@ -37,8 +37,9 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | 17 | `europe/cyprus` | country | null | Cyprus | 37,394,174 | `a70236ddae865b51ca75a318320033f2` | `zDvZRwzmDHgovpf7wPvvWDfwVHiQWzUzW4cwaz6mgYRY1DNH9jzv` | 18942 | **VERIFIED** |
 | 18 | `central-america/costa-rica` | country | null | Costa Rica | 38,970,721 | `743d23fafb6a85ddb9cee278f03cb702` | `zDvZRwzm6iHE4SCa6ZN1hf6jYxKRPJoTeUyoWsb85mPMYeFCnA4W` | 18948 | **VERIFIED** |
 | 19 | `asia/azerbaijan` | country | null | Azerbaijan | 46,199,081 | `a888b8bfab0f4453f369edaa7c7aa1e5` | `zDvZRwzmCC9F9gCZS9LFy41LSDFnvRELWA2Ufj3XL74vANmDvieC` | 18952 | **VERIFIED** |
+| 20 | `europe/luxembourg` | country | null | Luxembourg | 47,554,636 | `a7884df26736b305079389b193ff4211` | `zDvZRwzm5Aoyj7sWd2mrVNHNrU1RRdUhmMsaPEadCMNghbR1C6A8` | 18956 | **VERIFIED** |
 
-*Pipeline status: In progress (19/25 regions verified across 19/15 countries).*
+*Pipeline status: In progress (20/25 regions verified across 20/15 countries).*
 
 ---
 
