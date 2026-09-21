@@ -3,9 +3,12 @@
   "standard": "LP-0018 A1 Coverage",
   "timestamp": "2026-09-21 18:29:52Z",
   "summary": {
-    "total_verified_entries": 25,
-    "represented_countries": 25,
-    "status": "A1_VERIFIED",
+    "total_valid_closed_set_entries": 8,
+    "represented_closed_set_countries": 8,
+    "total_extra_entries": 17,
+    "required_entries": 25,
+    "required_countries": 15,
+    "status": "IN_PROGRESS_CLOSED_SET_AUDIT",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
   },
@@ -27,7 +30,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 49157919,
         "retrieved_md5": "0055ebfc7f14585c56d53a88062d5814"
-      }
+      },
+      "status": "A1_VERIFIED",
+      "in_closed_set": true
     },
     {
       "region": "africa/ethiopia",
@@ -46,7 +51,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 139741759,
         "retrieved_md5": "c2e00ecddf7ae4ed89bf05bf104d3f10"
-      }
+      },
+      "status": "A1_VERIFIED",
+      "in_closed_set": true
     },
     {
       "region": "asia/pakistan",
@@ -65,7 +72,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 156230629,
         "retrieved_md5": "d63c9409c20924d0813b81266eb2f5ad"
-      }
+      },
+      "status": "A1_VERIFIED",
+      "in_closed_set": true
     },
     {
       "region": "europe/bulgaria",
@@ -84,7 +93,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 174092672,
         "retrieved_md5": "25801cfabc5bfe8e1ae56ded0fa5ed13"
-      }
+      },
+      "status": "A1_VERIFIED",
+      "in_closed_set": true
     },
     {
       "region": "africa/egypt",
@@ -103,7 +114,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 178421161,
         "retrieved_md5": "04a4d557c902a5f29ba0e7a1394e0232"
-      }
+      },
+      "status": "A1_VERIFIED",
+      "in_closed_set": true
     },
     {
       "region": "asia/iran",
@@ -122,7 +135,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 229501907,
         "retrieved_md5": "e503562d3826bec67e6f87b899da4098"
-      }
+      },
+      "status": "A1_VERIFIED",
+      "in_closed_set": true
     },
     {
       "region": "africa/morocco",
@@ -141,7 +156,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 243471217,
         "retrieved_md5": "ac60aed8b36bac264f2c17c89a584b94"
-      }
+      },
+      "status": "A1_VERIFIED",
+      "in_closed_set": true
     },
     {
       "region": "asia/malaysia-singapore-brunei",
@@ -160,7 +177,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 251169608,
         "retrieved_md5": "203cebee0dbaa4e8464b777cd10698e6"
-      }
+      },
+      "status": "A1_VERIFIED",
+      "in_closed_set": true
     },
     {
       "region": "europe/malta",
@@ -179,7 +198,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 8914777,
         "retrieved_md5": "7315b7284ffe89c8286882398eb2394b"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     },
     {
       "region": "central-america/belize",
@@ -198,7 +219,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 18262587,
         "retrieved_md5": "871fd979e6f5112d2fdadd578b0ecd3d"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     },
     {
       "region": "europe/macedonia",
@@ -217,7 +240,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 29716707,
         "retrieved_md5": "10ccfc90c9d91cb2f913d289c51bbb0e"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     },
     {
       "region": "europe/kosovo",
@@ -236,7 +261,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 30756603,
         "retrieved_md5": "fcd283f004aa4c359d16110cbdfce275"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     },
     {
       "region": "asia/jordan",
@@ -255,7 +282,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 31025485,
         "retrieved_md5": "55aed7483c97278ad17b73509481f916"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     },
     {
       "region": "europe/montenegro",
@@ -274,7 +303,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 34401613,
         "retrieved_md5": "5e5bee8aaf87b2a5241574b8cf3af1a9"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     },
     {
       "region": "central-america/el-salvador",
@@ -293,7 +324,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 35039469,
         "retrieved_md5": "dd2cbf1297b18e404ec7ef192d953843"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     },
     {
       "region": "central-america/panama",
@@ -312,7 +345,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 36190818,
         "retrieved_md5": "eca5b331009acc4887d324fdb956554a"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     },
     {
       "region": "europe/cyprus",
@@ -331,7 +366,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 37394174,
         "retrieved_md5": "a70236ddae865b51ca75a318320033f2"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     },
     {
       "region": "central-america/costa-rica",
@@ -350,7 +387,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 38970721,
         "retrieved_md5": "743d23fafb6a85ddb9cee278f03cb702"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     },
     {
       "region": "asia/azerbaijan",
@@ -369,7 +408,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 46199081,
         "retrieved_md5": "a888b8bfab0f4453f369edaa7c7aa1e5"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     },
     {
       "region": "europe/luxembourg",
@@ -388,7 +429,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 47554636,
         "retrieved_md5": "a7884df26736b305079389b193ff4211"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     },
     {
       "region": "asia/tajikistan",
@@ -407,7 +450,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 48435989,
         "retrieved_md5": "b389057f1779bfd249b152e6bb1096d0"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     },
     {
       "region": "asia/lebanon",
@@ -426,7 +471,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 52497605,
         "retrieved_md5": "cd65407fe4f0401175a2af6f680b68fa"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     },
     {
       "region": "asia/armenia",
@@ -445,7 +492,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 53186007,
         "retrieved_md5": "01c12d028cf539c789e327859dfef7bb"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     },
     {
       "region": "europe/albania",
@@ -464,7 +513,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 54070075,
         "retrieved_md5": "6faf5f96aa14cc2b95b3bdf8d9f32f4d"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     },
     {
       "region": "central-america/nicaragua",
@@ -483,7 +534,9 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 61444052,
         "retrieved_md5": "982c1d47fdc6a103fbfb5ba63571ed16"
-      }
+      },
+      "status": "NON_COUNTING_EXTRA",
+      "in_closed_set": false
     }
   ]
 }
