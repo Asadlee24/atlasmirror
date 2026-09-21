@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 11:37:39Z",
+  "timestamp": "2026-09-21 11:41:54Z",
   "summary": {
-    "total_verified_entries": 9,
-    "represented_countries": 9,
+    "total_verified_entries": 10,
+    "represented_countries": 10,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -179,6 +179,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 8914777,
         "retrieved_md5": "7315b7284ffe89c8286882398eb2394b"
+      }
+    },
+    {
+      "region": "central-america/belize",
+      "parent": null,
+      "level": "country",
+      "country": "Belize",
+      "source_url": "https://download.geofabrik.de/central-america/belize-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 18262587,
+      "geofabrik_md5": "871fd979e6f5112d2fdadd578b0ecd3d",
+      "cid": "zDvZRwzm7Z6itHsGr4c8SuTbvo7ehQQefCrZdvMasJk3FmL8fQez",
+      "registry_tx": "d40df425c8dd961fdd409117d7f0030817d944a1c4e2daa8211cbf7ac14c61df",
+      "block": 18570,
+      "timestamp": 1789990904,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 18262587,
+        "retrieved_md5": "871fd979e6f5112d2fdadd578b0ecd3d"
       }
     }
   ]
