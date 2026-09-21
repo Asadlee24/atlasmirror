@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 18:00:46Z",
+  "timestamp": "2026-09-21 18:04:47Z",
   "summary": {
-    "total_verified_entries": 18,
-    "represented_countries": 18,
+    "total_verified_entries": 19,
+    "represented_countries": 19,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -350,6 +350,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 38970721,
         "retrieved_md5": "743d23fafb6a85ddb9cee278f03cb702"
+      }
+    },
+    {
+      "region": "asia/azerbaijan",
+      "parent": null,
+      "level": "country",
+      "country": "Azerbaijan",
+      "source_url": "https://download.geofabrik.de/asia/azerbaijan-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 46199081,
+      "geofabrik_md5": "a888b8bfab0f4453f369edaa7c7aa1e5",
+      "cid": "zDvZRwzmCC9F9gCZS9LFy41LSDFnvRELWA2Ufj3XL74vANmDvieC",
+      "registry_tx": "05693cbff6152a9927f64d39b975c19a3d4209bb63482e0132395024afe6ae37",
+      "block": 18952,
+      "timestamp": 1790013851,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 46199081,
+        "retrieved_md5": "a888b8bfab0f4453f369edaa7c7aa1e5"
       }
     }
   ]
