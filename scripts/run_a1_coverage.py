@@ -116,157 +116,157 @@ REGIONS_PLAN = [
         "approx_mb": 240
     },
     {
-        "region": "south-america/peru",
-        "country": "Peru",
+        "region": "europe/malta",
+        "country": "Malta",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/south-america/peru-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/south-america/peru-latest.osm.pbf.md5",
-        "approx_mb": 244
+        "pbf_url": "https://download.geofabrik.de/europe/malta-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/europe/malta-latest.osm.pbf.md5",
+        "approx_mb": 7
     },
     {
-        "region": "asia/south-korea",
-        "country": "South Korea",
+        "region": "oceania/fiji",
+        "country": "Fiji",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/asia/south-korea-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/asia/south-korea-latest.osm.pbf.md5",
-        "approx_mb": 274
+        "pbf_url": "https://download.geofabrik.de/oceania/fiji-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/oceania/fiji-latest.osm.pbf.md5",
+        "approx_mb": 5
     },
     {
-        "region": "europe/hungary",
-        "country": "Hungary",
+        "region": "asia/maldives",
+        "country": "Maldives",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/europe/hungary-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/europe/hungary-latest.osm.pbf.md5",
-        "approx_mb": 310
+        "pbf_url": "https://download.geofabrik.de/asia/maldives-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/asia/maldives-latest.osm.pbf.md5",
+        "approx_mb": 3
     },
     {
-        "region": "asia/thailand",
-        "country": "Thailand",
+        "region": "africa/mauritius",
+        "country": "Mauritius",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/asia/thailand-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/asia/thailand-latest.osm.pbf.md5",
-        "approx_mb": 312
+        "pbf_url": "https://download.geofabrik.de/africa/mauritius-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/africa/mauritius-latest.osm.pbf.md5",
+        "approx_mb": 5
     },
     {
-        "region": "europe/romania",
-        "country": "Romania",
+        "region": "central-america/belize",
+        "country": "Belize",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/europe/romania-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/europe/romania-latest.osm.pbf.md5",
-        "approx_mb": 313
+        "pbf_url": "https://download.geofabrik.de/central-america/belize-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/central-america/belize-latest.osm.pbf.md5",
+        "approx_mb": 10
     },
     {
-        "region": "asia/vietnam",
-        "country": "Vietnam",
+        "region": "europe/montenegro",
+        "country": "Montenegro",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/asia/vietnam-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/asia/vietnam-latest.osm.pbf.md5",
-        "approx_mb": 314
+        "pbf_url": "https://download.geofabrik.de/europe/montenegro-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/europe/montenegro-latest.osm.pbf.md5",
+        "approx_mb": 15
     },
     {
-        "region": "south-america/colombia",
-        "country": "Colombia",
+        "region": "europe/kosovo",
+        "country": "Kosovo",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/south-america/colombia-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/south-america/colombia-latest.osm.pbf.md5",
-        "approx_mb": 314
+        "pbf_url": "https://download.geofabrik.de/europe/kosovo-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/europe/kosovo-latest.osm.pbf.md5",
+        "approx_mb": 15
     },
     {
-        "region": "europe/greece",
-        "country": "Greece",
+        "region": "asia/lebanon",
+        "country": "Lebanon",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/europe/greece-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/europe/greece-latest.osm.pbf.md5",
-        "approx_mb": 325
+        "pbf_url": "https://download.geofabrik.de/asia/lebanon-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/asia/lebanon-latest.osm.pbf.md5",
+        "approx_mb": 16
     },
     {
-        "region": "south-america/chile",
-        "country": "Chile",
+        "region": "europe/cyprus",
+        "country": "Cyprus",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/south-america/chile-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/south-america/chile-latest.osm.pbf.md5",
-        "approx_mb": 331
+        "pbf_url": "https://download.geofabrik.de/europe/cyprus-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/europe/cyprus-latest.osm.pbf.md5",
+        "approx_mb": 21
     },
     {
-        "region": "europe/belarus",
-        "country": "Belarus",
+        "region": "africa/burundi",
+        "country": "Burundi",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/europe/belarus-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/europe/belarus-latest.osm.pbf.md5",
-        "approx_mb": 333
+        "pbf_url": "https://download.geofabrik.de/africa/burundi-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/africa/burundi-latest.osm.pbf.md5",
+        "approx_mb": 21
     },
     {
-        "region": "africa/kenya",
-        "country": "Kenya",
+        "region": "asia/jordan",
+        "country": "Jordan",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/africa/kenya-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/africa/kenya-latest.osm.pbf.md5",
-        "approx_mb": 334
+        "pbf_url": "https://download.geofabrik.de/asia/jordan-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/asia/jordan-latest.osm.pbf.md5",
+        "approx_mb": 26
     },
     {
-        "region": "asia/bangladesh",
-        "country": "Bangladesh",
+        "region": "europe/iceland",
+        "country": "Iceland",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/asia/bangladesh-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/asia/bangladesh-latest.osm.pbf.md5",
-        "approx_mb": 338
+        "pbf_url": "https://download.geofabrik.de/europe/iceland-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/europe/iceland-latest.osm.pbf.md5",
+        "approx_mb": 35
     },
     {
-        "region": "europe/ireland-and-northern-ireland",
-        "country": "Ireland",
+        "region": "europe/luxembourg",
+        "country": "Luxembourg",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/europe/ireland-and-northern-ireland-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/europe/ireland-and-northern-ireland-latest.osm.pbf.md5",
-        "approx_mb": 394
+        "pbf_url": "https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/europe/luxembourg-latest.osm.pbf.md5",
+        "approx_mb": 35
     },
     {
-        "region": "europe/portugal",
-        "country": "Portugal",
+        "region": "asia/armenia",
+        "country": "Armenia",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/europe/portugal-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/europe/portugal-latest.osm.pbf.md5",
-        "approx_mb": 403
+        "pbf_url": "https://download.geofabrik.de/asia/armenia-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/asia/armenia-latest.osm.pbf.md5",
+        "approx_mb": 32
     },
     {
-        "region": "europe/czech-republic",
-        "country": "Czech Republic",
+        "region": "africa/rwanda",
+        "country": "Rwanda",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/europe/czech-republic-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/europe/czech-republic-latest.osm.pbf.md5",
-        "approx_mb": 452
+        "pbf_url": "https://download.geofabrik.de/africa/rwanda-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/africa/rwanda-latest.osm.pbf.md5",
+        "approx_mb": 33
     },
     {
-        "region": "europe/austria",
-        "country": "Austria",
+        "region": "asia/tajikistan",
+        "country": "Tajikistan",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/europe/austria-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/europe/austria-latest.osm.pbf.md5",
-        "approx_mb": 499
+        "pbf_url": "https://download.geofabrik.de/asia/tajikistan-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/asia/tajikistan-latest.osm.pbf.md5",
+        "approx_mb": 37
     },
     {
-        "region": "europe/switzerland",
-        "country": "Switzerland",
+        "region": "central-america/panama",
+        "country": "Panama",
         "parent": None,
         "level": "country",
-        "pbf_url": "https://download.geofabrik.de/europe/switzerland-latest.osm.pbf",
-        "md5_url": "https://download.geofabrik.de/europe/switzerland-latest.osm.pbf.md5",
-        "approx_mb": 542
+        "pbf_url": "https://download.geofabrik.de/central-america/panama-latest.osm.pbf",
+        "md5_url": "https://download.geofabrik.de/central-america/panama-latest.osm.pbf.md5",
+        "approx_mb": 38
     }
 ]
 
