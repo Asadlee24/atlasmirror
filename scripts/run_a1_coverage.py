@@ -649,41 +649,46 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
             subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} load-module storage_module", shell=True)
             subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module init @{client_data / 'config.json'} --json", shell=True)
             subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module start --json", shell=True)
-            time.sleep(4)
+            time.sleep(8)
 
             # 4a. Fetch manifest and await completion event
-            dl_m_event = client_data / "dl-manifest-event.json"
-            if dl_m_event.exists():
-                dl_m_event.unlink()
-            dl_m_event.touch()
-            w_m = subprocess.Popen(
-                f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} watch storage_module --event storageDownloadManifestDone --json > {dl_m_event} 2>&1",
-                shell=True
-            )
-            time.sleep(1)
-            subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module downloadManifest '{cid}' --json", shell=True)
-            
             manifest_ok = False
-            for _ in range(60):
-                if dl_m_event.stat().st_size > 0:
-                    try:
-                        for line in dl_m_event.read_text().splitlines():
-                            ev = json.loads(line)
-                            if ev.get("event") == "storageDownloadManifestDone":
-                                inner = json.loads(ev["data"]["arg0"])
-                                if inner.get("success") is True:
-                                    manifest_ok = True
-                                    break
-                                elif inner.get("success") is False:
-                                    print(f"[WARN] Manifest fetch returned error: {inner.get('error')}")
-                                    break
-                    except Exception:
-                        pass
-                    if manifest_ok:
-                        break
+            for m_retry in range(3):
+                dl_m_event = client_data / "dl-manifest-event.json"
+                if dl_m_event.exists():
+                    dl_m_event.unlink()
+                dl_m_event.touch()
+                w_m = subprocess.Popen(
+                    f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} watch storage_module --event storageDownloadManifestDone --json > {dl_m_event} 2>&1",
+                    shell=True
+                )
                 time.sleep(1)
-            w_m.kill()
-            time.sleep(2)
+                subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module downloadManifest '{cid}' --json", shell=True)
+                
+                for _ in range(45):
+                    if dl_m_event.stat().st_size > 0:
+                        try:
+                            for line in dl_m_event.read_text().splitlines():
+                                ev = json.loads(line)
+                                if ev.get("event") == "storageDownloadManifestDone":
+                                    inner = json.loads(ev["data"]["arg0"])
+                                    if inner.get("success") is True:
+                                        manifest_ok = True
+                                        break
+                                    elif inner.get("success") is False:
+                                        print(f"[WARN] Manifest fetch returned error: {inner.get('error')}")
+                                        break
+                        except Exception:
+                            pass
+                        if manifest_ok:
+                            break
+                    time.sleep(1)
+                w_m.kill()
+                time.sleep(1)
+                if manifest_ok:
+                    break
+                print(f"[INFO] Manifest fetch attempt {m_retry+1}/3 failed, waiting 5s for DHT peer discovery...")
+                time.sleep(5)
 
             if not manifest_ok:
                 print(f"[WARN] Manifest not ready on attempt {dl_attempt}. Retrying with fresh daemon...")
@@ -704,14 +709,26 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
             res_dl = subprocess.run(f"export LOGOSCORE_CONFIG_DIR={client_cfg} && {LOGOSCORE_BIN} call storage_module downloadToUrl '{cid}' '{retrieved_file}' false 262144 --json", shell=True, capture_output=True, text=True)
             print(res_dl.stdout.strip())
 
+            # Dynamically scale download timeout with stall detection (min 30 mins)
+            max_wait_seconds = max(1800, int(f_size / (40 * 1024)))
             last_reported = 0
-            for i in range(600):
+            last_progress_size = 0
+            last_progress_time = time.time()
+
+            for i in range(max_wait_seconds):
                 if retrieved_file.exists():
                     cur_sz = retrieved_file.stat().st_size
                     if cur_sz == f_size:
                         print(f"External retrieval complete: {cur_sz}/{f_size} bytes ({i}s)")
                         download_success = True
                         break
+                    if cur_sz > last_progress_size:
+                        last_progress_size = cur_sz
+                        last_progress_time = time.time()
+                    elif time.time() - last_progress_time > 180 and cur_sz > 0:
+                        print(f"[WARN] External retrieval stalled for >180s at {cur_sz} bytes. Aborting attempt.")
+                        break
+
                     if cur_sz - last_reported >= 10 * 1024 * 1024 or i % 15 == 0:
                         pct = (cur_sz / f_size) * 100 if f_size else 0
                         print(f"[{i}s] Download progress: {cur_sz / (1024*1024):.1f} MB / {f_size / (1024*1024):.1f} MB ({pct:.1f}%)", flush=True)
