@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 07:39:21Z",
+  "timestamp": "2026-09-21 07:48:21Z",
   "summary": {
-    "total_verified_entries": 3,
-    "represented_countries": 3,
+    "total_verified_entries": 4,
+    "represented_countries": 4,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -65,6 +65,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 156230629,
         "retrieved_md5": "d63c9409c20924d0813b81266eb2f5ad"
+      }
+    },
+    {
+      "region": "europe/bulgaria",
+      "parent": null,
+      "level": "country",
+      "country": "Bulgaria",
+      "source_url": "https://download.geofabrik.de/europe/bulgaria-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 174092672,
+      "geofabrik_md5": "25801cfabc5bfe8e1ae56ded0fa5ed13",
+      "cid": "zDvZRwzm72Y7GBdMzdT7ibQWieQSmUhvk54VHfhcsUDcqnPhma51",
+      "registry_tx": "eb8604ba5a686e81d738a7c68d6a3cc4a219d1ca633e881a4444533635f7f844",
+      "block": 18337,
+      "timestamp": 1789976858,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 174092672,
+        "retrieved_md5": "25801cfabc5bfe8e1ae56ded0fa5ed13"
       }
     }
   ]
