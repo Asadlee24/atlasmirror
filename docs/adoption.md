@@ -41,8 +41,9 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | 21 | `asia/tajikistan` | country | null | Tajikistan | 48,435,989 | `b389057f1779bfd249b152e6bb1096d0` | `zDvZRwzmAynrFYf1f5MkJJFgK7Xn8pkTBUuHgUgR3fLW2zcvT6AP` | 18960 | **VERIFIED** |
 | 22 | `asia/lebanon` | country | null | Lebanon | 52,497,605 | `cd65407fe4f0401175a2af6f680b68fa` | `zDvZRwzm1oidxJtpGW4zFTpWkte5KdmQDygUJNQBbfHu7yFEGRTF` | 18964 | **VERIFIED** |
 | 23 | `asia/armenia` | country | null | Armenia | 53,186,007 | `01c12d028cf539c789e327859dfef7bb` | `zDvZRwzmCRBHtCD5xRDh86525iUpW236xw4osztJpCes3xWxMyNK` | 18968 | **VERIFIED** |
+| 24 | `europe/albania` | country | null | Albania | 54,070,075 | `6faf5f96aa14cc2b95b3bdf8d9f32f4d` | `zDvZRwzkyMTaCuE8K9FP1r4YPs8i37Z91NGuycpCmhrtwupMRMHw` | 18972 | **VERIFIED** |
 
-*Pipeline status: In progress (23/25 regions verified across 23/15 countries).*
+*Pipeline status: In progress (24/25 regions verified across 24/15 countries).*
 
 ---
 

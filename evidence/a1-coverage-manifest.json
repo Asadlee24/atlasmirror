@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-21 18:20:50Z",
+  "timestamp": "2026-09-21 18:24:55Z",
   "summary": {
-    "total_verified_entries": 23,
-    "represented_countries": 23,
+    "total_verified_entries": 24,
+    "represented_countries": 24,
     "status": "A1_IN_PROGRESS",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
@@ -445,6 +445,25 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 53186007,
         "retrieved_md5": "01c12d028cf539c789e327859dfef7bb"
+      }
+    },
+    {
+      "region": "europe/albania",
+      "parent": null,
+      "level": "country",
+      "country": "Albania",
+      "source_url": "https://download.geofabrik.de/europe/albania-latest.osm.pbf",
+      "version": "2026-09-20",
+      "size": 54070075,
+      "geofabrik_md5": "6faf5f96aa14cc2b95b3bdf8d9f32f4d",
+      "cid": "zDvZRwzkyMTaCuE8K9FP1r4YPs8i37Z91NGuycpCmhrtwupMRMHw",
+      "registry_tx": "6f6218081a52204eb4b1e8be09c2e6c448902335396a2a92fa5cc2776ba92d3b",
+      "block": 18972,
+      "timestamp": 1790015069,
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 54070075,
+        "retrieved_md5": "6faf5f96aa14cc2b95b3bdf8d9f32f4d"
       }
     }
   ]
