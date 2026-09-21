@@ -39,8 +39,9 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | 19 | `asia/azerbaijan` | country | null | Azerbaijan | 46,199,081 | `a888b8bfab0f4453f369edaa7c7aa1e5` | `zDvZRwzmCC9F9gCZS9LFy41LSDFnvRELWA2Ufj3XL74vANmDvieC` | 18952 | **VERIFIED** |
 | 20 | `europe/luxembourg` | country | null | Luxembourg | 47,554,636 | `a7884df26736b305079389b193ff4211` | `zDvZRwzm5Aoyj7sWd2mrVNHNrU1RRdUhmMsaPEadCMNghbR1C6A8` | 18956 | **VERIFIED** |
 | 21 | `asia/tajikistan` | country | null | Tajikistan | 48,435,989 | `b389057f1779bfd249b152e6bb1096d0` | `zDvZRwzmAynrFYf1f5MkJJFgK7Xn8pkTBUuHgUgR3fLW2zcvT6AP` | 18960 | **VERIFIED** |
+| 22 | `asia/lebanon` | country | null | Lebanon | 52,497,605 | `cd65407fe4f0401175a2af6f680b68fa` | `zDvZRwzm1oidxJtpGW4zFTpWkte5KdmQDygUJNQBbfHu7yFEGRTF` | 18964 | **VERIFIED** |
 
-*Pipeline status: In progress (21/25 regions verified across 21/15 countries).*
+*Pipeline status: In progress (22/25 regions verified across 22/15 countries).*
 
 ---
 
