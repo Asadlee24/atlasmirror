@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-22 13:43:31Z",
+  "timestamp": "2026-09-22 13:52:37Z",
   "summary": {
-    "total_valid_closed_set_entries": 20,
-    "represented_closed_set_countries": 12,
+    "total_valid_closed_set_entries": 21,
+    "represented_closed_set_countries": 13,
     "total_extra_entries": 17,
     "required_entries": 25,
     "required_countries": 15,
@@ -431,6 +431,27 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 325265347,
         "retrieved_md5": "418c3773df4cea22d4d034fc1ef29e36"
+      }
+    },
+    {
+      "region": "asia/thailand",
+      "parent": null,
+      "level": "country",
+      "country": "Thailand",
+      "source_url": "https://download.geofabrik.de/asia/thailand-latest.osm.pbf",
+      "version": "2026-09-21",
+      "size": 327605541,
+      "geofabrik_md5": "fb2caf6d2e0bc29d31c0178776676280",
+      "cid": "zDvZRwzkwiWPZsay9EFVEYUSQiVmW7veg9MQQ4ZJNnrFzirjho8Y",
+      "registry_tx": "076c8d6190c402efb4855d096c72da6d43293f52a6c7c02e9873a3f4ef86b674",
+      "block": 20137,
+      "timestamp": 1790085134,
+      "in_closed_set": true,
+      "status": "A1_VERIFIED",
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 327605541,
+        "retrieved_md5": "fb2caf6d2e0bc29d31c0178776676280"
       }
     },
     {
