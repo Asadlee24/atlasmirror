@@ -172,7 +172,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         },
         Commands::Updates(args) => {
-            commands::updates::execute(args.region.as_deref(), cli.json)?;
+            commands::updates::execute(args.region.as_deref(), cli.json).await?;
         }
         Commands::Registry(args) => match args.subcommand {
             RegistrySubcommand::ProgramId => {
