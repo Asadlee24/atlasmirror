@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-22 14:32:38Z",
+  "timestamp": "2026-09-22 14:45:40Z",
   "summary": {
-    "total_valid_closed_set_entries": 23,
-    "represented_closed_set_countries": 15,
+    "total_valid_closed_set_entries": 24,
+    "represented_closed_set_countries": 16,
     "total_extra_entries": 17,
     "required_entries": 25,
     "required_countries": 15,
@@ -494,6 +494,27 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 329083173,
         "retrieved_md5": "8e8faf2eff113b67f28059c3b4a5c677"
+      }
+    },
+    {
+      "region": "south-america/colombia",
+      "parent": null,
+      "level": "country",
+      "country": "Colombia",
+      "source_url": "https://download.geofabrik.de/south-america/colombia-latest.osm.pbf",
+      "version": "2026-09-21",
+      "size": 329796073,
+      "geofabrik_md5": "cb6b9a0ae742bd746017515427623726",
+      "cid": "zDvZRwzm244438FG43oa2LQuT39YuWrmLJXdK4mEkRLgvuyFZDik",
+      "registry_tx": "5f5494f6ea6551f79430de9f789e1ee3728387ecf0a2936dcdace45d885de911",
+      "block": 20190,
+      "timestamp": 1790088308,
+      "in_closed_set": true,
+      "status": "A1_VERIFIED",
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 329796073,
+        "retrieved_md5": "cb6b9a0ae742bd746017515427623726"
       }
     },
     {
