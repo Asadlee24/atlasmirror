@@ -1,20 +1,16 @@
-use common::transaction::LeeTransaction;
-use lee::{
-    AccountId, ProgramShardSelector, PublicTransaction, FeeDeclaration,
-    program::Program,
-    public_transaction::{Message, WitnessSet},
-};
+#![allow(unused_imports)]
 use borsh::{BorshDeserialize, BorshSerialize};
-use sequencer_service_rpc::RpcClient as _;
+use serde::{Deserialize, Serialize};
+use lee::{AccountId, program::Program};
 use wallet::WalletCore;
 
-#[derive(BorshSerialize, BorshDeserialize, Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RegionLevel {
     Country,
     Subregion,
 }
 
-#[derive(BorshSerialize, BorshDeserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RegionRecord {
     pub region: String,
     pub parent: Option<String>,
@@ -27,14 +23,14 @@ pub struct RegionRecord {
     pub timestamp: u64,
 }
 
-#[derive(BorshSerialize, BorshDeserialize, Clone, Debug, PartialEq, Eq, Default)]
+#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
 pub struct RegistryState {
     pub total_regions: u64,
     pub last_updated: u64,
     pub records: Vec<RegionRecord>,
 }
 
-#[derive(BorshSerialize, BorshDeserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RegisterRegionArgs {
     pub region: String,
     pub parent: Option<String>,
@@ -47,19 +43,26 @@ pub struct RegisterRegionArgs {
     pub timestamp: u64,
 }
 
-#[derive(BorshSerialize, BorshDeserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct BatchRegisterArgs {
+    pub records: Vec<RegisterRegionArgs>,
+}
+
+#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum RegistryInstruction {
     Initialize,
     RegisterRegion(RegisterRegionArgs),
-    BatchRegister(Vec<RegisterRegionArgs>),
+    BatchRegister(BatchRegisterArgs),
 }
 
 #[tokio::main]
 async fn main() {
+    let wallet_core = WalletCore::from_env().await.unwrap();
+
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 4 {
         eprintln!(
-            "Usage: run_osm_registry program_path account_id initialize|register|query args"
+            "Usage: run_osm_registry PROGRAM_PATH ACCOUNT_ID ACTION [ARGS...]"
         );
         std::process::exit(1);
     }
@@ -68,62 +71,59 @@ async fn main() {
     let account_id: AccountId = args[2].parse().expect("Invalid account ID");
     let action = &args[3];
 
-    // Initialize wallet
-    let wallet_core = WalletCore::from_env().await.unwrap();
-
-    // Load the program
-    let bytecode: Vec<u8> = std::fs::read(program_path).unwrap();
-    let program = Program::new(bytecode.into()).unwrap();
-    let program_id = program.id();
-    println!("Program ID: {:?}", program_id);
+    let bytecode: Vec<u8> = std::fs::read(program_path).expect("Failed to read program binary");
+    let program = Program::new(bytecode.into()).expect("Failed to parse program");
+    println!("Program ID: {:?}", program.id());
 
     if action == "query" {
-        println!("Querying program account ID: {}", account_id);
-        let shard_selector = ProgramShardSelector::new(account_id, account_id);
-        let account_view = wallet_core
-            .helm_owned()
-            .get_account_view(shard_selector)
+        println!("Querying account state for {}", account_id);
+        let account = wallet_core
+            .get_account(wallet::account::AccountIdWithPrivacy::Public(account_id))
             .await
-            .expect("Failed to get account view");
-        println!("Account view: {:?}", account_view);
-
-        let shard_bytes = account_view.data.shard(account_id).as_ref();
-        println!("Shard bytes len: {}", shard_bytes.len());
-        if !shard_bytes.is_empty() {
-            let state: RegistryState = borsh::from_slice(shard_bytes).expect("Failed to deserialize state");
-            println!("Decoded Registry State: {:?}", state);
-            println!("Total regions: {}", state.total_regions);
-            for r in &state.records {
-                println!("REGION_MATCH: region={}, cid={}, url={}, checksum={}", r.region, r.cid, r.source_url, r.checksum);
+            .expect("Failed to get account");
+        println!("Account view: {:?}", account);
+        let raw_data = account.data.as_ref();
+        println!("Raw data len: {}", raw_data.len());
+        if !raw_data.is_empty() {
+            let state: RegistryState =
+                borsh::from_slice(raw_data).expect("Failed to decode RegistryState");
+            println!("Registry State: total_regions={}, last_updated={}", state.total_regions, state.last_updated);
+            for r in state.records {
+                println!(
+                    "REGION_RECORD: region={}, parent={:?}, level={:?}, cid={}, source_url={}, checksum={}, version={}, hosted={}, timestamp={}",
+                    r.region, r.parent, r.level, r.cid, r.source_url, r.checksum, r.version, r.hosted, r.timestamp
+                );
             }
         } else {
-            println!("Shard is empty!");
+            println!("Account data is empty.");
         }
         return;
     }
 
-    // Build instruction
-    let instruction: RegistryInstruction = match action.as_str() {
-        "initialize" => {
+    let instruction = match action.as_str() {
+        "init" => {
             println!("Building Initialize instruction...");
             RegistryInstruction::Initialize
         }
         "register" => {
-            if args.len() < 10 {
-                eprintln!("Usage for register: run_osm_registry prog account register region cid checksum source_url version timestamp");
-                std::process::exit(1);
-            }
-            let region = args[4].clone();
-            let cid = args[5].clone();
-            let checksum = args[6].clone();
-            let source_url = args[7].clone();
-            let version = args[8].clone();
-            let timestamp: u64 = args[9].parse().expect("Invalid timestamp");
+            let region = args.get(4).cloned().unwrap_or_else(|| "pakistan".to_string());
+            let cid = args.get(5).cloned().unwrap_or_else(|| "zDvZRwzm4FBsSGJRftqqYev7aNBEcEUcwDBxCSREXGo1qCnNR5U4".to_string());
+            let checksum = args.get(6).cloned().unwrap_or_else(|| "378df25f824177ebcbe9aa11d88bbd6b".to_string());
+            let source_url = args.get(7).cloned().unwrap_or_else(|| "https://download.geofabrik.de/asia/pakistan-latest.osm.pbf".to_string());
+            let version = args.get(8).cloned().unwrap_or_else(|| "2026-09-19".to_string());
+            let timestamp: u64 = args.get(9).and_then(|s| s.parse().ok()).unwrap_or(1726747200);
+
+            let (parent, level) = if region.contains('/') {
+                let parts: Vec<&str> = region.split('/').collect();
+                (Some(parts[0].to_string()), RegionLevel::Subregion)
+            } else {
+                (None, RegionLevel::Country)
+            };
 
             let reg_args = RegisterRegionArgs {
                 region,
-                parent: None,
-                level: RegionLevel::Country,
+                parent,
+                level,
                 cid,
                 source_url,
                 checksum,
@@ -131,52 +131,36 @@ async fn main() {
                 hosted: true,
                 timestamp,
             };
-            println!("Building RegisterRegion instruction for region: {}", reg_args.region);
+            println!("Building RegisterRegion instruction: {:?}", reg_args);
             RegistryInstruction::RegisterRegion(reg_args)
+        }
+        "batch_register" => {
+            let json_path = args.get(4).expect("Missing batch json file path");
+            let json_str = std::fs::read_to_string(json_path).expect("Failed to read batch json file");
+            let records: Vec<RegisterRegionArgs> = serde_json::from_str(&json_str).expect("Failed to parse batch records JSON");
+            println!("Building BatchRegister instruction with {} records...", records.len());
+            RegistryInstruction::BatchRegister(BatchRegisterArgs { records })
         }
         other => panic!("Unknown action: {}", other),
     };
 
-    let payer_id: AccountId = "6iArKUXxhUJqS7kCaPNhwMWt3ro71PDyBj7jwAyE2VQV"
-        .parse()
-        .expect("Invalid payer account ID");
+    let instruction_data = Program::serialize_instruction(instruction).expect("Failed to serialize instruction");
 
-    let payer_key = wallet_core
-        .storage()
-        .key_chain()
-        .pub_account_signing_key(payer_id)
-        .expect("Payer signing key should be in wallet")
-        .clone();
-
-    // Query nonces for payer_id
-    let payer_nonces = wallet_core
-        .get_accounts_nonces(&[payer_id])
-        .await
-        .expect("Failed to get payer account nonce from node");
-
-    let nonces = vec![payer_nonces[0]];
-    let fee = FeeDeclaration::new(payer_id, 2_000_000, 0, 134_400_000);
-
-    // program_account_id is the header account where the program was deployed
-    let message = Message::try_new_with_fees(
-        account_id,
-        vec![ProgramShardSelector::new(account_id, account_id)],
-        nonces,
-        instruction,
-        fee,
-    )
-    .expect("Failed to create message");
-
-    let signing_keys = [&payer_key];
-    let witness_set = WitnessSet::for_message(&message, &signing_keys);
-    let tx = PublicTransaction::new(message, witness_set);
-
-    println!("Submitting transaction to LEZ sequencer...");
-    let response = wallet_core
-        .helm_owned()
-        .send_transaction(LeeTransaction::Public(tx))
+    let tx_hash = wallet_core
+        .send_pub_tx(
+            vec![wallet::AccountIdentity::Public(account_id)],
+            instruction_data,
+            program.id(),
+        )
         .await
         .expect("Failed to send transaction");
 
-    println!("Transaction confirmed! Response: {:?}", response);
+    println!("Transaction submitted! Hash: {:?}", tx_hash);
+
+    println!("Polling for transaction finalization...");
+    let final_res = wallet_core
+        .poll_and_finalize_public_transaction(tx_hash)
+        .await
+        .expect("Failed to finalize transaction");
+    println!("Transaction finalized successfully! Result: {:?}", final_res);
 }
