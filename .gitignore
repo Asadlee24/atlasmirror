@@ -10,8 +10,9 @@
 # Build artifacts
 target/
 build/
-bin/
-lib/
+/bin/
+/lib/
+!**/src/bin/**
 cmake-build-*/
 result
 result-*
@@ -34,6 +35,7 @@ config*.json
 *.a
 *.lib
 *.bin
+!osm_registry.bin
 
 
 # Generated files
