@@ -38,7 +38,10 @@ pub fn resolve_md5_url(region_path: &str) -> String {
 /// Fetches and parses the canonical MD5 checksum published by Geofabrik.
 pub async fn fetch_published_md5(region_path: &str) -> Result<String, GeofabrikError> {
     let url = resolve_md5_url(region_path);
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .user_agent("AtlasMirror/1.0 (LP-0018 Evaluator)")
+        .build()
+        .unwrap_or_else(|_| reqwest::Client::new());
     let resp = client.get(&url).send().await?.text().await?;
 
     // Geofabrik MD5 format is typically: "<md5_hex>  <filename>"
@@ -76,7 +79,10 @@ pub async fn download_pbf_stream(
     destination: &Path,
     on_progress: impl Fn(u64, Option<u64>),
 ) -> Result<(), GeofabrikError> {
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .user_agent("AtlasMirror/1.0 (LP-0018 Evaluator)")
+        .build()
+        .unwrap_or_else(|_| reqwest::Client::new());
     let resp = client.get(url).send().await?;
 
     let total_size = resp.content_length();
