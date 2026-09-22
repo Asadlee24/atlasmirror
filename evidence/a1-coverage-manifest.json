@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-22 14:04:34Z",
+  "timestamp": "2026-09-22 14:32:38Z",
   "summary": {
-    "total_valid_closed_set_entries": 22,
-    "represented_closed_set_countries": 14,
+    "total_valid_closed_set_entries": 23,
+    "represented_closed_set_countries": 15,
     "total_extra_entries": 17,
     "required_entries": 25,
     "required_countries": 15,
@@ -473,6 +473,27 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 328695224,
         "retrieved_md5": "15be838879747572b38be7593903d501"
+      }
+    },
+    {
+      "region": "asia/vietnam",
+      "parent": null,
+      "level": "country",
+      "country": "Vietnam",
+      "source_url": "https://download.geofabrik.de/asia/vietnam-latest.osm.pbf",
+      "version": "2026-09-21",
+      "size": 329083173,
+      "geofabrik_md5": "8e8faf2eff113b67f28059c3b4a5c677",
+      "cid": "zDvZRwzkziYDq1uiBfvomQs9aypHaWNeBtBUQqzgaMBVZaCVgz9R",
+      "registry_tx": "3ddbae60aa4ed3df4e4646f1e13fff02714a5d2ecd479ad9f975773a05ab96bf",
+      "block": 20177,
+      "timestamp": 1790087528,
+      "in_closed_set": true,
+      "status": "A1_VERIFIED",
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 329083173,
+        "retrieved_md5": "8e8faf2eff113b67f28059c3b4a5c677"
       }
     },
     {
