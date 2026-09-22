@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-22 13:17:27Z",
+  "timestamp": "2026-09-22 13:26:29Z",
   "summary": {
-    "total_valid_closed_set_entries": 17,
-    "represented_closed_set_countries": 9,
+    "total_valid_closed_set_entries": 18,
+    "represented_closed_set_countries": 10,
     "total_extra_entries": 17,
     "required_entries": 25,
     "required_countries": 15,
@@ -368,6 +368,27 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 247113947,
         "retrieved_md5": "52e787e4dfa4351506787e864d43fc2e"
+      }
+    },
+    {
+      "region": "south-america/peru",
+      "parent": null,
+      "level": "country",
+      "country": "Peru",
+      "source_url": "https://download.geofabrik.de/south-america/peru-latest.osm.pbf",
+      "version": "2026-09-21",
+      "size": 256020114,
+      "geofabrik_md5": "35b488e2b7323256ee981ae33d7f7c01",
+      "cid": "zDvZRwzkwrj1ZxgoWFzmQ7pr2aGE7ysC9VtaWhcf412PtZvynDbE",
+      "registry_tx": "2bd7f5924d4a3a4a6831d3848cdddec5ec86f2ec11a4027ad051488acf68bbb2",
+      "block": 20111,
+      "timestamp": 1790083530,
+      "in_closed_set": true,
+      "status": "A1_VERIFIED",
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 256020114,
+        "retrieved_md5": "35b488e2b7323256ee981ae33d7f7c01"
       }
     },
     {
