@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-22 13:52:37Z",
+  "timestamp": "2026-09-22 14:04:34Z",
   "summary": {
-    "total_valid_closed_set_entries": 21,
-    "represented_closed_set_countries": 13,
+    "total_valid_closed_set_entries": 22,
+    "represented_closed_set_countries": 14,
     "total_extra_entries": 17,
     "required_entries": 25,
     "required_countries": 15,
@@ -452,6 +452,27 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 327605541,
         "retrieved_md5": "fb2caf6d2e0bc29d31c0178776676280"
+      }
+    },
+    {
+      "region": "europe/romania",
+      "parent": null,
+      "level": "country",
+      "country": "Romania",
+      "source_url": "https://download.geofabrik.de/europe/romania-latest.osm.pbf",
+      "version": "2026-09-21",
+      "size": 328695224,
+      "geofabrik_md5": "15be838879747572b38be7593903d501",
+      "cid": "zDvZRwzm1tt7QonUPJAYyBXSD5M2pyBFCEQtyPvbLFMSZi6Ri65A",
+      "registry_tx": "004bc33e3edbb110bfb1b673521fb87adce90be5201bb61394530fdb7af13cc3",
+      "block": 20149,
+      "timestamp": 1790085865,
+      "in_closed_set": true,
+      "status": "A1_VERIFIED",
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 328695224,
+        "retrieved_md5": "15be838879747572b38be7593903d501"
       }
     },
     {
