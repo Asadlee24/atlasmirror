@@ -97,7 +97,12 @@ pub async fn execute_host_file(
     let expected_md5 = match crate::geofabrik::fetch_published_md5(region).await {
         Ok(hash) => hash,
         Err(e) => {
-            eprintln!("{} Failed to fetch canonical MD5 for region '{}': {}", "✖".red(), region, e);
+            eprintln!(
+                "{} Failed to fetch canonical MD5 for region '{}': {}",
+                "✖".red(),
+                region,
+                e
+            );
             std::process::exit(1);
         }
     };
@@ -106,14 +111,21 @@ pub async fn execute_host_file(
     let actual_md5 = match crate::geofabrik::compute_file_md5(file_path) {
         Ok(hash) => hash,
         Err(e) => {
-            eprintln!("{} Failed to calculate local file MD5: {}", "✖".red(), e);
+            eprintln!(
+                "{} Failed to calculate local file MD5: {}",
+                "✖".red(),
+                e
+            );
             std::process::exit(1);
         }
     };
     println!("     Actual:   {}", actual_md5);
 
     if expected_md5 != actual_md5 {
-        eprintln!("{} Checksum mismatch! Halting import immediately (tamper detected).", "✖".red());
+        eprintln!(
+            "{} Checksum mismatch! Halting import immediately (tamper detected).",
+            "✖".red()
+        );
         eprintln!("   Expected published: {}", expected_md5);
         eprintln!("   Computed local:     {}", actual_md5);
         std::process::exit(1);
