@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-22 13:26:29Z",
+  "timestamp": "2026-09-22 13:34:30Z",
   "summary": {
-    "total_valid_closed_set_entries": 18,
-    "represented_closed_set_countries": 10,
+    "total_valid_closed_set_entries": 19,
+    "represented_closed_set_countries": 11,
     "total_extra_entries": 17,
     "required_entries": 25,
     "required_countries": 15,
@@ -389,6 +389,27 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 256020114,
         "retrieved_md5": "35b488e2b7323256ee981ae33d7f7c01"
+      }
+    },
+    {
+      "region": "asia/south-korea",
+      "parent": null,
+      "level": "country",
+      "country": "South Korea",
+      "source_url": "https://download.geofabrik.de/asia/south-korea-latest.osm.pbf",
+      "version": "2026-09-21",
+      "size": 287704054,
+      "geofabrik_md5": "8becc786e5637e7c018fbb5418b6e243",
+      "cid": "zDvZRwzkwQdS93ToSZKhmgEHi8kXXE3w8m8hH8XxxaeZDPTngGvS",
+      "registry_tx": "979d85da65bb4253e83201d8d1e70e3b2a7342767cc12a66d06d02b0b8495011",
+      "block": 20119,
+      "timestamp": 1790084024,
+      "in_closed_set": true,
+      "status": "A1_VERIFIED",
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 287704054,
+        "retrieved_md5": "8becc786e5637e7c018fbb5418b6e243"
       }
     },
     {

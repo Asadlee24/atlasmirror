@@ -38,9 +38,10 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | 16 | `india/northern-zone` | subregion | india | India | 223,335,582 | `dcc43d108e7a5a77e1c6dfb4e3605918` | `zDvZRwzmAXm6gwKyfMoMsUjqzjbYLKwVW1ik5AYL5EE2DAvKtxwC` | 20092 | **A1_VERIFIED** |
 | 17 | `india/eastern-zone` | subregion | india | India | 247,113,947 | `52e787e4dfa4351506787e864d43fc2e` | `zDvZRwzkxSJ2nb8ZuBfkjb1gZQxVxu4zNwv1tvYfVQioqEVSQ1BP` | 20102 | **A1_VERIFIED** |
 | 18 | `south-america/peru` | country | null | Peru | 256,020,114 | `35b488e2b7323256ee981ae33d7f7c01` | `zDvZRwzkwrj1ZxgoWFzmQ7pr2aGE7ysC9VtaWhcf412PtZvynDbE` | 20111 | **A1_VERIFIED** |
+| 19 | `asia/south-korea` | country | null | South Korea | 287,704,054 | `8becc786e5637e7c018fbb5418b6e243` | `zDvZRwzkwQdS93ToSZKhmgEHi8kXXE3w8m8hH8XxxaeZDPTngGvS` | 20119 | **A1_VERIFIED** |
 
-**A1 Valid Closed-Set Count**: **18 / 25 entries** across **10 represented countries**.
-*Pipeline status: In progress (18/25 valid closed-set regions across 10/15 countries).*
+**A1 Valid Closed-Set Count**: **19 / 25 entries** across **11 represented countries**.
+*Pipeline status: In progress (19/25 valid closed-set regions across 11/15 countries).*
 
 #### Supplementary On-Chain & Storage Entries (Preserved, Marked `NON_COUNTING_EXTRA`)
 
