@@ -288,116 +288,139 @@ def process_region(region_name):
     run_ssh("systemctl restart logos-storage && sleep 4")
 
     # 4. Mandatory Independent External Retrieval from Local WSL Peer Client
-    print(f"\n[4/5] Executing independent external retrieval for CID {cid} from WSL peer...")
-    live_spr = run_ssh("export LOGOSCORE_CONFIG_DIR=/root/atlasmirror_vps/cfg && /root/atlasmirror_vps/bin/logoscore call storage_module spr --json").stdout
-    spr = None
-    for line in live_spr.splitlines():
-        if '"success":true' in line and "spr:CiU" in line:
-            spr = json.loads(line)["result"]["value"]
-            break
-    assert spr, "Failed to get VPS SPR for client peer!"
-
-    client_dir = Path("/root/a1_client")
-    subprocess.run(["killall", "-9", "logoscore"], capture_output=True)
-    time.sleep(1)
-    if client_dir.exists():
-        subprocess.run(["rm", "-rf", str(client_dir)])
-
-    cfg_dir = client_dir / "cfg"
-    data_dir = client_dir / "data"
-    cfg_dir.mkdir(parents=True, exist_ok=True)
-    data_dir.mkdir(parents=True, exist_ok=True)
-
-    config = {
-        "data-dir": str(data_dir),
-        "log-level": "NOTICE",
-        "network": "logos.test",
-        "listen-ip": "0.0.0.0",
-        "listen-port": 8095,
-        "nat": "auto",
-        "bootstrap-node": [spr]
-    }
-    (data_dir / "config.json").write_text(json.dumps(config, indent=2))
-
-    logoscore_bin = "/mnt/c/Users/Aftab/Desktop/atlasmirror/logos/bin/logoscore"
-    modules_dir = "/mnt/c/Users/Aftab/Desktop/atlasmirror/modules"
-
-    subprocess.Popen(f"export LOGOSCORE_CONFIG_DIR={cfg_dir} && {logoscore_bin} -D -m {modules_dir} > {data_dir}/daemon.log 2>&1", shell=True)
-    time.sleep(2)
-    subprocess.run(f"export LOGOSCORE_CONFIG_DIR={cfg_dir} && {logoscore_bin} load-module storage_module", shell=True)
-    subprocess.run(f"export LOGOSCORE_CONFIG_DIR={cfg_dir} && {logoscore_bin} call storage_module init @{data_dir / 'config.json'} --json", shell=True)
-    subprocess.run(f"export LOGOSCORE_CONFIG_DIR={cfg_dir} && {logoscore_bin} call storage_module start --json", shell=True)
-    print("Local client peer started. Waiting 12s for DHT bootstrap discovery...")
-    time.sleep(12)
-
-    manifest_ok = False
-    for m_try in range(1, 10):
-        print(f"Fetching manifest (attempt {m_try}/9)...")
-        dl_m_event = data_dir / "dl-manifest-event.json"
-        if dl_m_event.exists():
-            dl_m_event.unlink()
-        dl_m_event.touch()
-
-        w_m = subprocess.Popen(
-            f"export LOGOSCORE_CONFIG_DIR={cfg_dir} && {logoscore_bin} watch storage_module --event storageDownloadManifestDone --json > {dl_m_event} 2>&1",
-            shell=True
-        )
-        time.sleep(1)
-        subprocess.run(f"export LOGOSCORE_CONFIG_DIR={cfg_dir} && {logoscore_bin} call storage_module downloadManifest '{cid}' --json", shell=True)
-
-        for _ in range(40):
-            if dl_m_event.stat().st_size > 0:
-                try:
-                    for l in dl_m_event.read_text().splitlines():
-                        ev = json.loads(l)
-                        if ev.get("event") == "storageDownloadManifestDone":
-                            inner = json.loads(ev["data"]["arg0"])
-                            if inner.get("success") is True:
-                                manifest_ok = True
-                                break
-                            elif inner.get("success") is False:
-                                print(f"[INFO] Manifest attempt {m_try} note: {inner.get('error')}")
-                except Exception:
-                    pass
-                if manifest_ok:
-                    break
-            time.sleep(1)
-        w_m.kill()
-        if manifest_ok:
-            print("✅ Manifest downloaded and verified in local peer cache!")
-            break
-        print(f"Waiting 6s before retry...")
-        time.sleep(6)
-
-    assert manifest_ok, f"Failed to download manifest for {cid}!"
-
-    target_file = data_dir / "retrieved.osm.pbf"
-    print(f"Calling downloadToUrl to {target_file}...")
-    subprocess.run(f"export LOGOSCORE_CONFIG_DIR={cfg_dir} && {logoscore_bin} call storage_module downloadToUrl '{cid}' '{target_file}' false 262144 --json", shell=True)
-
     download_success = False
-    last_sz = 0
-    last_progress_time = time.time()
-    max_wait_secs = max(900, int(f_size / 150000))
-    for sec in range(max_wait_secs):
-        if target_file.exists():
-            cur_sz = target_file.stat().st_size
-            if cur_sz == f_size:
-                print(f"✅ External retrieval complete: {cur_sz:,} / {f_size:,} bytes ({sec}s)!")
-                download_success = True
+    target_file = None
+    for ret_try in range(1, 4):
+        print(f"\n[4/5] Independent external retrieval attempt {ret_try}/3 for CID {cid}...")
+        live_spr = run_ssh("export LOGOSCORE_CONFIG_DIR=/root/atlasmirror_vps/cfg && /root/atlasmirror_vps/bin/logoscore call storage_module spr --json").stdout
+        spr = None
+        for line in live_spr.splitlines():
+            if '"success":true' in line and "spr:CiU" in line:
+                spr = json.loads(line)["result"]["value"]
                 break
-            if cur_sz > last_sz:
-                last_sz = cur_sz
-                last_progress_time = time.time()
-            elif time.time() - last_progress_time > 90 and cur_sz > 0:
-                print(f"[WARN] Download stalled at {cur_sz:,} bytes.")
-                break
-            if sec % 10 == 0:
-                pct = (cur_sz / f_size) * 100
-                print(f"Download progress ({sec}s): {cur_sz:,} / {f_size:,} bytes ({pct:.1f}%)")
-        time.sleep(1)
+        assert spr, "Failed to get VPS SPR for client peer!"
 
-    subprocess.run(["killall", "-9", "logoscore"], capture_output=True)
+        client_dir = Path("/root/a1_client")
+        subprocess.run(["killall", "-9", "logoscore"], capture_output=True)
+        time.sleep(1)
+        if client_dir.exists():
+            subprocess.run(["rm", "-rf", str(client_dir)])
+
+        cfg_dir = client_dir / "cfg"
+        data_dir = client_dir / "data"
+        cfg_dir.mkdir(parents=True, exist_ok=True)
+        data_dir.mkdir(parents=True, exist_ok=True)
+
+        config = {
+            "data-dir": str(data_dir),
+            "log-level": "NOTICE",
+            "network": "logos.test",
+            "listen-ip": "0.0.0.0",
+            "listen-port": 8095,
+            "nat": "auto",
+            "bootstrap-node": [spr]
+        }
+        (data_dir / "config.json").write_text(json.dumps(config, indent=2))
+
+        logoscore_bin = "/mnt/c/Users/Aftab/Desktop/atlasmirror/logos/bin/logoscore"
+        modules_dir = "/mnt/c/Users/Aftab/Desktop/atlasmirror/modules"
+
+        subprocess.Popen(f"export LOGOSCORE_CONFIG_DIR={cfg_dir} && {logoscore_bin} -D -m {modules_dir} > {data_dir}/daemon.log 2>&1", shell=True)
+        client_cfg = cfg_dir / "client" / "config.json"
+        for _ in range(30):
+            if client_cfg.exists():
+                break
+            time.sleep(0.5)
+        time.sleep(1.5)
+
+        for attempt in range(5):
+            r_load = subprocess.run(f"export LOGOSCORE_CONFIG_DIR={cfg_dir} && {logoscore_bin} load-module storage_module", shell=True, capture_output=True, text=True)
+            if "No client config" not in r_load.stdout and "No client config" not in r_load.stderr:
+                break
+            time.sleep(1)
+
+        r_init = subprocess.run(f"export LOGOSCORE_CONFIG_DIR={cfg_dir} && {logoscore_bin} call storage_module init @{data_dir / 'config.json'} --json", shell=True, capture_output=True, text=True)
+        print(f"Client init result: {r_init.stdout.strip()}")
+        r_start = subprocess.run(f"export LOGOSCORE_CONFIG_DIR={cfg_dir} && {logoscore_bin} call storage_module start --json", shell=True, capture_output=True, text=True)
+        print(f"Client start result: {r_start.stdout.strip()}")
+        print("Local client peer started. Waiting 12s for DHT bootstrap discovery...")
+        time.sleep(12)
+
+        manifest_ok = False
+        for m_try in range(1, 10):
+            print(f"Fetching manifest (attempt {m_try}/9)...")
+            dl_m_event = data_dir / "dl-manifest-event.json"
+            if dl_m_event.exists():
+                dl_m_event.unlink()
+            dl_m_event.touch()
+
+            w_m = subprocess.Popen(
+                f"export LOGOSCORE_CONFIG_DIR={cfg_dir} && {logoscore_bin} watch storage_module --event storageDownloadManifestDone --json > {dl_m_event} 2>&1",
+                shell=True
+            )
+            time.sleep(1)
+            subprocess.run(f"export LOGOSCORE_CONFIG_DIR={cfg_dir} && {logoscore_bin} call storage_module downloadManifest '{cid}' --json", shell=True)
+
+            for _ in range(40):
+                if dl_m_event.stat().st_size > 0:
+                    try:
+                        for l in dl_m_event.read_text().splitlines():
+                            ev = json.loads(l)
+                            if ev.get("event") == "storageDownloadManifestDone":
+                                inner = json.loads(ev["data"]["arg0"])
+                                if inner.get("success") is True:
+                                    manifest_ok = True
+                                    break
+                                elif inner.get("success") is False:
+                                    print(f"[INFO] Manifest attempt {m_try} note: {inner.get('error')}")
+                    except Exception:
+                        pass
+                    if manifest_ok:
+                        break
+                time.sleep(1)
+            w_m.kill()
+            if manifest_ok:
+                print("✅ Manifest downloaded and verified in local peer cache!")
+                break
+            print(f"Waiting 6s before retry...")
+            time.sleep(6)
+
+        if not manifest_ok:
+            print(f"[WARN] Failed manifest download on attempt {ret_try}, retrying...")
+            subprocess.run(["killall", "-9", "logoscore"], capture_output=True)
+            continue
+
+        target_file = data_dir / "retrieved.osm.pbf"
+        print(f"Calling downloadToUrl to {target_file}...")
+        subprocess.run(f"export LOGOSCORE_CONFIG_DIR={cfg_dir} && {logoscore_bin} call storage_module downloadToUrl '{cid}' '{target_file}' false 262144 --json", shell=True)
+
+        last_sz = 0
+        last_progress_time = time.time()
+        max_wait_secs = max(1200, int(f_size / 100000))
+        for sec in range(max_wait_secs):
+            if target_file.exists():
+                cur_sz = target_file.stat().st_size
+                if cur_sz == f_size:
+                    print(f"✅ External retrieval complete: {cur_sz:,} / {f_size:,} bytes ({sec}s)!")
+                    download_success = True
+                    break
+                if cur_sz > last_sz:
+                    last_sz = cur_sz
+                    last_progress_time = time.time()
+                elif time.time() - last_progress_time > 120 and cur_sz > 0:
+                    print(f"[WARN] Download stalled at {cur_sz:,} bytes. Re-triggering downloadToUrl...")
+                    subprocess.run(f"export LOGOSCORE_CONFIG_DIR={cfg_dir} && {logoscore_bin} call storage_module downloadToUrl '{cid}' '{target_file}' false 262144 --json", shell=True)
+                    last_progress_time = time.time() + 60
+                if sec % 10 == 0:
+                    pct = (cur_sz / f_size) * 100
+                    print(f"Download progress ({sec}s): {cur_sz:,} / {f_size:,} bytes ({pct:.1f}%)")
+            time.sleep(1)
+
+        subprocess.run(["killall", "-9", "logoscore"], capture_output=True)
+        if download_success:
+            break
+        print(f"[WARN] Retrieval attempt {ret_try} did not complete, restarting peer...")
+
     assert download_success, f"External retrieval timed out for {region_name}!"
 
     import hashlib
