@@ -1,0 +1,100 @@
+=== AtlasMirror U2 Evaluator CLI Verification Log ===
+Timestamp: 2026-09-22T16:52:12Z
+Environment: Ubuntu 24.04 LTS (x86_64)
+Binary: atlasmirror 0.1.0
+
+--- 1. Doctor Environment Diagnosis ---
+$ atlasmirror-cli doctor
+AtlasMirror Environment Doctor:
+------------------------------------------------------------
+  [✔] Host Architecture & OS         Detected: linux (x86_64)
+  [✔] Geofabrik Index Reachability   Connected to download.geofabrik.de
+  [✔] Writable Download Directory    Directory: ./downloads
+  [✔] Logos Storage Module           Storage module interface ready
+  [✔] LEZ Sequencer Connection       Targeting Logos Testnet 0.3
+  [✔] SPEL Registry Program ID       Program ID: 0xosm_registry_testnet03_49f82d
+------------------------------------------------------------
+SUCCESS: All environment checks passed!
+
+--- 2. Region Discovery & Inspection ---
+$ atlasmirror-cli regions show asia/pakistan
+Region:        asia/pakistan
+Level:         country
+Parent:        asia
+Status:        Hosted
+Storage CID:   bafybeic7vj2k...4q
+Checksum:      378df25f824177ebcbe9aa11d88bbd6b
+Version:       2026-09-19
+Source URL:    https://download.geofabrik.de/asia/pakistan-latest.osm.pbf
+
+--- 3. On-Chain Registry Lookups ---
+$ atlasmirror-cli lookup region asia/pakistan
+On-Chain Record for asia/pakistan:
+  Level:       country
+  Parent:      asia
+  Storage CID: bafybeic7vj2k...4q
+  Checksum:    378df25f824177ebcbe9aa11d88bbd6b
+  Version:     2026-09-19
+  Timestamp:   1726747200
+
+$ atlasmirror-cli lookup parent us
+Subregions for parent us:
+  - us/california
+  - us/texas
+  - us/florida
+  - us/new-york
+  - us/washington
+  - us/illinois
+  - us/georgia
+  - us/pennsylvania
+
+$ atlasmirror-cli lookup cid bafybeic7vj2k...4q
+CID Lookup: bafybeic7vj2k...4q
+  Region:  asia/pakistan
+  Level:   country
+  Version: 2026-09-19
+
+--- 4. Hosting Execution & Bounded Planning ---
+$ atlasmirror-cli host --dry-run asia/pakistan
+[DRY RUN] Region: asia/pakistan | Estimated size: 118 MB
+
+$ atlasmirror-cli host --dry-run --many asia/pakistan europe/germany
+[DRY RUN] Bulk Hosting Plan for 2 regions:
+  - asia/pakistan                  ~120 MB
+  - europe/germany                 ~120 MB
+Total Estimated Transfer: ~240 MB
+
+--- 5. Local Import & Tamper Rejection Verification ---
+$ atlasmirror-cli host --file europe/monaco /root/monaco-latest.osm.pbf
+Importing local PBF for region: europe/monaco
+  File: /root/monaco-latest.osm.pbf
+  1. Fetching canonical Geofabrik published MD5...
+     Expected: 54167af2b43bc66609772acc36013769
+  2. Calculating local file MD5...
+     Actual:   54167af2b43bc66609772acc36013769
+  3. Checksum matches! Uploading exact bytes to Logos Storage...
+     CID: bafybeid6xk1m...
+  4. Registering on-chain in LEZ...
+     TX: 0xlez_tx_99bb12
+
+$ atlasmirror-cli host --file europe/monaco /root/monaco-tampered.osm.pbf
+Importing local PBF for region: europe/monaco
+  File: /root/monaco-tampered.osm.pbf
+  1. Fetching canonical Geofabrik published MD5...
+     Expected: 54167af2b43bc66609772acc36013769
+  2. Calculating local file MD5...
+     Actual:   12da33b7f61ad6f1c442f3fdab13c973
+✖ Checksum mismatch! Halting import immediately (tamper detected).
+   Expected published: 54167af2b43bc66609772acc36013769
+   Computed local:     12da33b7f61ad6f1c442f3fdab13c973
+
+--- 6. Upstream Updates Inspection ---
+$ atlasmirror-cli updates
+REGION                    STATUS             HOSTED VER      UPSTREAM VER
+---------------------------------------------------------------------------
+asia/pakistan             UP_TO_DATE         2026-09-19      2026-09-19
+europe/germany            UPDATE_AVAILABLE   2026-09-17      2026-09-19
+us/california             UP_TO_DATE         2026-09-19      2026-09-19
+us/texas                  NOT_HOSTED         —               2026-09-19
+
+=== U2 Evaluator CLI Full Verification Complete ===

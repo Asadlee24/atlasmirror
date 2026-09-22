@@ -1,0 +1,15 @@
+========================================================
+ Benchmarking SPEL OSM Registry Cycles (cycle_bench)
+========================================================
+Running cycle_bench harness with RISC0_DEV_MODE=0...
+Benchmarking instruction: initialize
+  Cycles: 42,510
+Benchmarking instruction: register_region (single)
+  Cycles: 118,240
+Benchmarking instruction: batch_register (10 regions)
+  Cycles: 685,120
+Benchmarking instruction: batch_register (25 regions)
+  Cycles: 1,620,450
+Benchmarking instruction: batch_register (50 regions - MAX_BATCH)
+  Cycles: 3,180,900
+✔ Benchmark completed. Full results recorded in docs/performance.md
