@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-22 13:34:30Z",
+  "timestamp": "2026-09-22 13:43:31Z",
   "summary": {
-    "total_valid_closed_set_entries": 19,
-    "represented_closed_set_countries": 11,
+    "total_valid_closed_set_entries": 20,
+    "represented_closed_set_countries": 12,
     "total_extra_entries": 17,
     "required_entries": 25,
     "required_countries": 15,
@@ -410,6 +410,27 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 287704054,
         "retrieved_md5": "8becc786e5637e7c018fbb5418b6e243"
+      }
+    },
+    {
+      "region": "europe/hungary",
+      "parent": null,
+      "level": "country",
+      "country": "Hungary",
+      "source_url": "https://download.geofabrik.de/europe/hungary-latest.osm.pbf",
+      "version": "2026-09-21",
+      "size": 325265347,
+      "geofabrik_md5": "418c3773df4cea22d4d034fc1ef29e36",
+      "cid": "zDvZRwzm89aJWkCswGMbafiLmReHzPm651AFHrgVuM1NpzdW5eKP",
+      "registry_tx": "b33d950e574ffc273309a993f105a4e587c835141bc61f10eef1bcd1b5ca1506",
+      "block": 20128,
+      "timestamp": 1790084603,
+      "in_closed_set": true,
+      "status": "A1_VERIFIED",
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 325265347,
+        "retrieved_md5": "418c3773df4cea22d4d034fc1ef29e36"
       }
     },
     {
