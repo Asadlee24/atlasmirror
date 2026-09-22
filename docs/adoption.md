@@ -44,9 +44,10 @@ In accordance with [LP-0018 Adoption Requirements](https://github.com/logos-co/l
 | 22 | `europe/romania` | country | null | Romania | 328,695,224 | `15be838879747572b38be7593903d501` | `zDvZRwzm1tt7QonUPJAYyBXSD5M2pyBFCEQtyPvbLFMSZi6Ri65A` | 20149 | **A1_VERIFIED** |
 | 23 | `asia/vietnam` | country | null | Vietnam | 329,083,173 | `8e8faf2eff113b67f28059c3b4a5c677` | `zDvZRwzkziYDq1uiBfvomQs9aypHaWNeBtBUQqzgaMBVZaCVgz9R` | 20177 | **A1_VERIFIED** |
 | 24 | `south-america/colombia` | country | null | Colombia | 329,796,073 | `cb6b9a0ae742bd746017515427623726` | `zDvZRwzm244438FG43oa2LQuT39YuWrmLJXdK4mEkRLgvuyFZDik` | 20190 | **A1_VERIFIED** |
+| 25 | `europe/greece` | country | null | Greece | 340,949,141 | `c15fda8eb7e74c93d11696719534661b` | `zDvZRwzm8tXSMbkc19uqXfTF95QWhcMPHqKLeS5juG5rYMEKTeaK` | 20203 | **A1_VERIFIED** |
 
-**A1 Valid Closed-Set Count**: **24 / 25 entries** across **16 represented countries**.
-*Pipeline status: In progress (24/25 valid closed-set regions across 16/15 countries).*
+**A1 Valid Closed-Set Count**: **25 / 25 entries** across **17 represented countries**.
+**A1 Status**: `A1_VERIFIED` (25 valid closed-set regions across 17 countries, 100% retrievable and MD5 verified).
 
 #### Supplementary On-Chain & Storage Entries (Preserved, Marked `NON_COUNTING_EXTRA`)
 

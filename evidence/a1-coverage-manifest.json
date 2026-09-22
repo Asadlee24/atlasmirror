@@ -1,14 +1,14 @@
 {
   "version": "1.0.0",
   "standard": "LP-0018 A1 Coverage",
-  "timestamp": "2026-09-22 14:45:40Z",
+  "timestamp": "2026-09-22 14:58:42Z",
   "summary": {
-    "total_valid_closed_set_entries": 24,
-    "represented_closed_set_countries": 16,
+    "total_valid_closed_set_entries": 25,
+    "represented_closed_set_countries": 17,
     "total_extra_entries": 17,
     "required_entries": 25,
     "required_countries": 15,
-    "status": "IN_PROGRESS_CLOSED_SET_REMEDIATION",
+    "status": "A1_VERIFIED",
     "vps_storage_host": "199.231.187.97:8070",
     "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci"
   },
@@ -515,6 +515,27 @@
         "status": "VERIFIED_EXACT_MATCH",
         "retrieved_size": 329796073,
         "retrieved_md5": "cb6b9a0ae742bd746017515427623726"
+      }
+    },
+    {
+      "region": "europe/greece",
+      "parent": null,
+      "level": "country",
+      "country": "Greece",
+      "source_url": "https://download.geofabrik.de/europe/greece-latest.osm.pbf",
+      "version": "2026-09-21",
+      "size": 340949141,
+      "geofabrik_md5": "c15fda8eb7e74c93d11696719534661b",
+      "cid": "zDvZRwzm8tXSMbkc19uqXfTF95QWhcMPHqKLeS5juG5rYMEKTeaK",
+      "registry_tx": "859c0e77d35fbf1af07ddd46cd8785dd487bc2166f9521e187d2b64ff0195745",
+      "block": 20203,
+      "timestamp": 1790089083,
+      "in_closed_set": true,
+      "status": "A1_VERIFIED",
+      "external_retrieval": {
+        "status": "VERIFIED_EXACT_MATCH",
+        "retrieved_size": 340949141,
+        "retrieved_md5": "c15fda8eb7e74c93d11696719534661b"
       }
     },
     {
