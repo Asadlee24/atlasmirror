@@ -111,11 +111,7 @@ pub async fn execute_host_file(
     let actual_md5 = match crate::geofabrik::compute_file_md5(file_path) {
         Ok(hash) => hash,
         Err(e) => {
-            eprintln!(
-                "{} Failed to calculate local file MD5: {}",
-                "✖".red(),
-                e
-            );
+            eprintln!("{} Failed to calculate local file MD5: {}", "✖".red(), e);
             std::process::exit(1);
         }
     };
