@@ -151,7 +151,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             } else if let Some(ref region) = args.region {
                 commands::host::execute_host_single(region, args.dry_run, cli.json).await?;
             } else {
-                eprintln!("Error: Specify a region, --many <regions...>, or --file <region> <file>");
+                eprintln!(
+                    "Error: Specify a region, --many <regions...>, or --file <region> <file>"
+                );
                 std::process::exit(1);
             }
         }

@@ -2,9 +2,11 @@
 resolver = "2"
 members = [
     "registry_core",
-    "methods/guest",
     "examples",
     "tests",
+]
+exclude = [
+    "methods/guest",
 ]
 
 [workspace.package]

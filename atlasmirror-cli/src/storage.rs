@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::path::Path;
 use std::time::Duration;
 use thiserror::Error;
@@ -10,8 +12,14 @@ pub enum StorageError {
     EndpointUnavailable(String, String),
     #[error("Logos Storage upload failed after {attempts} attempts: {last_error}")]
     UploadExhausted { attempts: u32, last_error: String },
-    #[error("Logos Storage download failed for CID '{cid}' after {attempts} attempts: {last_error}")]
-    DownloadExhausted { cid: String, attempts: u32, last_error: String },
+    #[error(
+        "Logos Storage download failed for CID '{cid}' after {attempts} attempts: {last_error}"
+    )]
+    DownloadExhausted {
+        cid: String,
+        attempts: u32,
+        last_error: String,
+    },
     #[error("Protocol error from Logos Storage: {0}")]
     Protocol(String),
 }
@@ -72,7 +80,9 @@ impl LogosStorageClient {
                     if let Some(cid) = body.get("cid").and_then(|c| c.as_str()) {
                         return Ok(cid.to_string());
                     } else {
-                        return Err(StorageError::Protocol("Missing CID in storage response".to_string()));
+                        return Err(StorageError::Protocol(
+                            "Missing CID in storage response".to_string(),
+                        ));
                     }
                 }
                 Ok(resp) => {
@@ -155,11 +165,10 @@ impl LogosStorageClient {
         let client = reqwest::Client::new();
         let url = format!("{}/api/v0/storage/status?cid={}", self.endpoint, cid);
 
-        let resp = client
-            .get(&url)
-            .send()
-            .await
-            .map_err(|e| StorageError::EndpointUnavailable(self.endpoint.clone(), e.to_string()))?;
+        let resp =
+            client.get(&url).send().await.map_err(|e| {
+                StorageError::EndpointUnavailable(self.endpoint.clone(), e.to_string())
+            })?;
 
         resp.json()
             .await

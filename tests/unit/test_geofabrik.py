@@ -11,8 +11,24 @@ import json
 import os
 import sys
 import tempfile
+import time
 import urllib.request
 from pathlib import Path
+
+def open_url_with_retry(req_or_url, timeout=30, retries=3):
+    if isinstance(req_or_url, str):
+        req_or_url = urllib.request.Request(req_or_url, headers={"User-Agent": "AtlasMirror/1.0"})
+    elif not req_or_url.has_header("User-agent"):
+        req_or_url.add_header("User-Agent", "AtlasMirror/1.0")
+    last_err = None
+    for attempt in range(retries):
+        try:
+            return urllib.request.urlopen(req_or_url, timeout=timeout)
+        except Exception as e:
+            last_err = e
+            if attempt < retries - 1:
+                time.sleep(2 ** attempt)
+    raise last_err
 
 def test_geofabrik_adapter():
     print("Running Milestone 1: Geofabrik Adapter Unit Tests...")
@@ -27,7 +43,7 @@ def test_geofabrik_adapter():
     print("[1/3] Fetching live Geofabrik machine index...")
     index_url = "https://download.geofabrik.de/index-v1-nogeom.json"
     req = urllib.request.Request(index_url, headers={"User-Agent": "AtlasMirror/1.0"})
-    with urllib.request.urlopen(req, timeout=15) as resp:
+    with open_url_with_retry(req, timeout=30) as resp:
         index_data = json.loads(resp.read().decode("utf-8"))
 
     features = index_data.get("features", [])
@@ -57,7 +73,7 @@ def test_geofabrik_adapter():
     md5_url = f"{pbf_url}.md5"
 
     head_req = urllib.request.Request(pbf_url, method="HEAD", headers={"User-Agent": "AtlasMirror/1.0"})
-    with urllib.request.urlopen(head_req, timeout=15) as resp:
+    with open_url_with_retry(head_req, timeout=30) as resp:
         content_length = resp.headers.get("Content-Length")
         last_modified = resp.headers.get("Last-Modified")
         assert content_length is not None, "Content-Length header missing"
@@ -66,7 +82,7 @@ def test_geofabrik_adapter():
         print(f"  PBF Size: {mb_size:.2f} MB")
         print(f"  Last Modified: {last_modified}")
 
-    with urllib.request.urlopen(md5_url, timeout=15) as resp:
+    with open_url_with_retry(md5_url, timeout=30) as resp:
         md5_content = resp.read().decode("utf-8").strip()
         md5_hash = md5_content.split()[0]
         assert len(md5_hash) == 32, f"Invalid MD5 hash format: {md5_hash}"
@@ -81,7 +97,7 @@ def test_geofabrik_adapter():
         bytes_read = 0
         chunk_size = 64 * 1024
 
-        with urllib.request.urlopen(pbf_url, timeout=15) as stream:
+        with open_url_with_retry(pbf_url, timeout=30) as stream:
             with open(partial_dest, "wb") as f:
                 while bytes_read < 256 * 1024:
                     chunk = stream.read(chunk_size)

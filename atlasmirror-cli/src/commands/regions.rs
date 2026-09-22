@@ -1,18 +1,77 @@
 use colored::Colorize;
 use serde_json::json;
 
-pub fn execute_list(filter: Option<&str>, json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub fn execute_list(
+    _filter: Option<&str>,
+    json_output: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     // 72 predefined regions (sample display in CLI)
     let regions = vec![
-        ("asia/pakistan", "Pakistan", "country", true, "bafybeic7vj2k...", "2026-09-19"),
-        ("europe/germany", "Germany", "country", true, "bafybeih4nm3q...", "2026-09-19"),
-        ("europe/france", "France", "country", true, "bafybeig5tl2x...", "2026-09-19"),
-        ("europe/great-britain", "United Kingdom", "country", true, "bafybeid3ko9p...", "2026-09-19"),
-        ("us/california", "California", "subregion", true, "bafybeid6xk1m...", "2026-09-19"),
+        (
+            "asia/pakistan",
+            "Pakistan",
+            "country",
+            true,
+            "bafybeic7vj2k...",
+            "2026-09-19",
+        ),
+        (
+            "europe/germany",
+            "Germany",
+            "country",
+            true,
+            "bafybeih4nm3q...",
+            "2026-09-19",
+        ),
+        (
+            "europe/france",
+            "France",
+            "country",
+            true,
+            "bafybeig5tl2x...",
+            "2026-09-19",
+        ),
+        (
+            "europe/great-britain",
+            "United Kingdom",
+            "country",
+            true,
+            "bafybeid3ko9p...",
+            "2026-09-19",
+        ),
+        (
+            "us/california",
+            "California",
+            "subregion",
+            true,
+            "bafybeid6xk1m...",
+            "2026-09-19",
+        ),
         ("us/texas", "Texas", "subregion", false, "—", "2026-09-19"),
-        ("india/northern-zone", "Northern Zone", "subregion", true, "bafybeif2mk7w...", "2026-09-19"),
-        ("china/guangdong", "Guangdong", "subregion", false, "—", "2026-09-19"),
-        ("russia/central-fed-district", "Central Fed District", "subregion", true, "bafybeid5mk2v...", "2026-09-19"),
+        (
+            "india/northern-zone",
+            "Northern Zone",
+            "subregion",
+            true,
+            "bafybeif2mk7w...",
+            "2026-09-19",
+        ),
+        (
+            "china/guangdong",
+            "Guangdong",
+            "subregion",
+            false,
+            "—",
+            "2026-09-19",
+        ),
+        (
+            "russia/central-fed-district",
+            "Central Fed District",
+            "subregion",
+            true,
+            "bafybeid5mk2v...",
+            "2026-09-19",
+        ),
     ];
 
     if json_output {
@@ -33,7 +92,10 @@ pub fn execute_list(filter: Option<&str>, json_output: bool) -> Result<(), Box<d
         return Ok(());
     }
 
-    println!("{:<30} {:<12} {:<10} {:<12} {}", "REGION", "LEVEL", "VERSION", "STATUS", "CID");
+    println!(
+        "{:<30} {:<12} {:<10} {:<12} CID",
+        "REGION", "LEVEL", "VERSION", "STATUS"
+    );
     println!("{}", "-".repeat(85));
 
     for (path, _name, level, hosted, cid, ver) in regions {
@@ -42,7 +104,10 @@ pub fn execute_list(filter: Option<&str>, json_output: bool) -> Result<(), Box<d
         } else {
             "Not hosted".yellow()
         };
-        println!("{:<30} {:<12} {:<10} {:<12} {}", path, level, ver, status, cid);
+        println!(
+            "{:<30} {:<12} {:<10} {:<12} {}",
+            path, level, ver, status, cid
+        );
     }
 
     Ok(())
@@ -51,7 +116,7 @@ pub fn execute_list(filter: Option<&str>, json_output: bool) -> Result<(), Box<d
 pub fn execute_show(path: &str, json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
     let details = json!({
         "path": path,
-        "name": path.split('/').last().unwrap_or(path),
+        "name": path.split('/').next_back().unwrap_or(path),
         "level": if path.contains('/') && (path.starts_with("us/") || path.starts_with("india/") || path.starts_with("china/") || path.starts_with("russia/")) { "subregion" } else { "country" },
         "parent": if path.contains('/') { Some(path.split('/').next().unwrap()) } else { None },
         "geofabrik_url": format!("https://download.geofabrik.de/{}-latest.osm.pbf", path),
@@ -65,14 +130,30 @@ pub fn execute_show(path: &str, json_output: bool) -> Result<(), Box<dyn std::er
     if json_output {
         println!("{}", serde_json::to_string_pretty(&details)?);
     } else {
-        println!("Region:        {}", details["path"].as_str().unwrap().bold());
+        println!(
+            "Region:        {}",
+            details["path"].as_str().unwrap().bold()
+        );
         println!("Level:         {}", details["level"].as_str().unwrap());
-        println!("Parent:        {}", details["parent"].as_str().unwrap_or("None"));
-        println!("Status:        {}", if details["hosted"].as_bool().unwrap() { "Hosted".green() } else { "Not hosted".yellow() });
+        println!(
+            "Parent:        {}",
+            details["parent"].as_str().unwrap_or("None")
+        );
+        println!(
+            "Status:        {}",
+            if details["hosted"].as_bool().unwrap() {
+                "Hosted".green()
+            } else {
+                "Not hosted".yellow()
+            }
+        );
         println!("Storage CID:   {}", details["cid"].as_str().unwrap().cyan());
         println!("Checksum:      {}", details["checksum"].as_str().unwrap());
         println!("Version:       {}", details["version"].as_str().unwrap());
-        println!("Source URL:    {}", details["geofabrik_url"].as_str().unwrap());
+        println!(
+            "Source URL:    {}",
+            details["geofabrik_url"].as_str().unwrap()
+        );
     }
 
     Ok(())

@@ -19,33 +19,45 @@ pub async fn execute(
         println!("  Downloading from Logos Storage (content-addressed)...");
         // Simulate/execute storage fetch
         println!("  Destination: {}", output.display());
-        println!("{} Download complete. Integrity verified against CID.", "✔".green());
+        println!(
+            "{} Download complete. Integrity verified against CID.",
+            "✔".green()
+        );
 
         if json_output {
-            println!("{}", json!({
-                "region": region,
-                "source": "logos_storage",
-                "cid": cid,
-                "output": output.display().to_string(),
-                "status": "SUCCESS"
-            }));
+            println!(
+                "{}",
+                json!({
+                    "region": region,
+                    "source": "logos_storage",
+                    "cid": cid,
+                    "output": output.display().to_string(),
+                    "status": "SUCCESS"
+                })
+            );
         }
     } else {
         println!("  Status: {}", "NOT HOSTED".yellow());
-        println!("  {}", "[CENTRAL FALLBACK] Downloading directly from Geofabrik...".yellow());
+        println!(
+            "  {}",
+            "[CENTRAL FALLBACK] Downloading directly from Geofabrik...".yellow()
+        );
         let url = format!("https://download.geofabrik.de/{}-latest.osm.pbf", region);
         println!("  Source URL: {}", url);
         println!("  Destination: {}", output.display());
         println!("{} Download complete via Geofabrik fallback.", "✔".green());
 
         if json_output {
-            println!("{}", json!({
-                "region": region,
-                "source": "geofabrik_fallback",
-                "url": url,
-                "output": output.display().to_string(),
-                "status": "SUCCESS"
-            }));
+            println!(
+                "{}",
+                json!({
+                    "region": region,
+                    "source": "geofabrik_fallback",
+                    "url": url,
+                    "output": output.display().to_string(),
+                    "status": "SUCCESS"
+                })
+            );
         }
     }
 

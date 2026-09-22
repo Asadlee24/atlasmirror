@@ -55,7 +55,9 @@ pub enum RegistryError {
 }
 
 /// Hierarchy level of a region within the non-overlapping predefined set.
-#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(
+    BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq,
+)]
 pub enum RegionLevel {
     Country,
     Subregion,
@@ -193,7 +195,9 @@ impl BatchRegisterArgs {
 }
 
 /// Global registry state account.
-#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
+#[derive(
+    BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq,
+)]
 pub struct GlobalRegistryState {
     /// Total number of unique registered regions.
     pub total_regions: u64,
@@ -202,7 +206,9 @@ pub struct GlobalRegistryState {
 }
 
 /// Complete on-chain registry state stored in the program's account shard.
-#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
+#[derive(
+    BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq,
+)]
 pub struct RegistryState {
     /// Total number of unique registered regions.
     pub total_regions: u64,
@@ -218,6 +224,68 @@ pub enum RegistryInstruction {
     Initialize,
     RegisterRegion(RegisterRegionArgs),
     BatchRegister(BatchRegisterArgs),
+}
+
+/// Entry point / state transition function for the SPEL OSM Registry.
+pub fn process_instruction(
+    instruction_data: &[u8],
+    state: &mut GlobalRegistryState,
+    records: &mut Vec<RegionRecord>,
+) -> Result<(), RegistryError> {
+    let instruction = RegistryInstruction::try_from_slice(instruction_data)
+        .map_err(|_| RegistryError::InvalidRegionPath)?;
+
+    match instruction {
+        RegistryInstruction::Initialize => {
+            state.total_regions = 0;
+            state.last_updated = 0;
+            Ok(())
+        }
+        RegistryInstruction::RegisterRegion(args) => {
+            args.validate()?;
+            let ts = args.timestamp;
+
+            if let Some(existing) = records.iter_mut().find(|r| r.region == args.region) {
+                if ts <= existing.timestamp {
+                    return Err(RegistryError::TimestampRegression {
+                        existing_ts: existing.timestamp,
+                        new_ts: ts,
+                    });
+                }
+                *existing = args.into_record();
+            } else {
+                records.push(args.into_record());
+                state.total_regions += 1;
+            }
+
+            state.last_updated = ts;
+            Ok(())
+        }
+        RegistryInstruction::BatchRegister(batch) => {
+            batch.validate()?;
+
+            for args in batch.records {
+                let ts = args.timestamp;
+                if let Some(existing) = records.iter_mut().find(|r| r.region == args.region) {
+                    if ts <= existing.timestamp {
+                        return Err(RegistryError::TimestampRegression {
+                            existing_ts: existing.timestamp,
+                            new_ts: ts,
+                        });
+                    }
+                    *existing = args.into_record();
+                } else {
+                    records.push(args.into_record());
+                    state.total_regions += 1;
+                }
+                if ts > state.last_updated {
+                    state.last_updated = ts;
+                }
+            }
+
+            Ok(())
+        }
+    }
 }
 
 #[cfg(test)]
@@ -247,7 +315,8 @@ mod tests {
             parent: Some("us".to_string()),
             level: RegionLevel::Subregion,
             cid: "bafybeid6xk1m...".to_string(),
-            source_url: "https://download.geofabrik.de/north-america/us/california-latest.osm.pbf".to_string(),
+            source_url: "https://download.geofabrik.de/north-america/us/california-latest.osm.pbf"
+                .to_string(),
             checksum: "0123456789abcdef0123456789abcdef".to_string(),
             version: "2026-09-19".to_string(),
             hosted: true,
@@ -269,7 +338,10 @@ mod tests {
             hosted: true,
             timestamp: 1726747200,
         };
-        assert_eq!(args.validate(), Err(RegistryError::CountryMustNotHaveParent));
+        assert_eq!(
+            args.validate(),
+            Err(RegistryError::CountryMustNotHaveParent)
+        );
     }
 
     #[test]
@@ -279,7 +351,8 @@ mod tests {
             parent: None,
             level: RegionLevel::Subregion,
             cid: "bafybeie...".to_string(),
-            source_url: "https://download.geofabrik.de/north-america/us/texas-latest.osm.pbf".to_string(),
+            source_url: "https://download.geofabrik.de/north-america/us/texas-latest.osm.pbf"
+                .to_string(),
             checksum: "11223344556677889900aabbccddeeff".to_string(),
             version: "2026-09-19".to_string(),
             hosted: true,

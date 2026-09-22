@@ -1,9 +1,8 @@
 use borsh::to_vec;
 use osm_registry_core::{
-    BatchRegisterArgs, GlobalRegistryState, RegionLevel, RegionRecord, RegisterRegionArgs,
-    RegistryError, MAX_BATCH_SIZE,
+    process_instruction, BatchRegisterArgs, GlobalRegistryState, RegionLevel, RegionRecord,
+    RegisterRegionArgs, RegistryError, RegistryInstruction, MAX_BATCH_SIZE,
 };
-use osm_registry_guest::{process_instruction, RegistryInstruction};
 
 #[test]
 fn test_initialize_instruction() {
@@ -69,7 +68,8 @@ fn test_register_subregion_and_lookup_by_parent() {
         parent: Some("us".to_string()),
         level: RegionLevel::Subregion,
         cid: "bafybeid6xk1m...".to_string(),
-        source_url: "https://download.geofabrik.de/north-america/us/california-latest.osm.pbf".to_string(),
+        source_url: "https://download.geofabrik.de/north-america/us/california-latest.osm.pbf"
+            .to_string(),
         checksum: "0123456789abcdef0123456789abcdef".to_string(),
         version: "2026-09-19".to_string(),
         hosted: true,
@@ -81,7 +81,8 @@ fn test_register_subregion_and_lookup_by_parent() {
         parent: Some("us".to_string()),
         level: RegionLevel::Subregion,
         cid: "bafybeie4mk2p...".to_string(),
-        source_url: "https://download.geofabrik.de/north-america/us/texas-latest.osm.pbf".to_string(),
+        source_url: "https://download.geofabrik.de/north-america/us/texas-latest.osm.pbf"
+            .to_string(),
         checksum: "11223344556677889900aabbccddeeff".to_string(),
         version: "2026-09-19".to_string(),
         hosted: true,

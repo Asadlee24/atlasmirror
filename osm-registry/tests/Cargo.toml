@@ -7,7 +7,6 @@ license.workspace = true
 
 [dependencies]
 osm-registry-core = { path = "../registry_core" }
-osm-registry-guest = { path = "../methods/guest" }
 borsh = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

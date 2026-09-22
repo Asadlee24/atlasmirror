@@ -1,10 +1,18 @@
 use colored::Colorize;
 use serde_json::json;
 
-pub fn execute(region_opt: Option<&str>, json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub fn execute(
+    region_opt: Option<&str>,
+    json_output: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     let check_list = match region_opt {
         Some(r) => vec![r],
-        None => vec!["asia/pakistan", "europe/germany", "us/california", "us/texas"],
+        None => vec![
+            "asia/pakistan",
+            "europe/germany",
+            "us/california",
+            "us/texas",
+        ],
     };
 
     let mut results = Vec::new();
@@ -31,7 +39,10 @@ pub fn execute(region_opt: Option<&str>, json_output: bool) -> Result<(), Box<dy
         return Ok(());
     }
 
-    println!("{:<25} {:<18} {:<15} {}", "REGION", "STATUS", "HOSTED VER", "UPSTREAM VER");
+    println!(
+        "{:<25} {:<18} {:<15} UPSTREAM VER",
+        "REGION", "STATUS", "HOSTED VER"
+    );
     println!("{}", "-".repeat(75));
 
     for item in results {

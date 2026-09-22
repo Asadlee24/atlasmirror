@@ -9,7 +9,10 @@ pub async fn execute_host_single(
 ) -> Result<(), Box<dyn std::error::Error>> {
     if dry_run {
         if json_output {
-            println!("{}", json!({ "dry_run": true, "region": region, "estimated_size": "118 MB" }));
+            println!(
+                "{}",
+                json!({ "dry_run": true, "region": region, "estimated_size": "118 MB" })
+            );
         } else {
             println!("[DRY RUN] Region: {} | Estimated size: 118 MB", region);
         }
@@ -18,7 +21,10 @@ pub async fn execute_host_single(
 
     println!("Hosting region: {}", region.bold());
     println!("  1. Fetching canonical metadata & MD5 from Geofabrik...");
-    println!("     Checksum: {}", "378df25f824177ebcbe9aa11d88bbd6b".cyan());
+    println!(
+        "     Checksum: {}",
+        "378df25f824177ebcbe9aa11d88bbd6b".cyan()
+    );
     println!("  2. Verifying snapshot integrity...");
     println!("     Status: {}", "CHECKSUM_VERIFIED".green());
     println!("  3. Uploading to Logos Storage...");
@@ -29,15 +35,22 @@ pub async fn execute_host_single(
     println!("     Transaction: {}", tx.green());
 
     if json_output {
-        println!("{}", json!({
-            "success": true,
-            "region": region,
-            "cid": cid,
-            "tx_hash": tx,
-            "status": "HOSTED"
-        }));
+        println!(
+            "{}",
+            json!({
+                "success": true,
+                "region": region,
+                "cid": cid,
+                "tx_hash": tx,
+                "status": "HOSTED"
+            })
+        );
     } else {
-        println!("\n{} Successfully hosted {} on Logos!", "✔".green(), region.bold());
+        println!(
+            "\n{} Successfully hosted {} on Logos!",
+            "✔".green(),
+            region.bold()
+        );
     }
 
     Ok(())
@@ -57,7 +70,10 @@ pub async fn execute_host_many(
         return Ok(());
     }
 
-    println!("Executing bounded bulk hosting for {} regions...", regions.len());
+    println!(
+        "Executing bounded bulk hosting for {} regions...",
+        regions.len()
+    );
     for r in regions {
         execute_host_single(r, false, json_output).await?;
     }
@@ -96,12 +112,15 @@ pub async fn execute_host_file(
     println!("     TX: {}", "0xlez_tx_99bb12".green());
 
     if json_output {
-        println!("{}", json!({
-            "success": true,
-            "region": region,
-            "cid": cid,
-            "file": file_path.display().to_string()
-        }));
+        println!(
+            "{}",
+            json!({
+                "success": true,
+                "region": region,
+                "cid": cid,
+                "file": file_path.display().to_string()
+            })
+        );
     }
 
     Ok(())

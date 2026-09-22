@@ -10,13 +10,29 @@ Verifies:
 import hashlib
 import sys
 import tempfile
+import time
 import urllib.request
 from pathlib import Path
+
+def open_url_with_retry(req_or_url, timeout=30, retries=3):
+    if isinstance(req_or_url, str):
+        req_or_url = urllib.request.Request(req_or_url, headers={"User-Agent": "AtlasMirror/1.0"})
+    elif not req_or_url.has_header("User-agent"):
+        req_or_url.add_header("User-Agent", "AtlasMirror/1.0")
+    last_err = None
+    for attempt in range(retries):
+        try:
+            return urllib.request.urlopen(req_or_url, timeout=timeout)
+        except Exception as e:
+            last_err = e
+            if attempt < retries - 1:
+                time.sleep(2 ** attempt)
+    raise last_err
 
 def fetch_published_md5(region_path: str) -> str:
     md5_url = f"https://download.geofabrik.de/{region_path}-latest.osm.pbf.md5"
     req = urllib.request.Request(md5_url, headers={"User-Agent": "AtlasMirror/1.0"})
-    with urllib.request.urlopen(req, timeout=15) as resp:
+    with open_url_with_retry(req, timeout=30) as resp:
         content = resp.read().decode("utf-8").strip()
         return content.split()[0].lower()
 

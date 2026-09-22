@@ -35,7 +35,11 @@ pub async fn execute(json_output: bool) -> Result<(), Box<dyn std::error::Error>
     checks.push(CheckItem {
         name: "Geofabrik Index Reachability",
         status: geofabrik_ok,
-        details: if geofabrik_ok { "Connected to download.geofabrik.de".to_string() } else { "Failed to reach download.geofabrik.de".to_string() },
+        details: if geofabrik_ok {
+            "Connected to download.geofabrik.de".to_string()
+        } else {
+            "Failed to reach download.geofabrik.de".to_string()
+        },
     });
 
     // 3. Writable Download Directory
@@ -82,7 +86,10 @@ pub async fn execute(json_output: bool) -> Result<(), Box<dyn std::error::Error>
             })
             .collect();
 
-        println!("{}", json!({ "all_passed": all_passed, "checks": json_checks }));
+        println!(
+            "{}",
+            json!({ "all_passed": all_passed, "checks": json_checks })
+        );
     } else {
         println!("AtlasMirror Environment Doctor:");
         println!("{}", "-".repeat(60));
@@ -92,9 +99,15 @@ pub async fn execute(json_output: bool) -> Result<(), Box<dyn std::error::Error>
         }
         println!("{}", "-".repeat(60));
         if all_passed {
-            println!("{} All environment checks passed!", "SUCCESS:".green().bold());
+            println!(
+                "{} All environment checks passed!",
+                "SUCCESS:".green().bold()
+            );
         } else {
-            println!("{} One or more environment checks failed.", "WARNING:".yellow().bold());
+            println!(
+                "{} One or more environment checks failed.",
+                "WARNING:".yellow().bold()
+            );
         }
     }
 

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use futures_util::StreamExt;
 use md5::{Digest, Md5};
 use std::fs::File;
@@ -19,12 +21,18 @@ pub enum GeofabrikError {
 
 /// Resolves the canonical Geofabrik PBF URL for a region path.
 pub fn resolve_pbf_url(region_path: &str) -> String {
-    format!("https://download.geofabrik.de/{}-latest.osm.pbf", region_path)
+    format!(
+        "https://download.geofabrik.de/{}-latest.osm.pbf",
+        region_path
+    )
 }
 
 /// Resolves the canonical Geofabrik MD5 URL for a region path.
 pub fn resolve_md5_url(region_path: &str) -> String {
-    format!("https://download.geofabrik.de/{}-latest.osm.pbf.md5", region_path)
+    format!(
+        "https://download.geofabrik.de/{}-latest.osm.pbf.md5",
+        region_path
+    )
 }
 
 /// Fetches and parses the canonical MD5 checksum published by Geofabrik.

@@ -18,7 +18,10 @@ pub fn execute_region(path: &str, json_output: bool) -> Result<(), Box<dyn std::
     } else {
         println!("On-Chain Record for {}:", path.bold());
         println!("  Level:       {}", res["level"].as_str().unwrap());
-        println!("  Parent:      {}", res["parent"].as_str().unwrap_or("None"));
+        println!(
+            "  Parent:      {}",
+            res["parent"].as_str().unwrap_or("None")
+        );
         println!("  Storage CID: {}", res["cid"].as_str().unwrap().cyan());
         println!("  Checksum:    {}", res["checksum"].as_str().unwrap());
         println!("  Version:     {}", res["version"].as_str().unwrap());
@@ -29,10 +32,38 @@ pub fn execute_region(path: &str, json_output: bool) -> Result<(), Box<dyn std::
 
 pub fn execute_parent(parent: &str, json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
     let children = match parent {
-        "us" => vec!["us/california", "us/texas", "us/florida", "us/new-york", "us/washington", "us/illinois", "us/georgia", "us/pennsylvania"],
-        "india" => vec!["india/central-zone", "india/eastern-zone", "india/north-eastern-zone", "india/northern-zone", "india/southern-zone", "india/western-zone"],
-        "china" => vec!["china/guangdong", "china/jiangsu", "china/shandong", "china/zhejiang", "china/sichuan", "china/henan"],
-        "russia" => vec!["russia/central-fed-district", "russia/northwestern-fed-district", "russia/volga-fed-district", "russia/siberian-fed-district"],
+        "us" => vec![
+            "us/california",
+            "us/texas",
+            "us/florida",
+            "us/new-york",
+            "us/washington",
+            "us/illinois",
+            "us/georgia",
+            "us/pennsylvania",
+        ],
+        "india" => vec![
+            "india/central-zone",
+            "india/eastern-zone",
+            "india/north-eastern-zone",
+            "india/northern-zone",
+            "india/southern-zone",
+            "india/western-zone",
+        ],
+        "china" => vec![
+            "china/guangdong",
+            "china/jiangsu",
+            "china/shandong",
+            "china/zhejiang",
+            "china/sichuan",
+            "china/henan",
+        ],
+        "russia" => vec![
+            "russia/central-fed-district",
+            "russia/northwestern-fed-district",
+            "russia/volga-fed-district",
+            "russia/siberian-fed-district",
+        ],
         _ => vec![],
     };
 

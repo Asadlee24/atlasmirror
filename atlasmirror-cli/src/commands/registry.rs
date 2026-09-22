@@ -4,7 +4,10 @@ use serde_json::json;
 pub fn execute_program_id(json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
     let program_id = "0xosm_registry_testnet03_49f82d";
     if json_output {
-        println!("{}", json!({ "program_id": program_id, "network": "Logos Testnet 0.3" }));
+        println!(
+            "{}",
+            json!({ "program_id": program_id, "network": "Logos Testnet 0.3" })
+        );
     } else {
         println!("LEZ OSM Registry Program ID: {}", program_id.cyan().bold());
         println!("Target Network:             Logos Testnet 0.3");
@@ -12,7 +15,7 @@ pub fn execute_program_id(json_output: bool) -> Result<(), Box<dyn std::error::E
     Ok(())
 }
 
-pub fn execute_raw(region: &str, json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub fn execute_raw(region: &str, _json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
     let raw = json!({
         "account_seed": format!("pda:region:{}", region),
         "region": region,
