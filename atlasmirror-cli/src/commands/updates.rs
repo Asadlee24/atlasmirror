@@ -2,6 +2,7 @@ use colored::Colorize;
 use serde_json::{json, Value};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+#[allow(clippy::manual_is_multiple_of)]
 fn today_date_string() -> String {
     // Compute current UTC date from system time without chrono dependency
     let secs = SystemTime::now()
