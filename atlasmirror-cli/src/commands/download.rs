@@ -1,8 +1,8 @@
+use crate::storage::LogosStorageClient;
 use colored::Colorize;
 use serde_json::{json, Value};
 use std::path::Path;
 use std::time::Duration;
-use crate::storage::LogosStorageClient;
 
 pub async fn execute(
     region: &str,
@@ -13,13 +13,23 @@ pub async fn execute(
 
     let manifest_bytes = include_bytes!("../../../evidence/a1-coverage-manifest.json");
     let manifest: Value = serde_json::from_slice(manifest_bytes).unwrap_or(json!({}));
-    let entries = manifest.get("entries").and_then(|e| e.as_array()).cloned().unwrap_or_default();
+    let entries = manifest
+        .get("entries")
+        .and_then(|e| e.as_array())
+        .cloned()
+        .unwrap_or_default();
 
     let regions_bytes = include_bytes!("../../../metadata/regions.json");
     let catalog: Value = serde_json::from_slice(regions_bytes).unwrap_or(json!({}));
-    let catalog_regions = catalog.get("regions").and_then(|r| r.as_array()).cloned().unwrap_or_default();
+    let catalog_regions = catalog
+        .get("regions")
+        .and_then(|r| r.as_array())
+        .cloned()
+        .unwrap_or_default();
 
-    let hosted_entry = entries.iter().find(|e| e["region"].as_str() == Some(region));
+    let hosted_entry = entries
+        .iter()
+        .find(|e| e["region"].as_str() == Some(region));
 
     if let Some(entry) = hosted_entry {
         let cid = entry["cid"].as_str().unwrap_or("");
@@ -36,7 +46,11 @@ pub async fn execute(
         let download_success = match storage.get(cid, output).await {
             Ok(_) => true,
             Err(e) => {
-                eprintln!("  {} Local daemon unreachable ({}), using peer storage replica...", "⚠".yellow(), e);
+                eprintln!(
+                    "  {} Local daemon unreachable ({}), using peer storage replica...",
+                    "⚠".yellow(),
+                    e
+                );
                 // Attempt peer download or direct fallback for content
                 let fallback_url = entry["source_url"].as_str().unwrap_or("");
                 if !fallback_url.is_empty() {
@@ -60,7 +74,11 @@ pub async fn execute(
         println!("  Local MD5:   {}", computed_md5);
 
         if !expected_md5.is_empty() && computed_md5 != expected_md5 {
-            eprintln!("{} Integrity check failed! Expected MD5: {}", "✖".red(), expected_md5);
+            eprintln!(
+                "{} Integrity check failed! Expected MD5: {}",
+                "✖".red(),
+                expected_md5
+            );
             std::process::exit(1);
         }
 
@@ -91,7 +109,9 @@ pub async fn execute(
             "[CENTRAL FALLBACK] Downloading directly from Geofabrik...".yellow()
         );
 
-        let cat_entry = catalog_regions.iter().find(|r| r["path"].as_str() == Some(region));
+        let cat_entry = catalog_regions
+            .iter()
+            .find(|r| r["path"].as_str() == Some(region));
         let url = if let Some(cat) = cat_entry {
             cat["geofabrik_url"].as_str().unwrap_or("").to_string()
         } else {

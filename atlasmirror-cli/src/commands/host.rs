@@ -1,8 +1,8 @@
+use crate::storage::LogosStorageClient;
 use colored::Colorize;
 use serde_json::json;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
-use crate::storage::LogosStorageClient;
 
 pub async fn execute_host_single(
     region: &str,
@@ -40,7 +40,11 @@ pub async fn execute_host_single(
 
     let resp = client.get(&url).send().await?;
     if !resp.status().is_success() {
-        eprintln!("{} Failed to download snapshot from Geofabrik: HTTP {}", "✖".red(), resp.status());
+        eprintln!(
+            "{} Failed to download snapshot from Geofabrik: HTTP {}",
+            "✖".red(),
+            resp.status()
+        );
         std::process::exit(1);
     }
     let bytes = resp.bytes().await?;
@@ -48,7 +52,10 @@ pub async fn execute_host_single(
 
     let actual_md5 = crate::geofabrik::compute_file_md5(&pbf_path)?;
     if actual_md5 != expected_md5 {
-        eprintln!("{} Snapshot checksum mismatch! Halting immediately.", "✖".red());
+        eprintln!(
+            "{} Snapshot checksum mismatch! Halting immediately.",
+            "✖".red()
+        );
         eprintln!("   Expected: {}", expected_md5);
         eprintln!("   Computed: {}", actual_md5);
         let _ = std::fs::remove_file(&pbf_path);
@@ -65,17 +72,21 @@ pub async fn execute_host_single(
         Ok(c) => c,
         Err(e) => {
             eprintln!("{} Logos Storage upload failed: {}", "✖".red(), e);
-            eprintln!("   Ensure Logos storage daemon is active on {}", storage_endpoint);
+            eprintln!(
+                "   Ensure Logos storage daemon is active on {}",
+                storage_endpoint
+            );
             std::process::exit(1);
         }
     };
     println!("     Obtained CID: {}", cid.cyan());
 
     println!("  4. Registering on-chain in LEZ OSM registry...");
-    let runner_bin = std::env::var("LEZ_RUNNER_BIN")
-        .unwrap_or_else(|_| "/root/lez-testnet-compatible/target/release/run_osm_registry".to_string());
-    let program_bin = std::env::var("OSM_REGISTRY_BIN")
-        .unwrap_or_else(|_| "/root/osm_registry.bin".to_string());
+    let runner_bin = std::env::var("LEZ_RUNNER_BIN").unwrap_or_else(|_| {
+        "/root/lez-testnet-compatible/target/release/run_osm_registry".to_string()
+    });
+    let program_bin =
+        std::env::var("OSM_REGISTRY_BIN").unwrap_or_else(|_| "/root/osm_registry.bin".to_string());
     let account_id = std::env::var("LEZ_ACCOUNT_ID")
         .unwrap_or_else(|_| "55Me6rDpyUu9vhuMhnM26ikUL4XbgKDUjrWEpdpzyv6r".to_string());
 
@@ -98,7 +109,8 @@ pub async fn execute_host_single(
     let tx_hash = match reg_cmd {
         Ok(output) if output.status.success() => {
             let stdout = String::from_utf8_lossy(&output.stdout);
-            let tx = stdout.lines()
+            let tx = stdout
+                .lines()
                 .find(|l| l.contains("Hash:"))
                 .and_then(|l| l.split("Hash:").nth(1))
                 .map(|s| s.trim().to_string())
@@ -106,7 +118,11 @@ pub async fn execute_host_single(
             tx
         }
         Ok(output) => {
-            eprintln!("{} On-chain registration failed: {}", "✖".red(), String::from_utf8_lossy(&output.stderr));
+            eprintln!(
+                "{} On-chain registration failed: {}",
+                "✖".red(),
+                String::from_utf8_lossy(&output.stderr)
+            );
             std::process::exit(1);
         }
         Err(e) => {
@@ -149,10 +165,15 @@ pub async fn execute_host_many(
         for j in (i + 1)..regions.len() {
             let r1 = &regions[i];
             let r2 = &regions[j];
-            if r1 == r2 || r1.starts_with(&format!("{}/", r2)) || r2.starts_with(&format!("{}/", r1)) {
+            if r1 == r2
+                || r1.starts_with(&format!("{}/", r2))
+                || r2.starts_with(&format!("{}/", r1))
+            {
                 eprintln!(
                     "{} Region overlap warning: '{}' and '{}' contain common geography!",
-                    "⚠".yellow(), r1, r2
+                    "⚠".yellow(),
+                    r1,
+                    r2
                 );
             }
         }
@@ -226,11 +247,15 @@ pub async fn execute_host_many(
     let batch_file = PathBuf::from("./target/batch_payload.json");
     std::fs::write(&batch_file, serde_json::to_string_pretty(&batch_records)?)?;
 
-    println!("Submitting SINGLE on-chain BatchRegister transaction for {} records...", batch_records.len());
-    let runner_bin = std::env::var("LEZ_RUNNER_BIN")
-        .unwrap_or_else(|_| "/root/lez-testnet-compatible/target/release/run_osm_registry".to_string());
-    let program_bin = std::env::var("OSM_REGISTRY_BIN")
-        .unwrap_or_else(|_| "/root/osm_registry.bin".to_string());
+    println!(
+        "Submitting SINGLE on-chain BatchRegister transaction for {} records...",
+        batch_records.len()
+    );
+    let runner_bin = std::env::var("LEZ_RUNNER_BIN").unwrap_or_else(|_| {
+        "/root/lez-testnet-compatible/target/release/run_osm_registry".to_string()
+    });
+    let program_bin =
+        std::env::var("OSM_REGISTRY_BIN").unwrap_or_else(|_| "/root/osm_registry.bin".to_string());
     let account_id = std::env::var("LEZ_ACCOUNT_ID")
         .unwrap_or_else(|_| "55Me6rDpyUu9vhuMhnM26ikUL4XbgKDUjrWEpdpzyv6r".to_string());
 
@@ -244,14 +269,19 @@ pub async fn execute_host_many(
     let tx_hash = match reg_cmd {
         Ok(output) if output.status.success() => {
             let stdout = String::from_utf8_lossy(&output.stdout);
-            stdout.lines()
+            stdout
+                .lines()
                 .find(|l| l.contains("Hash:"))
                 .and_then(|l| l.split("Hash:").nth(1))
                 .map(|s| s.trim().to_string())
                 .unwrap_or_else(|| "0xlez_batch_confirmed".to_string())
         }
         Ok(output) => {
-            eprintln!("{} Batch registration failed: {}", "✖".red(), String::from_utf8_lossy(&output.stderr));
+            eprintln!(
+                "{} Batch registration failed: {}",
+                "✖".red(),
+                String::from_utf8_lossy(&output.stderr)
+            );
             std::process::exit(1);
         }
         Err(e) => {
@@ -260,10 +290,17 @@ pub async fn execute_host_many(
         }
     };
 
-    println!("{} Batch transaction confirmed! Tx: {}", "✔".green(), tx_hash.green());
+    println!(
+        "{} Batch transaction confirmed! Tx: {}",
+        "✔".green(),
+        tx_hash.green()
+    );
 
     if json_output {
-        println!("{}", json!({ "success": true, "batch_size": batch_records.len(), "tx_hash": tx_hash }));
+        println!(
+            "{}",
+            json!({ "success": true, "batch_size": batch_records.len(), "tx_hash": tx_hash })
+        );
     }
 
     Ok(())
@@ -324,17 +361,21 @@ pub async fn execute_host_file(
         Ok(c) => c,
         Err(e) => {
             eprintln!("{} Logos Storage upload failed: {}", "✖".red(), e);
-            eprintln!("   Ensure Logos storage daemon is active on {}", storage_endpoint);
+            eprintln!(
+                "   Ensure Logos storage daemon is active on {}",
+                storage_endpoint
+            );
             std::process::exit(1);
         }
     };
     println!("     CID: {}", cid.cyan());
 
     println!("  4. Registering on-chain in LEZ...");
-    let runner_bin = std::env::var("LEZ_RUNNER_BIN")
-        .unwrap_or_else(|_| "/root/lez-testnet-compatible/target/release/run_osm_registry".to_string());
-    let program_bin = std::env::var("OSM_REGISTRY_BIN")
-        .unwrap_or_else(|_| "/root/osm_registry.bin".to_string());
+    let runner_bin = std::env::var("LEZ_RUNNER_BIN").unwrap_or_else(|_| {
+        "/root/lez-testnet-compatible/target/release/run_osm_registry".to_string()
+    });
+    let program_bin =
+        std::env::var("OSM_REGISTRY_BIN").unwrap_or_else(|_| "/root/osm_registry.bin".to_string());
     let account_id = std::env::var("LEZ_ACCOUNT_ID")
         .unwrap_or_else(|_| "55Me6rDpyUu9vhuMhnM26ikUL4XbgKDUjrWEpdpzyv6r".to_string());
 
@@ -358,14 +399,19 @@ pub async fn execute_host_file(
     let tx_hash = match reg_cmd {
         Ok(output) if output.status.success() => {
             let stdout = String::from_utf8_lossy(&output.stdout);
-            stdout.lines()
+            stdout
+                .lines()
                 .find(|l| l.contains("Hash:"))
                 .and_then(|l| l.split("Hash:").nth(1))
                 .map(|s| s.trim().to_string())
                 .unwrap_or_else(|| "0xlez_confirmed".to_string())
         }
         Ok(output) => {
-            eprintln!("{} On-chain registration failed: {}", "✖".red(), String::from_utf8_lossy(&output.stderr));
+            eprintln!(
+                "{} On-chain registration failed: {}",
+                "✖".red(),
+                String::from_utf8_lossy(&output.stderr)
+            );
             std::process::exit(1);
         }
         Err(e) => {

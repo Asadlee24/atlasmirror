@@ -16,15 +16,32 @@ fn today_date_string() -> String {
     loop {
         let leap = (y % 4 == 0 && y % 100 != 0) || y % 400 == 0;
         let days_in_year = if leap { 366 } else { 365 };
-        if d < days_in_year { break; }
+        if d < days_in_year {
+            break;
+        }
         d -= days_in_year;
         y += 1;
     }
     let leap = (y % 4 == 0 && y % 100 != 0) || y % 400 == 0;
-    let month_days: [u64; 12] = [31, if leap { 29 } else { 28 }, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let month_days: [u64; 12] = [
+        31,
+        if leap { 29 } else { 28 },
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ];
     let mut m = 0u64;
     for md in &month_days {
-        if d < *md { break; }
+        if d < *md {
+            break;
+        }
         d -= md;
         m += 1;
     }
@@ -37,7 +54,11 @@ pub async fn execute(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let manifest_bytes = include_bytes!("../../../evidence/a1-coverage-manifest.json");
     let manifest: Value = serde_json::from_slice(manifest_bytes).unwrap_or(json!({}));
-    let entries = manifest.get("entries").and_then(|e| e.as_array()).cloned().unwrap_or_default();
+    let entries = manifest
+        .get("entries")
+        .and_then(|e| e.as_array())
+        .cloned()
+        .unwrap_or_default();
 
     let check_list: Vec<String> = match region_opt {
         Some(r) => vec![r.to_string()],
