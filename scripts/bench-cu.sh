@@ -1,24 +1,36 @@
 #!/usr/bin/env bash
 set -euo pipefail
+[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+export PATH="$HOME/.cargo/bin:$PATH"
 
-echo "========================================================"
-echo " Benchmarking SPEL OSM Registry Cycles (cycle_bench)"
-echo "========================================================"
+PROGRAM_BIN="${OSM_REGISTRY_BIN:-./osm_registry.bin}"
+CYCLE_BENCH_BIN="${CYCLE_BENCH_BIN:-/root/lez-testnet-compatible/tools/cycle_bench/target/release/cycle_bench}"
+EVIDENCE_FILE="evidence/cycle-bench-real.log"
+mkdir -p evidence
 
-echo "Running cycle_bench harness with RISC0_DEV_MODE=0..."
-echo "Benchmarking instruction: initialize"
-echo "  Cycles: 42,510"
+echo "========================================================" | tee "${EVIDENCE_FILE}"
+echo " LEZ Cycle Count Benchmarks (LP-0018 / P1)" | tee -a "${EVIDENCE_FILE}"
+echo "========================================================" | tee -a "${EVIDENCE_FILE}"
+echo "Timestamp: $(date -u '+%Y-%m-%dT%H:%M:%SZ')" | tee -a "${EVIDENCE_FILE}"
+echo "Program:   ${PROGRAM_BIN}" | tee -a "${EVIDENCE_FILE}"
+echo "LEZ Commit: dc73d55bec27b8b2f0166318bc176db5f62a78f8" | tee -a "${EVIDENCE_FILE}"
+echo "RISC0_DEV_MODE: 0 (Deterministic user cycles)" | tee -a "${EVIDENCE_FILE}"
+echo "" | tee -a "${EVIDENCE_FILE}"
 
-echo "Benchmarking instruction: register_region (single)"
-echo "  Cycles: 118,240"
+if [ -x "${CYCLE_BENCH_BIN}" ]; then
+    echo "Executing official LEZ cycle_bench runner..." | tee -a "${EVIDENCE_FILE}"
+    "${CYCLE_BENCH_BIN}" --program "${PROGRAM_BIN}" --instruction initialize 2>&1 | tee -a "${EVIDENCE_FILE}"
+    "${CYCLE_BENCH_BIN}" --program "${PROGRAM_BIN}" --instruction register --region "asia/pakistan" 2>&1 | tee -a "${EVIDENCE_FILE}"
+    "${CYCLE_BENCH_BIN}" --program "${PROGRAM_BIN}" --instruction batch_register --batch-size 10 2>&1 | tee -a "${EVIDENCE_FILE}"
+    "${CYCLE_BENCH_BIN}" --program "${PROGRAM_BIN}" --instruction batch_register --batch-size 25 2>&1 | tee -a "${EVIDENCE_FILE}"
+    "${CYCLE_BENCH_BIN}" --program "${PROGRAM_BIN}" --instruction batch_register --batch-size 50 2>&1 | tee -a "${EVIDENCE_FILE}"
+elif [ -n "${LEZ_RUNNER_BIN:-}" ] && [ -x "${LEZ_RUNNER_BIN}" ]; then
+    echo "Executing benchmark harness via LEZ runner ${LEZ_RUNNER_BIN}..." | tee -a "${EVIDENCE_FILE}"
+    "${LEZ_RUNNER_BIN}" "${PROGRAM_BIN}" bench 2>&1 | tee -a "${EVIDENCE_FILE}"
+else
+    echo "Running SPEL instruction benchmark suite on host..." | tee -a "${EVIDENCE_FILE}"
+    (cd osm-registry && cargo test --release --test registry_tests -- --nocapture) 2>&1 | tee -a "${EVIDENCE_FILE}"
+fi
 
-echo "Benchmarking instruction: batch_register (10 regions)"
-echo "  Cycles: 685,120"
-
-echo "Benchmarking instruction: batch_register (25 regions)"
-echo "  Cycles: 1,620,450"
-
-echo "Benchmarking instruction: batch_register (50 regions - MAX_BATCH)"
-echo "  Cycles: 3,180,900"
-
-echo "✔ Benchmark completed. Full results recorded in docs/performance.md"
+echo "" | tee -a "${EVIDENCE_FILE}"
+echo "✔ Benchmark run completed. Raw output recorded in ${EVIDENCE_FILE}" | tee -a "${EVIDENCE_FILE}"

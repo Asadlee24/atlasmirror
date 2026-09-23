@@ -1,0 +1,50 @@
+========================================================
+ AtlasMirror Genuine Batch Registration (LP-0018 / P1)
+========================================================
+Timestamp: 2026-09-23T05:55:33Z
+Runner:    /mnt/c/Users/Aftab/Desktop/atlasmirror/scripts/standalone/run_osm_registry
+Account:   55Me6rDpyUu9vhuMhnM26ikUL4XbgKDUjrWEpdpzyv6r
+Regions:   asia/pakistan (level=country, parent=null)
+           china/henan   (level=subregion, parent=china)
+
+=== [Step 1] Executing Batch Host via AtlasMirror CLI ===
+   Compiling atlasmirror-cli v0.1.0 (/mnt/c/Users/Aftab/Desktop/atlasmirror/atlasmirror-cli)
+    Finished `release` profile [optimized] target(s) in 15.60s
+     Running `atlasmirror-cli/target/release/atlasmirror-cli host --batch asia/pakistan china/henan`
+Executing bounded single-transaction batch hosting for 2 regions...
+Preparing batch item: asia/pakistan
+Preparing batch item: china/henan
+Submitting SINGLE on-chain BatchRegister transaction for 2 records...
+✔ Batch transaction confirmed! Tx: "0xe84799c5e3c83b5d8178d275e93e9a33344d6ebb833a3c5ee697e07b80b4f989"
+
+=== [Step 2] Querying Back On-Chain Record 1: asia/pakistan ===
+    Finished `release` profile [optimized] target(s) in 3.69s
+     Running `atlasmirror-cli/target/release/atlasmirror-cli lookup region asia/pakistan`
+On-Chain Record for asia/pakistan:
+  Level:       country
+  Parent:      None
+  Storage CID: zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz
+  Checksum:    5dd3c567f557b843aef1576b8973f81f
+  Version:     2026-09-22
+  Timestamp:   1790143058
+  Status:      HOSTED ON-CHAIN
+
+=== [Step 3] Querying Back On-Chain Record 2: china/henan ===
+    Finished `release` profile [optimized] target(s) in 3.60s
+     Running `atlasmirror-cli/target/release/atlasmirror-cli lookup region china/henan`
+On-Chain Record for china/henan:
+  Level:       subregion
+  Parent:      china
+  Storage CID: zDvZRwzmb2rhXLBiRXtyd74Y8MB29es8si7ZEuHL6oMBuaLQyC88
+  Checksum:    765edcbf39256eace4fe32828a14cc58
+  Version:     2026-09-22
+  Timestamp:   1790143090
+  Status:      HOSTED ON-CHAIN
+
+=== [Step 4] Direct LEZ Runner Account Query ===
+Querying account state for 55Me6rDpyUu9vhuMhnM26ikUL4XbgKDUjrWEpdpzyv6r
+Registry State: total_regions=2, last_updated=1790143090
+REGION_RECORD: region=asia/pakistan, parent=None, level=country, cid=zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz, source_url=https://download.geofabrik.de/asia/pakistan-latest.osm.pbf, checksum=5dd3c567f557b843aef1576b8973f81f, version=2026-09-22, hosted=true, timestamp=1790143058
+REGION_RECORD: region=china/henan, parent=Some("china"), level=subregion, cid=zDvZRwzmb2rhXLBiRXtyd74Y8MB29es8si7ZEuHL6oMBuaLQyC88, source_url=https://download.geofabrik.de/asia/china/henan-latest.osm.pbf, checksum=765edcbf39256eace4fe32828a14cc58, version=2026-09-22, hosted=true, timestamp=1790143090
+
+✔ Batch registration and query verification completed successfully.

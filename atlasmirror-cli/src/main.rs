@@ -1,5 +1,6 @@
 mod commands;
 mod geofabrik;
+pub mod registry;
 mod storage;
 
 use clap::{Args, Parser, Subcommand};
@@ -70,7 +71,7 @@ struct HostArgs {
     region: Option<String>,
 
     /// Host multiple regions in batch
-    #[arg(long, num_args = 1..)]
+    #[arg(long, alias = "batch", num_args = 1..)]
     many: Option<Vec<String>>,
 
     /// Host a local .osm.pbf file after import-time checksum verification

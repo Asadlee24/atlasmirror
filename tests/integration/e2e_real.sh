@@ -66,11 +66,13 @@ RETRIEVED_FILE="${TMP_DIR}/retrieved.osm.pbf"
 
 # Step 1: Download Geofabrik snapshot and MD5
 echo "=== [Step 1] Fetching live published MD5 from Geofabrik ===" | tee -a evidence/e2e-real.log
-PUBLISHED_MD5=$(curl -sSf "https://download.geofabrik.de/${TARGET_REGION}-latest.osm.pbf.md5" | awk '{print $1}' | tr '[:upper:]' '[:lower:]')
+GEOFABRIK_PBF_URL=$(python3 -c "import json; cat=json.load(open('metadata/regions.json'))['regions']; print(next((r['geofabrik_url'] for r in cat if r['path'] == '${TARGET_REGION}'), 'https://download.geofabrik.de/${TARGET_REGION}-latest.osm.pbf'))")
+GEOFABRIK_MD5_URL=$(python3 -c "import json; cat=json.load(open('metadata/regions.json'))['regions']; print(next((r['md5_url'] for r in cat if r['path'] == '${TARGET_REGION}'), 'https://download.geofabrik.de/${TARGET_REGION}-latest.osm.pbf.md5'))")
+PUBLISHED_MD5=$(curl -sSfL "${GEOFABRIK_MD5_URL}" | awk '{print $1}' | tr '[:upper:]' '[:lower:]')
 echo "Published MD5: ${PUBLISHED_MD5}" | tee -a evidence/e2e-real.log
 
 echo "=== [Step 2] Downloading real PBF snapshot ===" | tee -a evidence/e2e-real.log
-curl -sSf -o "${PBF_FILE}" "https://download.geofabrik.de/${TARGET_REGION}-latest.osm.pbf"
+curl -sSfL -o "${PBF_FILE}" "${GEOFABRIK_PBF_URL}"
 FILE_BYTES=$(wc -c < "${PBF_FILE}")
 echo "Downloaded ${FILE_BYTES} bytes." | tee -a evidence/e2e-real.log
 

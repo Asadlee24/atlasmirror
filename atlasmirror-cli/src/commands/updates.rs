@@ -1,65 +1,12 @@
 use colored::Colorize;
-use serde_json::{json, Value};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-
-#[allow(clippy::manual_is_multiple_of)]
-fn today_date_string() -> String {
-    // Compute current UTC date from system time without chrono dependency
-    let secs = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs();
-    // Days since epoch
-    let days = secs / 86400;
-    // Zeller/Gregorian calendar calculation
-    let mut y = 1970u64;
-    let mut d = days;
-    loop {
-        let leap = (y % 4 == 0 && y % 100 != 0) || y % 400 == 0;
-        let days_in_year = if leap { 366 } else { 365 };
-        if d < days_in_year {
-            break;
-        }
-        d -= days_in_year;
-        y += 1;
-    }
-    let leap = (y % 4 == 0 && y % 100 != 0) || y % 400 == 0;
-    let month_days: [u64; 12] = [
-        31,
-        if leap { 29 } else { 28 },
-        31,
-        30,
-        31,
-        30,
-        31,
-        31,
-        30,
-        31,
-        30,
-        31,
-    ];
-    let mut m = 0u64;
-    for md in &month_days {
-        if d < *md {
-            break;
-        }
-        d -= md;
-        m += 1;
-    }
-    format!("{:04}-{:02}-{:02}", y, m + 1, d + 1)
-}
+use serde_json::json;
+use std::time::Duration;
 
 pub async fn execute(
     region_opt: Option<&str>,
     json_output: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let manifest_bytes = include_bytes!("../../../evidence/a1-coverage-manifest.json");
-    let manifest: Value = serde_json::from_slice(manifest_bytes).unwrap_or(json!({}));
-    let entries = manifest
-        .get("entries")
-        .and_then(|e| e.as_array())
-        .cloned()
-        .unwrap_or_default();
+    let on_chain_records = crate::registry::query_on_chain_registry().ok();
 
     let check_list: Vec<String> = match region_opt {
         Some(r) => vec![r.to_string()],
@@ -75,15 +22,18 @@ pub async fn execute(
         .timeout(Duration::from_secs(10))
         .build()?;
 
-    let today = today_date_string();
     let mut results = Vec::new();
 
     for r in &check_list {
-        let hosted_entry = entries.iter().find(|e| e["region"].as_str() == Some(r));
+        let hosted_entry = on_chain_records
+            .as_ref()
+            .and_then(|recs| recs.iter().find(|e| e.region == *r));
+
+        let live_upstream_ver = crate::geofabrik::fetch_snapshot_version(r).await;
 
         let (status, current_ver, upstream_ver) = if let Some(entry) = hosted_entry {
-            let hosted_version = entry["version"].as_str().unwrap_or("—");
-            let hosted_md5 = entry["geofabrik_md5"].as_str().unwrap_or("");
+            let hosted_version = entry.version.as_str();
+            let hosted_md5 = entry.checksum.as_str();
 
             // Fetch live MD5 from Geofabrik to check for newer upstream snapshot
             let md5_url = format!("https://download.geofabrik.de/{}-latest.osm.pbf.md5", r);
@@ -98,15 +48,27 @@ pub async fn execute(
 
             if let Some(ref live_hash) = upstream_info {
                 if live_hash == hosted_md5 {
-                    ("UP_TO_DATE", hosted_version, hosted_version)
+                    (
+                        "UP_TO_DATE",
+                        hosted_version.to_string(),
+                        hosted_version.to_string(),
+                    )
                 } else {
-                    ("UPDATE_AVAILABLE", hosted_version, today.as_str())
+                    (
+                        "UPDATE_AVAILABLE",
+                        hosted_version.to_string(),
+                        live_upstream_ver,
+                    )
                 }
             } else {
-                ("UP_TO_DATE", hosted_version, hosted_version)
+                (
+                    "UP_TO_DATE",
+                    hosted_version.to_string(),
+                    hosted_version.to_string(),
+                )
             }
         } else {
-            ("NOT_HOSTED", "—", today.as_str())
+            ("NOT_HOSTED", "—".to_string(), live_upstream_ver)
         };
 
         results.push(json!({
@@ -119,29 +81,28 @@ pub async fn execute(
 
     if json_output {
         println!("{}", serde_json::to_string_pretty(&results)?);
-        return Ok(());
-    }
+    } else {
+        println!(
+            "{:<25} {:<18} {:<15} {:<15}",
+            "REGION", "STATUS", "HOSTED VER", "UPSTREAM VER"
+        );
+        println!("{}", "-".repeat(75));
 
-    println!(
-        "{:<25} {:<18} {:<15} UPSTREAM VER",
-        "REGION", "STATUS", "HOSTED VER"
-    );
-    println!("{}", "-".repeat(75));
+        for res in &results {
+            let status_badge = match res["status"].as_str().unwrap_or("") {
+                "UP_TO_DATE" => "UP_TO_DATE".green(),
+                "UPDATE_AVAILABLE" => "UPDATE_AVAILABLE".yellow(),
+                _ => "NOT_HOSTED".dimmed(),
+            };
 
-    for item in results {
-        let r = item["region"].as_str().unwrap();
-        let s = item["status"].as_str().unwrap();
-        let cv = item["current_version"].as_str().unwrap();
-        let uv = item["upstream_version"].as_str().unwrap();
-
-        let formatted_status = match s {
-            "UP_TO_DATE" => s.green(),
-            "UPDATE_AVAILABLE" => s.yellow().bold(),
-            "NOT_HOSTED" => s.bright_black(),
-            _ => s.red(),
-        };
-
-        println!("{:<25} {:<18} {:<15} {}", r, formatted_status, cv, uv);
+            println!(
+                "{:<25} {:<27} {:<15} {:<15}",
+                res["region"].as_str().unwrap_or(""),
+                status_badge,
+                res["current_version"].as_str().unwrap_or(""),
+                res["upstream_version"].as_str().unwrap_or("")
+            );
+        }
     }
 
     Ok(())

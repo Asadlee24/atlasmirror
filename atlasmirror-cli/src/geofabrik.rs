@@ -19,8 +19,35 @@ pub enum GeofabrikError {
     InvalidChecksumResponse(String),
 }
 
+fn get_catalog_urls(region_path: &str) -> Option<(String, String)> {
+    let bytes = include_bytes!("../../metadata/regions.json");
+    if let Ok(val) = serde_json::from_slice::<serde_json::Value>(bytes) {
+        if let Some(arr) = val.get("regions").and_then(|r| r.as_array()) {
+            for item in arr {
+                if item.get("path").and_then(|p| p.as_str()) == Some(region_path) {
+                    let pbf = item
+                        .get("geofabrik_url")
+                        .and_then(|u| u.as_str())
+                        .map(|s| s.to_string());
+                    let md5 = item
+                        .get("md5_url")
+                        .and_then(|u| u.as_str())
+                        .map(|s| s.to_string());
+                    if let (Some(p), Some(m)) = (pbf, md5) {
+                        return Some((p, m));
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
 /// Resolves the canonical Geofabrik PBF URL for a region path.
 pub fn resolve_pbf_url(region_path: &str) -> String {
+    if let Some((pbf, _)) = get_catalog_urls(region_path) {
+        return pbf;
+    }
     format!(
         "https://download.geofabrik.de/{}-latest.osm.pbf",
         region_path
@@ -29,6 +56,9 @@ pub fn resolve_pbf_url(region_path: &str) -> String {
 
 /// Resolves the canonical Geofabrik MD5 URL for a region path.
 pub fn resolve_md5_url(region_path: &str) -> String {
+    if let Some((_, md5)) = get_catalog_urls(region_path) {
+        return md5;
+    }
     format!(
         "https://download.geofabrik.de/{}-latest.osm.pbf.md5",
         region_path
@@ -114,4 +144,96 @@ pub async fn download_pbf_stream(
     // Atomic rename
     std::fs::rename(&temp_dest, destination)?;
     Ok(())
+}
+
+/// Fetches the live snapshot date/version from Geofabrik HTTP headers (Last-Modified).
+pub async fn fetch_snapshot_version(region_path: &str) -> String {
+    let url = resolve_pbf_url(region_path);
+    let client = reqwest::Client::builder()
+        .user_agent("AtlasMirror/1.0 (LP-0018 Evaluator)")
+        .build()
+        .unwrap_or_else(|_| reqwest::Client::new());
+
+    if let Ok(resp) = client.head(&url).send().await {
+        if let Some(lm) = resp
+            .headers()
+            .get("last-modified")
+            .and_then(|h| h.to_str().ok())
+        {
+            if let Ok(dt) = parse_last_modified_date(lm) {
+                return dt;
+            }
+        }
+    }
+
+    current_date_string()
+}
+
+fn parse_last_modified_date(lm: &str) -> Result<String, ()> {
+    let parts: Vec<&str> = lm.split_whitespace().collect();
+    if parts.len() >= 4 {
+        let day: u32 = parts[1].parse().map_err(|_| ())?;
+        let mon = match parts[2] {
+            "Jan" => 1,
+            "Feb" => 2,
+            "Mar" => 3,
+            "Apr" => 4,
+            "May" => 5,
+            "Jun" => 6,
+            "Jul" => 7,
+            "Aug" => 8,
+            "Sep" => 9,
+            "Oct" => 10,
+            "Nov" => 11,
+            "Dec" => 12,
+            _ => return Err(()),
+        };
+        let year: u32 = parts[3].parse().map_err(|_| ())?;
+        return Ok(format!("{:04}-{:02}-{:02}", year, mon, day));
+    }
+    Err(())
+}
+
+#[allow(clippy::manual_is_multiple_of)]
+fn current_date_string() -> String {
+    let secs = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    let days = secs / 86400;
+    let mut y = 1970u64;
+    let mut d = days;
+    loop {
+        let leap = (y % 4 == 0 && y % 100 != 0) || y % 400 == 0;
+        let days_in_year = if leap { 366 } else { 365 };
+        if d < days_in_year {
+            break;
+        }
+        d -= days_in_year;
+        y += 1;
+    }
+    let leap = (y % 4 == 0 && y % 100 != 0) || y % 400 == 0;
+    let month_days = [
+        31,
+        if leap { 29 } else { 28 },
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ];
+    let mut m = 0usize;
+    for md in &month_days {
+        if d < *md {
+            break;
+        }
+        d -= *md;
+        m += 1;
+    }
+    format!("{:04}-{:02}-{:02}", y, m + 1, d + 1)
 }

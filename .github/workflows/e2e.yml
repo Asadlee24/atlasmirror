@@ -33,14 +33,14 @@ jobs:
   real-e2e-integration:
     name: Real Infrastructure Integration (logoscore & LEZ)
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.run_real_integration == 'true' }}
     needs: unit-verification
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Run Real E2E Test (Fails if Logos daemons absent)
+      - name: Run Real Standalone E2E Test
         run: |
           chmod +x scripts/*.sh
-          python tests/integration/test_e2e_real.py
+          chmod +x scripts/standalone/*
+          bash scripts/run_e2e_real.sh

@@ -1,63 +1,41 @@
 use colored::Colorize;
 use serde_json::{json, Value};
 
-fn load_data() -> (Vec<Value>, Vec<Value>) {
-    let manifest_bytes = include_bytes!("../../../evidence/a1-coverage-manifest.json");
-    let manifest: Value = serde_json::from_slice(manifest_bytes).unwrap_or(json!({}));
-    let entries = manifest
-        .get("entries")
-        .and_then(|e| e.as_array())
-        .cloned()
-        .unwrap_or_default();
-
+fn load_catalog() -> Vec<Value> {
     let regions_bytes = include_bytes!("../../../metadata/regions.json");
     let catalog: Value = serde_json::from_slice(regions_bytes).unwrap_or(json!({}));
-    let catalog_regions = catalog
+    catalog
         .get("regions")
         .and_then(|r| r.as_array())
         .cloned()
-        .unwrap_or_default();
-
-    (entries, catalog_regions)
+        .unwrap_or_default()
 }
 
 pub fn execute_region(path: &str, json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
-    let (entries, catalog_regions) = load_data();
-
-    // Check if hosted on-chain in verified manifest
-    if let Some(entry) = entries.iter().find(|e| e["region"].as_str() == Some(path)) {
-        if json_output {
-            println!("{}", serde_json::to_string_pretty(entry)?);
-        } else {
-            println!("On-Chain Record for {}:", path.bold());
-            println!(
-                "  Level:       {}",
-                entry["level"].as_str().unwrap_or("unknown")
-            );
-            println!(
-                "  Parent:      {}",
-                entry["parent"].as_str().unwrap_or("None")
-            );
-            println!(
-                "  Storage CID: {}",
-                entry["cid"].as_str().unwrap_or("").cyan()
-            );
-            println!(
-                "  Checksum:    {}",
-                entry["geofabrik_md5"].as_str().unwrap_or("")
-            );
-            println!("  Version:     {}", entry["version"].as_str().unwrap_or(""));
-            println!("  Timestamp:   {}", entry["timestamp"]);
-            println!(
-                "  Tx Hash:     {}",
-                entry["registry_tx"].as_str().unwrap_or("")
-            );
-            println!("  Status:      {}", "HOSTED & VERIFIED".green());
+    // Query genuine on-chain LEZ registry
+    if let Ok(on_chain_records) = crate::registry::query_on_chain_registry() {
+        if let Some(entry) = on_chain_records.iter().find(|e| e.region == path) {
+            if json_output {
+                println!("{}", serde_json::to_string_pretty(entry)?);
+            } else {
+                println!("On-Chain Record for {}:", path.bold());
+                println!("  Level:       {}", entry.level);
+                println!(
+                    "  Parent:      {}",
+                    entry.parent.as_deref().unwrap_or("None")
+                );
+                println!("  Storage CID: {}", entry.cid.cyan());
+                println!("  Checksum:    {}", entry.checksum);
+                println!("  Version:     {}", entry.version);
+                println!("  Timestamp:   {}", entry.timestamp);
+                println!("  Status:      {}", "HOSTED ON-CHAIN".green());
+            }
+            return Ok(());
         }
-        return Ok(());
     }
 
-    // Check if in predefined catalog but not yet hosted
+    // Check predefined catalog if not hosted
+    let catalog_regions = load_catalog();
     if let Some(cat) = catalog_regions
         .iter()
         .find(|r| r["path"].as_str() == Some(path))
@@ -65,8 +43,7 @@ pub fn execute_region(path: &str, json_output: bool) -> Result<(), Box<dyn std::
         let res = json!({
             "region": path,
             "level": cat["level"].as_str().unwrap_or("country"),
-            "parent": cat["parent"].as_str(),
-            "hosted": false,
+            "parent": cat.get("parent"),
             "source_url": cat["geofabrik_url"].as_str().unwrap_or(""),
             "status": "NOT_HOSTED"
         });
@@ -100,13 +77,31 @@ pub fn execute_region(path: &str, json_output: bool) -> Result<(), Box<dyn std::
 }
 
 pub fn execute_parent(parent: &str, json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
-    let (_entries, catalog_regions) = load_data();
-
     let mut children = Vec::new();
-    for r in &catalog_regions {
-        if r["parent"].as_str() == Some(parent) {
-            if let Some(p) = r["path"].as_str() {
-                children.push(p.to_string());
+    if let Ok(on_chain_records) = crate::registry::query_on_chain_registry() {
+        for r in on_chain_records {
+            if r.parent.as_deref() == Some(parent) {
+                children.push(json!({
+                    "region": r.region,
+                    "level": r.level,
+                    "cid": r.cid,
+                    "checksum": r.checksum,
+                    "version": r.version,
+                    "hosted": true
+                }));
+            }
+        }
+    }
+
+    if children.is_empty() {
+        let catalog_regions = load_catalog();
+        for r in catalog_regions {
+            if r["parent"].as_str() == Some(parent) {
+                children.push(json!({
+                    "region": r["path"].as_str().unwrap_or(""),
+                    "level": r["level"].as_str().unwrap_or("subregion"),
+                    "hosted": false
+                }));
             }
         }
     }
@@ -121,43 +116,42 @@ pub fn execute_parent(parent: &str, json_output: bool) -> Result<(), Box<dyn std
     }
 
     if json_output {
-        println!("{}", json!({ "parent": parent, "children": children }));
+        println!("{}", serde_json::to_string_pretty(&children)?);
     } else {
-        println!("Subregions for parent {}:", parent.bold());
+        println!("Subregions under {}:", parent.bold());
         for c in children {
-            println!("  - {}", c.cyan());
+            let status_badge = if c["hosted"].as_bool().unwrap_or(false) {
+                "HOSTED".green()
+            } else {
+                "NOT_HOSTED".yellow()
+            };
+            println!(
+                "  - {:<30} [{}]",
+                c["region"].as_str().unwrap_or(""),
+                status_badge
+            );
         }
     }
+
     Ok(())
 }
 
 pub fn execute_cid(cid: &str, json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
-    let (entries, _catalog_regions) = load_data();
+    let on_chain_records = crate::registry::query_on_chain_registry()
+        .map_err(|e| format!("Failed to query on-chain registry for CID {}: {}", cid, e))?;
 
-    if let Some(entry) = entries.iter().find(|e| e["cid"].as_str() == Some(cid)) {
+    if let Some(entry) = on_chain_records.iter().find(|e| e.cid == cid) {
         if json_output {
             println!("{}", serde_json::to_string_pretty(entry)?);
         } else {
-            println!("CID Lookup: {}", cid.cyan());
-            println!(
-                "  Region:    {}",
-                entry["region"].as_str().unwrap_or("").bold()
-            );
-            println!("  Level:     {}", entry["level"].as_str().unwrap_or(""));
-            println!(
-                "  Parent:    {}",
-                entry["parent"].as_str().unwrap_or("None")
-            );
-            println!("  Version:   {}", entry["version"].as_str().unwrap_or(""));
-            println!(
-                "  Checksum:  {}",
-                entry["geofabrik_md5"].as_str().unwrap_or("")
-            );
-            println!("  Timestamp: {}", entry["timestamp"]);
-            println!(
-                "  Tx Hash:   {}",
-                entry["registry_tx"].as_str().unwrap_or("")
-            );
+            println!("On-Chain CID Lookup: {}", cid.cyan());
+            println!("  Region:    {}", entry.region.bold());
+            println!("  Level:     {}", entry.level);
+            println!("  Parent:    {}", entry.parent.as_deref().unwrap_or("None"));
+            println!("  Version:   {}", entry.version);
+            println!("  Checksum:  {}", entry.checksum);
+            println!("  Timestamp: {}", entry.timestamp);
+            println!("  Status:    {}", "HOSTED ON-CHAIN".green());
         }
         return Ok(());
     }

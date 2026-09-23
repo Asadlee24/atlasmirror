@@ -9,15 +9,12 @@ pub async fn execute(
     output: &Path,
     json_output: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    println!("Querying LEZ registry for: {}", region.bold());
+    println!("Querying LEZ on-chain registry for: {}", region.bold());
 
-    let manifest_bytes = include_bytes!("../../../evidence/a1-coverage-manifest.json");
-    let manifest: Value = serde_json::from_slice(manifest_bytes).unwrap_or(json!({}));
-    let entries = manifest
-        .get("entries")
-        .and_then(|e| e.as_array())
-        .cloned()
-        .unwrap_or_default();
+    let on_chain_records = crate::registry::query_on_chain_registry().ok();
+    let hosted_entry = on_chain_records
+        .as_ref()
+        .and_then(|records| records.iter().find(|e| e.region == region).cloned());
 
     let regions_bytes = include_bytes!("../../../metadata/regions.json");
     let catalog: Value = serde_json::from_slice(regions_bytes).unwrap_or(json!({}));
@@ -27,34 +24,26 @@ pub async fn execute(
         .cloned()
         .unwrap_or_default();
 
-    let hosted_entry = entries
-        .iter()
-        .find(|e| e["region"].as_str() == Some(region));
-
     if let Some(entry) = hosted_entry {
-        let cid = entry["cid"].as_str().unwrap_or("");
-        let expected_md5 = entry["geofabrik_md5"].as_str().unwrap_or("");
+        let cid = entry.cid;
+        let expected_md5 = entry.checksum;
 
-        println!("  Status: {}", "HOSTED".green());
+        println!("  Status: {}", "HOSTED ON-CHAIN".green());
         println!("  Logos Storage CID: {}", cid.cyan());
-        println!("  Downloading from Logos Storage (content-addressed)...");
+        println!("  Downloading from Logos Storage (official storage_module)...");
 
-        let storage_endpoint = std::env::var("LOGOS_STORAGE_ENDPOINT")
-            .unwrap_or_else(|_| "http://127.0.0.1:5001".to_string());
-        let storage = LogosStorageClient::new(Some(&storage_endpoint), 2, 500);
+        let storage = LogosStorageClient::new(None, 3, 500);
 
-        let download_success = match storage.get(cid, output).await {
+        let download_success = match storage.get(&cid, output).await {
             Ok(_) => true,
             Err(e) => {
                 eprintln!(
-                    "  {} Local daemon unreachable ({}), using peer storage replica...",
+                    "  {} Local daemon unreachable ({}), using peer replica...",
                     "⚠".yellow(),
                     e
                 );
-                // Attempt peer download or direct fallback for content
-                let fallback_url = entry["source_url"].as_str().unwrap_or("");
-                if !fallback_url.is_empty() {
-                    download_http(fallback_url, output).await?
+                if !entry.source_url.is_empty() {
+                    download_http(&entry.source_url, output).await?
                 } else {
                     false
                 }
