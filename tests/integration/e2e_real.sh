@@ -157,7 +157,17 @@ fi
 if [ -z "${REAL_CID}" ]; then
     echo "Querying manifests for uploaded CID..." | tee -a evidence/e2e-real.log
     MANIFESTS_JSON=$("${LOGOSCORE_BIN}" call storage_module manifests --json 2>&1 || echo "")
-    REAL_CID=$(echo "${MANIFESTS_JSON}" | grep -o '"cid": *"[^"]*"' | head -1 | cut -d'"' -f4 || echo "")
+    REAL_CID=$(python3 -c "
+import json, sys
+try:
+    m = json.loads('''${MANIFESTS_JSON}''')
+    entries = m.get('result', {}).get('value', [])
+    target = 'henan-latest.osm.pbf'
+    matched = [e['cid'] for e in entries if e.get('filename') == target]
+    print(matched[-1] if matched else '')
+except Exception:
+    print('')
+")
 fi
 
 if [ -z "${REAL_CID}" ]; then
@@ -219,13 +229,31 @@ QUERY_OUTPUT=$(spel inspect "${REGISTRY_ACCOUNT_ID}" \
     --idl osm-registry/idl/osm_registry.json \
     --type GlobalRegistryState | tee -a evidence/e2e-real.log)
 
-# Step 6: Download snapshot by CID via storage_module downloadToUrl (local=true)
+echo "=== [Step 7b] Asserting on-chain record fields ===" | tee -a evidence/e2e-real.log
+python3 -c "
+import sys
+q = '''${QUERY_OUTPUT}'''
+expected_region = '${REGISTER_REGION_PATH}'
+expected_cid = '${REAL_CID}'
+expected_checksum = '${COMPUTED_MD5}'
+expected_level = '${LEVEL}'
+
+assert expected_region in q, f'Region {expected_region} not found in on-chain inspect: {q}'
+assert expected_cid in q, f'CID {expected_cid} not found in on-chain inspect: {q}'
+assert expected_checksum in q, f'Checksum {expected_checksum} not found in on-chain inspect: {q}'
+assert expected_level in q, f'Level {expected_level} not found in on-chain inspect: {q}'
+print('✔ On-chain record fields verified: region, CID, checksum, and level match exactly!')
+" | tee -a evidence/e2e-real.log
+
+# Step 6: Download snapshot by CID via storage_module downloadToUrl (network peer retrieval first, local fallback)
 echo "=== [Step 8] Downloading snapshot by CID from Logos Storage ===" | tee -a evidence/e2e-real.log
 : > evidence/e2e-download-event.json
 "${LOGOSCORE_BIN}" watch storage_module --event storageDownloadDone --json > evidence/e2e-download-event.json 2>&1 &
 WATCHER_DOWNLOAD_PID=$!
 sleep 1
 
+# Try peer retrieval (local=false) first; if fails fallback to local=true
+"${LOGOSCORE_BIN}" call storage_module downloadToUrl "${REAL_CID}" "$(realpath -m "${RETRIEVED_FILE}")" false 1048576 --json >> evidence/e2e-real.log 2>&1 || \
 "${LOGOSCORE_BIN}" call storage_module downloadToUrl "${REAL_CID}" "$(realpath -m "${RETRIEVED_FILE}")" true 1048576 --json >> evidence/e2e-real.log 2>&1
 
 echo "Waiting for storageDownloadDone event..." | tee -a evidence/e2e-real.log

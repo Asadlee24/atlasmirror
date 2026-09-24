@@ -157,8 +157,38 @@ impl LogosStorageClient {
                         .and_then(|r| r.get("value"))
                         .and_then(|v| v.as_array())
                     {
-                        if let Some(last_entry) = arr.last() {
-                            if let Some(cid) = last_entry.get("cid").and_then(|c| c.as_str()) {
+                        let target_filename = abs_path
+                            .file_name()
+                            .and_then(|f| f.to_str())
+                            .unwrap_or_default();
+                        let target_size = std::fs::metadata(&abs_path)
+                            .map(|meta| meta.len())
+                            .unwrap_or(0);
+
+                        // Correlate with uploaded file: match filename and size
+                        let matched = arr.iter().rev().find(|entry| {
+                            let fname = entry
+                                .get("filename")
+                                .and_then(|s| s.as_str())
+                                .unwrap_or_default();
+                            let dsize = entry
+                                .get("datasetSize")
+                                .and_then(|s| s.as_u64())
+                                .unwrap_or(0);
+                            fname == target_filename && (target_size == 0 || dsize == target_size)
+                        }).or_else(|| {
+                            // Fallback to filename match
+                            arr.iter().rev().find(|entry| {
+                                let fname = entry
+                                    .get("filename")
+                                    .and_then(|s| s.as_str())
+                                    .unwrap_or_default();
+                                fname == target_filename
+                            })
+                        });
+
+                        if let Some(entry) = matched {
+                            if let Some(cid) = entry.get("cid").and_then(|c| c.as_str()) {
                                 real_cid = cid.to_string();
                             }
                         }

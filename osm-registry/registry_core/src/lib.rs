@@ -258,6 +258,7 @@ pub fn process_instruction(
                 state.total_regions += 1;
             }
 
+            records.sort_by(|a, b| a.timestamp.cmp(&b.timestamp).then_with(|| a.region.cmp(&b.region)));
             state.last_updated = ts;
             Ok(())
         }
@@ -283,6 +284,7 @@ pub fn process_instruction(
                 }
             }
 
+            records.sort_by(|a, b| a.timestamp.cmp(&b.timestamp).then_with(|| a.region.cmp(&b.region)));
             Ok(())
         }
     }
@@ -394,5 +396,46 @@ mod tests {
             records: vec![valid_item; 51],
         };
         assert_eq!(batch.validate(), Err(RegistryError::BatchTooLarge(51)));
+    }
+
+    #[test]
+    fn test_records_timestamp_ordering() {
+        let mut state = GlobalRegistryState::default();
+        let mut records = Vec::new();
+
+        let r2 = RegisterRegionArgs {
+            region: "europe/germany".to_string(),
+            parent: None,
+            level: RegionLevel::Country,
+            cid: "cid2".to_string(),
+            source_url: "https://example.com/2".to_string(),
+            checksum: "0123456789abcdef0123456789abcdef".to_string(),
+            version: "2026-09-20".to_string(),
+            hosted: true,
+            timestamp: 200,
+        };
+        let r1 = RegisterRegionArgs {
+            region: "asia/pakistan".to_string(),
+            parent: None,
+            level: RegionLevel::Country,
+            cid: "cid1".to_string(),
+            source_url: "https://example.com/1".to_string(),
+            checksum: "0123456789abcdef0123456789abcdef".to_string(),
+            version: "2026-09-19".to_string(),
+            hosted: true,
+            timestamp: 100,
+        };
+
+        let data2 = borsh::to_vec(&RegistryInstruction::RegisterRegion(r2)).unwrap();
+        process_instruction(&data2, &mut state, &mut records).unwrap();
+
+        let data1 = borsh::to_vec(&RegistryInstruction::RegisterRegion(r1)).unwrap();
+        process_instruction(&data1, &mut state, &mut records).unwrap();
+
+        assert_eq!(records.len(), 2);
+        assert_eq!(records[0].region, "asia/pakistan");
+        assert_eq!(records[0].timestamp, 100);
+        assert_eq!(records[1].region, "europe/germany");
+        assert_eq!(records[1].timestamp, 200);
     }
 }

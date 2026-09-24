@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <cstdint>
+#include <algorithm>
 #include "logos_module_context.h"
 
 /**

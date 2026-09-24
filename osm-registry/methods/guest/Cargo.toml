@@ -1,16 +1,16 @@
 [package]
 name = "osm-registry-guest"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
+version = "0.1.0"
+edition = "2021"
+authors = ["AtlasMirror Contributors"]
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 osm-registry-core = { path = "../../registry_core" }
-borsh = { workspace = true }
-serde = { workspace = true }
+borsh = { version = "1.5", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
 risc0-zkvm = { version = "3.0", default-features = false, features = ["std"] }
-lee_core = { path = "/root/lez-testnet-compatible/lee/state_machine/core" }
+lee_core = { git = "https://github.com/logos-blockchain/logos-execution-zone.git", rev = "47eba25", package = "lee_core" }
 
 [[bin]]
 name = "osm_registry"
