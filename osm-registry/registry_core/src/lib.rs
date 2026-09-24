@@ -258,7 +258,11 @@ pub fn process_instruction(
                 state.total_regions += 1;
             }
 
-            records.sort_by(|a, b| a.timestamp.cmp(&b.timestamp).then_with(|| a.region.cmp(&b.region)));
+            records.sort_by(|a, b| {
+                a.timestamp
+                    .cmp(&b.timestamp)
+                    .then_with(|| a.region.cmp(&b.region))
+            });
             state.last_updated = ts;
             Ok(())
         }
@@ -284,7 +288,11 @@ pub fn process_instruction(
                 }
             }
 
-            records.sort_by(|a, b| a.timestamp.cmp(&b.timestamp).then_with(|| a.region.cmp(&b.region)));
+            records.sort_by(|a, b| {
+                a.timestamp
+                    .cmp(&b.timestamp)
+                    .then_with(|| a.region.cmp(&b.region))
+            });
             Ok(())
         }
     }

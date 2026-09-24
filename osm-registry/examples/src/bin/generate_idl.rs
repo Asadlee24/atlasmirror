@@ -33,7 +33,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if let Ok(val) = serde_json::from_str::<serde_json::Value>(&stdout) {
                         let pretty = serde_json::to_string_pretty(&val)?;
                         fs::write(&out_path, format!("{}\n", pretty))?;
-                        println!("Successfully generated genuine SPEL IDL via CLI at: {}", out_path.display());
+                        println!(
+                            "Successfully generated genuine SPEL IDL via CLI at: {}",
+                            out_path.display()
+                        );
                         return Ok(());
                     }
                 }
@@ -168,7 +171,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let json_str = format!("{}\n", serde_json::to_string_pretty(&idl)?);
     fs::write(&out_path, json_str)?;
-    println!("Successfully generated canonical SPEL IDL at: {}", out_path.display());
+    println!(
+        "Successfully generated canonical SPEL IDL at: {}",
+        out_path.display()
+    );
 
     Ok(())
 }

@@ -166,26 +166,31 @@ impl LogosStorageClient {
                             .unwrap_or(0);
 
                         // Correlate with uploaded file: match filename and size
-                        let matched = arr.iter().rev().find(|entry| {
-                            let fname = entry
-                                .get("filename")
-                                .and_then(|s| s.as_str())
-                                .unwrap_or_default();
-                            let dsize = entry
-                                .get("datasetSize")
-                                .and_then(|s| s.as_u64())
-                                .unwrap_or(0);
-                            fname == target_filename && (target_size == 0 || dsize == target_size)
-                        }).or_else(|| {
-                            // Fallback to filename match
-                            arr.iter().rev().find(|entry| {
+                        let matched = arr
+                            .iter()
+                            .rev()
+                            .find(|entry| {
                                 let fname = entry
                                     .get("filename")
                                     .and_then(|s| s.as_str())
                                     .unwrap_or_default();
+                                let dsize = entry
+                                    .get("datasetSize")
+                                    .and_then(|s| s.as_u64())
+                                    .unwrap_or(0);
                                 fname == target_filename
+                                    && (target_size == 0 || dsize == target_size)
                             })
-                        });
+                            .or_else(|| {
+                                // Fallback to filename match
+                                arr.iter().rev().find(|entry| {
+                                    let fname = entry
+                                        .get("filename")
+                                        .and_then(|s| s.as_str())
+                                        .unwrap_or_default();
+                                    fname == target_filename
+                                })
+                            });
 
                         if let Some(entry) = matched {
                             if let Some(cid) = entry.get("cid").and_then(|c| c.as_str()) {
