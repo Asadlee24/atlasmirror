@@ -88,7 +88,8 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
         "channel_params": {
             "allowed_routes": [],
             "expected_block_signing_pubkeys": [],
-            "min_committee_size": 0
+            "min_committee_size": 0,
+            "minimum_sequencer_stake": 1000000
         }
     },
     "genesis": [
@@ -115,8 +116,7 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
         37, 37, 37, 37, 37, 37, 37, 37,
         37, 37, 37, 37, 37, 37, 37, 37,
         37, 37, 37, 37, 37, 37, 37, 37
-    ],
-    "minimum_sequencer_stake": 1000000
+    ]
 }
 EOF
 
