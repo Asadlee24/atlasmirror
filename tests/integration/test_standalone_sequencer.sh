@@ -103,6 +103,7 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
     "genesis": [
         {
             "supply_bridge_lock_holding": {
+                "holder": "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r",
                 "balance": 10000000
             }
         },
