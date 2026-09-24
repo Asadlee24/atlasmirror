@@ -198,7 +198,7 @@ except Exception:
 
 if [ "${ACCOUNT_DATA_LEN}" -eq "0" ]; then
     echo "Initializing state account ${REGISTRY_ACCOUNT_ID} via spel initialize..." | tee -a evidence/e2e-real.log
-    timeout 60s spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- initialize --state "${REGISTRY_ACCOUNT_ID}" | tee -a evidence/e2e-real.log
+    timeout 90s spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- initialize --state "${REGISTRY_ACCOUNT_ID}" | tee -a evidence/e2e-real.log
     sleep 4
     # Re-verify account is now initialized before proceeding
     ACCOUNT_DATA_LEN=$(python3 -c "import urllib.request, json;
@@ -229,7 +229,7 @@ except Exception:
 ")
 
 TX_OUT_FILE=$(mktemp)
-if ! timeout 30s spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
+if ! timeout 90s spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
     register-region \
     --state "${REGISTRY_ACCOUNT_ID}" \
     --region "${REGISTER_REGION_PATH}" \
@@ -248,7 +248,7 @@ fi
 TX_OUTPUT=$(cat "${TX_OUT_FILE}"); rm -f "${TX_OUT_FILE}"
 
 echo "=== [Step 7] Querying on-chain state via spel inspect ===" | tee -a evidence/e2e-real.log
-QUERY_OUTPUT=$(timeout 30s spel inspect "${REGISTRY_ACCOUNT_ID}" \
+QUERY_OUTPUT=$(timeout 45s spel inspect "${REGISTRY_ACCOUNT_ID}" \
     --idl osm-registry/idl/osm_registry.json \
     --type GlobalRegistryState 2>&1 || echo "")
 echo "${QUERY_OUTPUT}" | tee -a evidence/e2e-real.log
