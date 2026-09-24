@@ -72,7 +72,10 @@ pub async fn execute(
         }
 
         if !temp_dest.exists() {
-            eprintln!("{} Failed to download snapshot from Logos Storage.", "✖".red());
+            eprintln!(
+                "{} Failed to download snapshot from Logos Storage.",
+                "✖".red()
+            );
             std::process::exit(1);
         }
 
