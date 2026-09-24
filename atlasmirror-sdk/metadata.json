@@ -12,14 +12,14 @@
   "nix": {
     "packages": {
       "build": ["pkg-config", "cmake"],
-      "runtime": ["curl", "qt6.qtbase"]
+      "runtime": ["curl"]
     },
     "external_libraries": [],
     "cmake": {
-      "find_packages": ["Qt6 COMPONENTS Core Network"],
-      "extra_sources": ["src/atlasmirror_sdk_impl.cpp", "src/atlasmirror_sdk_impl.h"],
-      "extra_include_dirs": ["src"],
-      "extra_link_libraries": ["Qt6::Core", "Qt6::Network"]
+      "find_packages": [],
+      "extra_sources": [],
+      "extra_include_dirs": [],
+      "extra_link_libraries": []
     }
   }
 }
