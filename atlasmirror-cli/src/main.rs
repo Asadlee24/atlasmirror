@@ -220,16 +220,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         Commands::Updates(args) => {
-            let target_region = if let Some(UpdatesSubcommand::Check { region }) = args.subcommand {
-                Some(region)
-            } else if let Some(r) = args.region {
-                if r == "check" {
-                    None
-                } else {
-                    Some(r)
-                }
-            } else {
-                None
+            let target_region = match args.subcommand {
+                Some(UpdatesSubcommand::Check { region }) => Some(region),
+                None => args.region.filter(|r| r != "check"),
             };
             commands::updates::execute(target_region.as_deref(), cli.json).await?;
         }
