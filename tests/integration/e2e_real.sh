@@ -228,8 +228,10 @@ except Exception:
     print(1790300000)
 ")
 
-TX_OUT_FILE=$(mktemp)
-if ! timeout 90s spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
+# Submit TX in background; capture tx_hash immediately; then poll RPC ourselves.
+# This avoids being blocked by spel's internal confirmation poller on a slow testnet.
+SPEL_LOG=$(mktemp)
+timeout 120s spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
     register-region \
     --state "${REGISTRY_ACCOUNT_ID}" \
     --region "${REGISTER_REGION_PATH}" \
@@ -240,29 +242,66 @@ if ! timeout 90s spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}
     --checksum "${COMPUTED_MD5}" \
     --version "$(date +%Y-%m-%d)" \
     --hosted true \
-    --timestamp "${REG_TIMESTAMP}" 2>&1 | tee "${TX_OUT_FILE}" | tee -a evidence/e2e-real.log; then
-    echo "[FAIL] spel register-region transaction failed (exit non-zero)." | tee -a evidence/e2e-real.log
-    rm -f "${TX_OUT_FILE}"
+    --timestamp "${REG_TIMESTAMP}" >"${SPEL_LOG}" 2>&1 &
+SPEL_PID=$!
+
+# Wait up to 25s for tx_hash to appear (submission confirmation)
+TX_HASH=""
+for i in {1..25}; do
+    if grep -q "tx_hash:" "${SPEL_LOG}" 2>/dev/null; then
+        TX_HASH=$(grep "tx_hash:" "${SPEL_LOG}" | grep -o '[0-9a-f]\{64\}' | head -1 || true)
+        break
+    fi
+    sleep 1
+done
+cat "${SPEL_LOG}" | tee -a evidence/e2e-real.log || true
+
+if [ -z "${TX_HASH}" ]; then
+    echo "[FAIL] spel did not emit a tx_hash within 25s — TX was not submitted." | tee -a evidence/e2e-real.log
+    kill "${SPEL_PID}" 2>/dev/null || true
+    rm -f "${SPEL_LOG}"
     exit 1
 fi
-TX_OUTPUT=$(cat "${TX_OUT_FILE}"); rm -f "${TX_OUT_FILE}"
+echo "TX submitted: ${TX_HASH}" | tee -a evidence/e2e-real.log
+# Kill spel's confirmation-poller — we poll the RPC ourselves below
+kill "${SPEL_PID}" 2>/dev/null || true; wait "${SPEL_PID}" 2>/dev/null || true
+rm -f "${SPEL_LOG}"
 
-echo "=== [Step 7] Querying on-chain state via spel inspect ===" | tee -a evidence/e2e-real.log
+# Poll testnet RPC directly until new CID appears in account state (up to 180s)
+echo "=== [Step 7] Polling testnet RPC for on-chain confirmation (up to 180s) ===" | tee -a evidence/e2e-real.log
+RPC_ACCOUNT_DATA=""
+CONFIRMED=false
+for i in {1..60}; do
+    RPC_ACCOUNT_DATA=$(python3 -c "import urllib.request, json;
+try:
+    req = urllib.request.Request('https://testnet.lez.logos.co/', data=json.dumps({'jsonrpc':'2.0','id':1,'method':'getAccount','params':['${REGISTRY_ACCOUNT_ID}']}).encode(), headers={'Content-Type':'application/json'})
+    raw = bytes(json.loads(urllib.request.urlopen(req, timeout=10).read().decode())['result']['data'])
+    print(raw.decode('latin1', errors='ignore'))
+except Exception:
+    print('')
+" 2>/dev/null || true)
+    if echo "${RPC_ACCOUNT_DATA}" | grep -q "${REAL_CID}"; then
+        echo "[${i}s] CID confirmed on-chain." | tee -a evidence/e2e-real.log
+        CONFIRMED=true
+        break
+    fi
+    echo "[${i}×3s] Waiting for CID ${REAL_CID:0:20}... to appear on-chain..." | tee -a evidence/e2e-real.log
+    sleep 3
+done
+
+if [ "${CONFIRMED}" != "true" ]; then
+    echo "[FAIL] CID ${REAL_CID} not found in on-chain account state after 180s." | tee -a evidence/e2e-real.log
+    exit 1
+fi
+
+# Also run spel inspect for structured output evidence
+echo "=== [Step 7b] spel inspect for structured record evidence ===" | tee -a evidence/e2e-real.log
 QUERY_OUTPUT=$(timeout 45s spel inspect "${REGISTRY_ACCOUNT_ID}" \
     --idl osm-registry/idl/osm_registry.json \
     --type GlobalRegistryState 2>&1 || echo "")
 echo "${QUERY_OUTPUT}" | tee -a evidence/e2e-real.log
 
-RPC_ACCOUNT_DATA=$(python3 -c "import urllib.request, json;
-try:
-    req = urllib.request.Request('https://testnet.lez.logos.co/', data=json.dumps({'jsonrpc':'2.0','id':1,'method':'getAccount','params':['${REGISTRY_ACCOUNT_ID}']}).encode(), headers={'Content-Type':'application/json'})
-    raw = bytes(json.loads(urllib.request.urlopen(req, timeout=10).read().decode())['result']['data'])
-    print(raw.decode('latin1', errors='ignore'))
-except Exception as e:
-    print('')
-")
-
-echo "=== [Step 7b] Asserting on-chain record fields ===" | tee -a evidence/e2e-real.log
+echo "=== [Step 7c] Asserting on-chain record fields ===" | tee -a evidence/e2e-real.log
 python3 -c "
 import sys
 q = '''${QUERY_OUTPUT}'''
@@ -275,7 +314,7 @@ combined = q + rpc_data
 assert expected_region in combined, f'Region {expected_region} not found in on-chain state'
 assert expected_cid in combined, f'CID {expected_cid} not found in on-chain state'
 assert expected_checksum in combined, f'Checksum {expected_checksum} not found in on-chain state'
-print('✔ On-chain record fields verified: region, CID, checksum match on-chain state!')
+print('✔ On-chain record verified: region=%s cid=%s checksum=%s' % (expected_region, expected_cid[:20], expected_checksum))
 " | tee -a evidence/e2e-real.log
 
 # Step 6: Download snapshot by CID via storage_module downloadToUrl (network peer retrieval first, local fallback)
