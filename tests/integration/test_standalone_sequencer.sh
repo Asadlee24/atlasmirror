@@ -125,6 +125,12 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
         37, 37, 37, 37, 37, 37, 37, 37,
         37, 37, 37, 37, 37, 37, 37, 37,
         37, 37, 37, 37, 37, 37, 37, 37
+    ],
+    "sequencer_key": [
+        37, 37, 37, 37, 37, 37, 37, 37,
+        37, 37, 37, 37, 37, 37, 37, 37,
+        37, 37, 37, 37, 37, 37, 37, 37,
+        37, 37, 37, 37, 37, 37, 37, 37
     ]
 }
 EOF
@@ -160,8 +166,10 @@ def patch(obj, key):
         return "1 MiB"
     if key in ('holder','account_id'):
         return "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r"
-    if key in ('balance',):
+    if key in ('balance','amount'):
         return 1000000
+    if key.endswith('_key') or key == 'key':
+        return [37]*32
     return 0
 def deep_patch(obj, key):
     if isinstance(obj, dict):
