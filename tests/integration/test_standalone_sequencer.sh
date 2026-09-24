@@ -84,7 +84,12 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
         },
         "channel_id": "0101010101010101010101010101010101010101010101010101010101010101",
         "node_url": "http://127.0.0.1:18080",
-        "funding_key": "2e03b2eff5a45478e7e79668d2a146cf2c5c7925bce927f2b1c67f2ab4fc0d26"
+        "funding_key": "2e03b2eff5a45478e7e79668d2a146cf2c5c7925bce927f2b1c67f2ab4fc0d26",
+        "channel_params": {
+            "allowed_routes": [],
+            "expected_block_signing_pubkeys": [],
+            "min_committee_size": 0
+        }
     },
     "genesis": [
         {
