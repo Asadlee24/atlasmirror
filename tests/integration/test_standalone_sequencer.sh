@@ -98,7 +98,13 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
             "finalization_timeout": 30,
             "max_blob_size": "1 MiB",
             "max_blobs_per_block": 10
-        }
+        },
+        "sequencer_key": [
+            37, 37, 37, 37, 37, 37, 37, 37,
+            37, 37, 37, 37, 37, 37, 37, 37,
+            37, 37, 37, 37, 37, 37, 37, 37,
+            37, 37, 37, 37, 37, 37, 37, 37
+        ]
     },
     "genesis": [
         {
@@ -125,12 +131,6 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
         37, 37, 37, 37, 37, 37, 37, 37,
         37, 37, 37, 37, 37, 37, 37, 37,
         37, 37, 37, 37, 37, 37, 37, 37
-    ],
-    "sequencer_key": [
-        37, 37, 37, 37, 37, 37, 37, 37,
-        37, 37, 37, 37, 37, 37, 37, 37,
-        37, 37, 37, 37, 37, 37, 37, 37,
-        37, 37, 37, 37, 37, 37, 37, 37
     ]
 }
 EOF
@@ -151,39 +151,38 @@ for probe in $(seq 1 20); do
     if [ -n "${MISSING}" ]; then
         echo "[probe ${probe}] Missing field: ${MISSING} — auto-patching..." | tee -a "${EVIDENCE_FILE}"
         python3 - <<PYEOF
-import json, sys
+import json
 with open("${WORK_DIR}/sequencer_config.json") as f:
     cfg = json.load(f)
 field = "${MISSING}"
-# Walk nested dicts to find where the field is missing by trying to insert at various levels
-# Heuristic: timeframe/timeout = int, everything else = sensible default
-def patch(obj, key):
+def default_val(key):
+    if key.endswith('_key') or key == 'key':
+        return [37]*32
     if key in ('posting_timeframe','posting_timeout','challenge_timeframe','challenge_timeout',
                'finalization_timeframe','finalization_timeout','min_committee_size',
                'minimum_sequencer_stake','max_blobs_per_block'):
         return 10
-    if key in ('max_blob_size',):
+    if key == 'max_blob_size':
         return "1 MiB"
     if key in ('holder','account_id'):
         return "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r"
     if key in ('balance','amount'):
         return 1000000
-    if key.endswith('_key') or key == 'key':
-        return [37]*32
+    if key in ('node_url',):
+        return "http://127.0.0.1:18080"
     return 0
-def deep_patch(obj, key):
-    if isinstance(obj, dict):
-        if key not in obj:
-            obj[key] = patch(obj, key)
-        for v in obj.values():
-            deep_patch(v, key)
-    elif isinstance(obj, list):
-        for item in obj:
-            deep_patch(item, key)
-deep_patch(cfg, field)
+# Try to add at root, then bedrock_config, then channel_params (targeted, not recursive)
+placed = False
+for target in [cfg, cfg.get('bedrock_config', {}), cfg.get('bedrock_config', {}).get('channel_params', {})]:
+    if isinstance(target, dict) and field not in target:
+        target[field] = default_val(field)
+        placed = True
+        break
+if not placed:
+    cfg[field] = default_val(field)
 with open("${WORK_DIR}/sequencer_config.json", 'w') as f:
     json.dump(cfg, f, indent=4)
-print(f"Patched: added {field}")
+print(f"Patched: added {field} = {default_val(field)!r}")
 PYEOF
     fi
 done
