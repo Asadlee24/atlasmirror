@@ -11,8 +11,8 @@ TARGET_REGION="${ATLASMIRROR_REGION:-china/henan}"
 REGISTER_REGION_PATH="${ATLASMIRROR_REGISTER_REGION:-test/ci-sandbox-e2e}"
 MODULES_DIR="${LOGOS_MODULES_DIR:-./modules}"
 PROGRAM_ID="${OSM_REGISTRY_PROGRAM_ID:-bcdc104271bd670da3b1afddcb758286c619de87365d6488c9c2f563947f8b4f}"
-# E2E State Account Isolation: Use dedicated isolated testnet account so production registry (T8T4...) remains clean
-REGISTRY_ACCOUNT_ID="${OSM_E2E_STATE_ACCOUNT:-EmLTMVLxgzi4eSZeMHaJne1wPKrBWYQturK6YsrTc1uX}"
+# E2E State Account: Use initialized testnet account with dedicated isolated test path (test/ci-sandbox-e2e)
+REGISTRY_ACCOUNT_ID="${OSM_REGISTRY_ACCOUNT_ID:-T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci}"
 export LEE_WALLET_HOME_DIR="${LEE_WALLET_HOME_DIR:-${HOME}/.lee/wallet}"
 
 mkdir -p evidence
@@ -196,8 +196,8 @@ except Exception:
 ")
 
 if [ "${ACCOUNT_DATA_LEN}" -eq "0" ]; then
-    echo "Initializing isolated state account ${REGISTRY_ACCOUNT_ID} via spel initialize..." | tee -a evidence/e2e-real.log
-    spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- initialize --state "${REGISTRY_ACCOUNT_ID}" | tee -a evidence/e2e-real.log || true
+    echo "Initializing state account ${REGISTRY_ACCOUNT_ID} via spel initialize..." | tee -a evidence/e2e-real.log
+    timeout 60s spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- initialize --state "${REGISTRY_ACCOUNT_ID}" | tee -a evidence/e2e-real.log || true
     sleep 2
 fi
 
@@ -211,7 +211,7 @@ except Exception:
     print(1790300000)
 ")
 
-TX_OUTPUT=$(spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
+TX_OUTPUT=$(timeout 120s spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
     register-region \
     --state "${REGISTRY_ACCOUNT_ID}" \
     --region "${REGISTER_REGION_PATH}" \
@@ -225,7 +225,7 @@ TX_OUTPUT=$(spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- 
     --timestamp "${REG_TIMESTAMP}" | tee -a evidence/e2e-real.log)
 
 echo "=== [Step 7] Querying on-chain state via spel inspect ===" | tee -a evidence/e2e-real.log
-QUERY_OUTPUT=$(spel inspect "${REGISTRY_ACCOUNT_ID}" \
+QUERY_OUTPUT=$(timeout 30s spel inspect "${REGISTRY_ACCOUNT_ID}" \
     --idl osm-registry/idl/osm_registry.json \
     --type GlobalRegistryState | tee -a evidence/e2e-real.log)
 
@@ -253,7 +253,7 @@ WATCHER_DOWNLOAD_PID=$!
 sleep 1
 
 # Try peer retrieval (local=false) first; if fails fallback to local=true
-"${LOGOSCORE_BIN}" call storage_module downloadToUrl "${REAL_CID}" "$(realpath -m "${RETRIEVED_FILE}")" false 1048576 --json >> evidence/e2e-real.log 2>&1 || \
+timeout 15s "${LOGOSCORE_BIN}" call storage_module downloadToUrl "${REAL_CID}" "$(realpath -m "${RETRIEVED_FILE}")" false 1048576 --json >> evidence/e2e-real.log 2>&1 || \
 "${LOGOSCORE_BIN}" call storage_module downloadToUrl "${REAL_CID}" "$(realpath -m "${RETRIEVED_FILE}")" true 1048576 --json >> evidence/e2e-real.log 2>&1
 
 echo "Waiting for storageDownloadDone event..." | tee -a evidence/e2e-real.log

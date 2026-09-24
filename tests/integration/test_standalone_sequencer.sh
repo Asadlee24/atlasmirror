@@ -133,6 +133,9 @@ fi
 
 # 4. Set up wallet pointing to local standalone sequencer
 export LEE_WALLET_HOME_DIR="${WORK_DIR}/wallet"
+if [ -f "${HOME}/.lee/wallet/storage.json" ]; then
+    cp "${HOME}/.lee/wallet/storage.json" "${LEE_WALLET_HOME_DIR}/" || true
+fi
 cat > "${LEE_WALLET_HOME_DIR}/wallet_config.json" <<EOF
 {
   "sequencers": [
@@ -163,15 +166,15 @@ echo "CID:            ${TEST_CID}" | tee -a "${EVIDENCE_FILE}"
 
 if [ -x "${RUNNER_BIN}" ] && [ -f "${TEST_PROGRAM_BIN}" ]; then
     echo "Executing via standalone runner: ${RUNNER_BIN}" | tee -a "${EVIDENCE_FILE}"
-    "${RUNNER_BIN}" "${TEST_PROGRAM_BIN}" "${TEST_ACCOUNT}" initialize 2>&1 | tee -a "${EVIDENCE_FILE}" || true
+    timeout 30s "${RUNNER_BIN}" "${TEST_PROGRAM_BIN}" "${TEST_ACCOUNT}" initialize 2>&1 | tee -a "${EVIDENCE_FILE}" || true
     sleep 1
-    "${RUNNER_BIN}" "${TEST_PROGRAM_BIN}" "${TEST_ACCOUNT}" register "${TEST_REGION}" "${TEST_CID}" "${TEST_MD5}" "${TEST_SOURCE}" "2026-09-24" "${TEST_TIMESTAMP}" 2>&1 | tee -a "${EVIDENCE_FILE}" || true
+    timeout 30s "${RUNNER_BIN}" "${TEST_PROGRAM_BIN}" "${TEST_ACCOUNT}" register "${TEST_REGION}" "${TEST_CID}" "${TEST_MD5}" "${TEST_SOURCE}" "2026-09-24" "${TEST_TIMESTAMP}" 2>&1 | tee -a "${EVIDENCE_FILE}" || true
     sleep 2
 elif command -v spel >/dev/null 2>&1; then
     echo "Executing via spel CLI to standalone sequencer..." | tee -a "${EVIDENCE_FILE}"
-    spel --idl osm-registry/idl/osm_registry.json -p "${TEST_ACCOUNT}" -- initialize --state "${TEST_ACCOUNT}" 2>&1 | tee -a "${EVIDENCE_FILE}" || true
+    timeout 30s spel --idl osm-registry/idl/osm_registry.json -p "${TEST_ACCOUNT}" -- initialize --state "${TEST_ACCOUNT}" 2>&1 | tee -a "${EVIDENCE_FILE}" || true
     sleep 1
-    spel --idl osm-registry/idl/osm_registry.json -p "${TEST_ACCOUNT}" -- register-region \
+    timeout 30s spel --idl osm-registry/idl/osm_registry.json -p "${TEST_ACCOUNT}" -- register-region \
         --state "${TEST_ACCOUNT}" \
         --region "${TEST_REGION}" \
         --level "Country" \
