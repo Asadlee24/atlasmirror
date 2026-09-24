@@ -1,7 +1,7 @@
 ========================================================
  AtlasMirror Genuine Batch Registration (LP-0018 / P1)
 ========================================================
-Timestamp: 2026-09-23T05:55:33Z
+Timestamp: 2026-09-23T11:29:14Z
 Runner:    /mnt/c/Users/Aftab/Desktop/atlasmirror/scripts/standalone/run_osm_registry
 Account:   55Me6rDpyUu9vhuMhnM26ikUL4XbgKDUjrWEpdpzyv6r
 Regions:   asia/pakistan (level=country, parent=null)
@@ -9,16 +9,16 @@ Regions:   asia/pakistan (level=country, parent=null)
 
 === [Step 1] Executing Batch Host via AtlasMirror CLI ===
    Compiling atlasmirror-cli v0.1.0 (/mnt/c/Users/Aftab/Desktop/atlasmirror/atlasmirror-cli)
-    Finished `release` profile [optimized] target(s) in 15.60s
+    Finished `release` profile [optimized] target(s) in 22.07s
      Running `atlasmirror-cli/target/release/atlasmirror-cli host --batch asia/pakistan china/henan`
 Executing bounded single-transaction batch hosting for 2 regions...
 Preparing batch item: asia/pakistan
 Preparing batch item: china/henan
 Submitting SINGLE on-chain BatchRegister transaction for 2 records...
-✔ Batch transaction confirmed! Tx: "0xe84799c5e3c83b5d8178d275e93e9a33344d6ebb833a3c5ee697e07b80b4f989"
+✔ Batch transaction confirmed! Tx: "0xa0aad78650e8f36694a39fdc06e7607ce640b5c88590aa9b05e06eb5b423c9ec"
 
 === [Step 2] Querying Back On-Chain Record 1: asia/pakistan ===
-    Finished `release` profile [optimized] target(s) in 3.69s
+    Finished `release` profile [optimized] target(s) in 3.45s
      Running `atlasmirror-cli/target/release/atlasmirror-cli lookup region asia/pakistan`
 On-Chain Record for asia/pakistan:
   Level:       country
@@ -26,11 +26,11 @@ On-Chain Record for asia/pakistan:
   Storage CID: zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz
   Checksum:    5dd3c567f557b843aef1576b8973f81f
   Version:     2026-09-22
-  Timestamp:   1790143058
+  Timestamp:   1790162988
   Status:      HOSTED ON-CHAIN
 
 === [Step 3] Querying Back On-Chain Record 2: china/henan ===
-    Finished `release` profile [optimized] target(s) in 3.60s
+    Finished `release` profile [optimized] target(s) in 3.78s
      Running `atlasmirror-cli/target/release/atlasmirror-cli lookup region china/henan`
 On-Chain Record for china/henan:
   Level:       subregion
@@ -38,13 +38,83 @@ On-Chain Record for china/henan:
   Storage CID: zDvZRwzmb2rhXLBiRXtyd74Y8MB29es8si7ZEuHL6oMBuaLQyC88
   Checksum:    765edcbf39256eace4fe32828a14cc58
   Version:     2026-09-22
-  Timestamp:   1790143090
+  Timestamp:   1790162994
   Status:      HOSTED ON-CHAIN
 
 === [Step 4] Direct LEZ Runner Account Query ===
 Querying account state for 55Me6rDpyUu9vhuMhnM26ikUL4XbgKDUjrWEpdpzyv6r
-Registry State: total_regions=2, last_updated=1790143090
-REGION_RECORD: region=asia/pakistan, parent=None, level=country, cid=zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz, source_url=https://download.geofabrik.de/asia/pakistan-latest.osm.pbf, checksum=5dd3c567f557b843aef1576b8973f81f, version=2026-09-22, hosted=true, timestamp=1790143058
-REGION_RECORD: region=china/henan, parent=Some("china"), level=subregion, cid=zDvZRwzmb2rhXLBiRXtyd74Y8MB29es8si7ZEuHL6oMBuaLQyC88, source_url=https://download.geofabrik.de/asia/china/henan-latest.osm.pbf, checksum=765edcbf39256eace4fe32828a14cc58, version=2026-09-22, hosted=true, timestamp=1790143090
+Registry State: total_regions=72, last_updated=1790162994
+REGION_RECORD: region=europe/germany, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/germany-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/france, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/france-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/great-britain, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/great-britain-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/italy, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/italy-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/spain, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/spain-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/poland, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/poland-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/netherlands, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/netherlands-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/belgium, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/belgium-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/switzerland, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/switzerland-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/austria, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/austria-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/czech-republic, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/czech-republic-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/sweden, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/sweden-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/norway, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/norway-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/denmark, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/denmark-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/finland, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/finland-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/portugal, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/portugal-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/greece, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/greece-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/ireland-and-northern-ireland, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/ireland-and-northern-ireland-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/hungary, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/hungary-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/romania, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/romania-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/bulgaria, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/bulgaria-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/ukraine, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/ukraine-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/belarus, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/belarus-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/turkey, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/turkey-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=north-america/canada, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/north-america/canada-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=north-america/mexico, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/north-america/mexico-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/japan, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/japan-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/south-korea, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/south-korea-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/indonesia, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/indonesia-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/thailand, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/thailand-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/vietnam, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/vietnam-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/malaysia-singapore-brunei, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/philippines, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/philippines-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/pakistan, parent=None, level=country, cid=zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz, source_url=https://download.geofabrik.de/asia/pakistan-latest.osm.pbf, checksum=5dd3c567f557b843aef1576b8973f81f, version=2026-09-22, hosted=true, timestamp=1790162988
+REGION_RECORD: region=asia/bangladesh, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/bangladesh-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/iran, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/iran-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=australia-oceania/australia, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/australia-oceania/australia-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=south-america/brazil, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/south-america/brazil-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=south-america/argentina, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/south-america/argentina-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=south-america/colombia, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/south-america/colombia-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=south-america/peru, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/south-america/peru-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=south-america/chile, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/south-america/chile-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=africa/south-africa, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/africa/south-africa-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=africa/egypt, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/africa/egypt-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=africa/nigeria, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/africa/nigeria-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=africa/kenya, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/africa/kenya-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=africa/morocco, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/africa/morocco-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=africa/ethiopia, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/africa/ethiopia-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=us/california, parent=Some("us"), level=subregion, cid=, source_url=https://download.geofabrik.de/north-america/us/california-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=us/texas, parent=Some("us"), level=subregion, cid=, source_url=https://download.geofabrik.de/north-america/us/texas-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=us/florida, parent=Some("us"), level=subregion, cid=, source_url=https://download.geofabrik.de/north-america/us/florida-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=us/new-york, parent=Some("us"), level=subregion, cid=, source_url=https://download.geofabrik.de/north-america/us/new-york-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=us/washington, parent=Some("us"), level=subregion, cid=, source_url=https://download.geofabrik.de/north-america/us/washington-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=us/illinois, parent=Some("us"), level=subregion, cid=, source_url=https://download.geofabrik.de/north-america/us/illinois-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=us/georgia, parent=Some("us"), level=subregion, cid=, source_url=https://download.geofabrik.de/north-america/us/georgia-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=us/pennsylvania, parent=Some("us"), level=subregion, cid=, source_url=https://download.geofabrik.de/north-america/us/pennsylvania-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=india/central-zone, parent=Some("india"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/india/central-zone-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=india/eastern-zone, parent=Some("india"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/india/eastern-zone-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=india/north-eastern-zone, parent=Some("india"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/india/north-eastern-zone-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=india/northern-zone, parent=Some("india"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/india/northern-zone-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=india/southern-zone, parent=Some("india"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/india/southern-zone-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=india/western-zone, parent=Some("india"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/india/western-zone-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=china/guangdong, parent=Some("china"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/china/guangdong-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=china/jiangsu, parent=Some("china"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/china/jiangsu-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=china/shandong, parent=Some("china"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/china/shandong-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=china/zhejiang, parent=Some("china"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/china/zhejiang-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=china/sichuan, parent=Some("china"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/china/sichuan-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=china/henan, parent=Some("china"), level=subregion, cid=zDvZRwzmb2rhXLBiRXtyd74Y8MB29es8si7ZEuHL6oMBuaLQyC88, source_url=https://download.geofabrik.de/asia/china/henan-latest.osm.pbf, checksum=765edcbf39256eace4fe32828a14cc58, version=2026-09-22, hosted=true, timestamp=1790162994
+REGION_RECORD: region=russia/central-fed-district, parent=Some("russia"), level=subregion, cid=, source_url=https://download.geofabrik.de/russia/central-fed-district-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=russia/northwestern-fed-district, parent=Some("russia"), level=subregion, cid=, source_url=https://download.geofabrik.de/russia/northwestern-fed-district-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=russia/volga-fed-district, parent=Some("russia"), level=subregion, cid=, source_url=https://download.geofabrik.de/russia/volga-fed-district-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=russia/siberian-fed-district, parent=Some("russia"), level=subregion, cid=, source_url=https://download.geofabrik.de/russia/siberian-fed-district-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
 
 ✔ Batch registration and query verification completed successfully.

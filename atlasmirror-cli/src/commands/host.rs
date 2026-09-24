@@ -34,21 +34,32 @@ pub async fn execute_host_single(
 
     println!("  2. Downloading snapshot & verifying integrity...");
     let url = format!("https://download.geofabrik.de/{}-latest.osm.pbf", region);
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(300))
-        .build()?;
+    let needs_download = if pbf_path.exists() {
+        match crate::geofabrik::compute_file_md5(&pbf_path) {
+            Ok(md5) => md5 != expected_md5,
+            Err(_) => true,
+        }
+    } else {
+        true
+    };
 
-    let resp = client.get(&url).send().await?;
-    if !resp.status().is_success() {
-        eprintln!(
-            "{} Failed to download snapshot from Geofabrik: HTTP {}",
-            "✖".red(),
-            resp.status()
-        );
-        std::process::exit(1);
+    if needs_download {
+        let client = reqwest::Client::builder()
+            .timeout(Duration::from_secs(300))
+            .build()?;
+
+        let resp = client.get(&url).send().await?;
+        if !resp.status().is_success() {
+            eprintln!(
+                "{} Failed to download snapshot from Geofabrik: HTTP {}",
+                "✖".red(),
+                resp.status()
+            );
+            std::process::exit(1);
+        }
+        let bytes = resp.bytes().await?;
+        std::fs::write(&pbf_path, bytes)?;
     }
-    let bytes = resp.bytes().await?;
-    std::fs::write(&pbf_path, bytes)?;
 
     let actual_md5 = crate::geofabrik::compute_file_md5(&pbf_path)?;
     if actual_md5 != expected_md5 {
@@ -243,9 +254,22 @@ pub async fn execute_host_many(
         let pbf_path = cache_dir.join(format!("{}.osm.pbf", safe_name));
 
         let url = crate::geofabrik::resolve_pbf_url(r.as_str());
-        let client = reqwest::Client::new();
-        let bytes = client.get(&url).send().await?.bytes().await?;
-        std::fs::write(&pbf_path, bytes)?;
+        let needs_download = if pbf_path.exists() {
+            match crate::geofabrik::compute_file_md5(&pbf_path) {
+                Ok(md5) => md5 != expected_md5,
+                Err(_) => true,
+            }
+        } else {
+            true
+        };
+
+        if needs_download {
+            let client = reqwest::Client::builder()
+                .timeout(std::time::Duration::from_secs(300))
+                .build()?;
+            let bytes = client.get(&url).send().await?.bytes().await?;
+            std::fs::write(&pbf_path, bytes)?;
+        }
 
         // Pre-upload integrity verification
         let computed_md5 = crate::geofabrik::compute_file_md5(&pbf_path)?;

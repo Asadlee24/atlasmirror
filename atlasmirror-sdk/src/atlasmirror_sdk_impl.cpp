@@ -1,23 +1,270 @@
 #include "atlasmirror_sdk_impl.h"
-#include <QtCore/QFile>
-#include <QtCore/QFileInfo>
-#include <QtCore/QJsonDocument>
-#include <QtCore/QCryptographicHash>
-#include <QtCore/QDateTime>
-#include <QtCore/QProcess>
-#include <QtCore/QDir>
-#include <QtCore/QDebug>
+#include <sstream>
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+#include <cstdio>
+#include <memory>
+#include <array>
+#include <cstring>
+#include <cstdint>
+#include <sys/stat.h>
 
-AtlasMirrorSdkImpl::AtlasMirrorSdkImpl(QObject *parent)
-    : QObject(parent)
+// --- Lightweight Self-Contained MD5 Implementation ---
+namespace {
+
+struct MD5Context {
+    uint32_t state[4];
+    uint32_t count[2];
+    uint8_t buffer[64];
+};
+
+#define S11 7
+#define S12 12
+#define S13 17
+#define S14 22
+#define S21 5
+#define S22 9
+#define S23 14
+#define S24 20
+#define S31 4
+#define S32 11
+#define S33 16
+#define S34 23
+#define S41 6
+#define S42 10
+#define S43 15
+#define S44 21
+
+#define F(x, y, z) (((x) & (y)) | ((~x) & (z)))
+#define G(x, y, z) (((x) & (z)) | ((y) & (~z)))
+#define H(x, y, z) ((x) ^ (y) ^ (z))
+#define I(x, y, z) ((y) ^ ((x) | (~z)))
+
+#define ROTATE_LEFT(x, n) (((x) << (n)) | ((x) >> (32-(n))))
+
+#define FF(a, b, c, d, x, s, ac) { \
+ (a) += F ((b), (c), (d)) + (x) + (uint32_t)(ac); \
+ (a) = ROTATE_LEFT ((a), (s)); \
+ (a) += (b); \
+  }
+#define GG(a, b, c, d, x, s, ac) { \
+ (a) += G ((b), (c), (d)) + (x) + (uint32_t)(ac); \
+ (a) = ROTATE_LEFT ((a), (s)); \
+ (a) += (b); \
+  }
+#define HH(a, b, c, d, x, s, ac) { \
+ (a) += H ((b), (c), (d)) + (x) + (uint32_t)(ac); \
+ (a) = ROTATE_LEFT ((a), (s)); \
+ (a) += (b); \
+  }
+#define II(a, b, c, d, x, s, ac) { \
+ (a) += I ((b), (c), (d)) + (x) + (uint32_t)(ac); \
+ (a) = ROTATE_LEFT ((a), (s)); \
+ (a) += (b); \
+  }
+
+static void MD5Transform(uint32_t state[4], const uint8_t block[64]) {
+    uint32_t a = state[0], b = state[1], c = state[2], d = state[3], x[16];
+    for (int i = 0, j = 0; j < 64; i++, j += 4)
+        x[i] = ((uint32_t)block[j]) | (((uint32_t)block[j+1]) << 8) |
+               (((uint32_t)block[j+2]) << 16) | (((uint32_t)block[j+3]) << 24);
+
+    FF (a, b, c, d, x[ 0], S11, 0xd76aa478);
+    FF (d, a, b, c, x[ 1], S12, 0xe8c7b756);
+    FF (c, d, a, b, x[ 2], S13, 0x242070db);
+    FF (b, c, d, a, x[ 3], S14, 0xc1bdceee);
+    FF (a, b, c, d, x[ 4], S11, 0xf57c0faf);
+    FF (d, a, b, c, x[ 5], S12, 0x4787c62a);
+    FF (c, d, a, b, x[ 6], S13, 0xa8304613);
+    FF (b, c, d, a, x[ 7], S14, 0xfd469501);
+    FF (a, b, c, d, x[ 8], S11, 0x698098d8);
+    FF (d, a, b, c, x[ 9], S12, 0x8b44f7af);
+    FF (c, d, a, b, x[10], S13, 0xffff5bb1);
+    FF (b, c, d, a, x[11], S14, 0x895cd7be);
+    FF (a, b, c, d, x[12], S11, 0x6b901122);
+    FF (d, a, b, c, x[13], S12, 0xfd987193);
+    FF (c, d, a, b, x[14], S13, 0xa679438e);
+    FF (b, c, d, a, x[15], S14, 0x49b40821);
+
+    GG (a, b, c, d, x[ 1], S21, 0xf61e2562);
+    GG (d, a, b, c, x[ 6], S22, 0xc040b340);
+    GG (c, d, a, b, x[11], S23, 0x265e5a51);
+    GG (b, c, d, a, x[ 0], S24, 0xe9b6c7aa);
+    GG (a, b, c, d, x[ 5], S21, 0xd62f105d);
+    GG (d, a, b, c, x[10], S22,  0x2441453);
+    GG (c, d, a, b, x[15], S23, 0xd8a1e681);
+    GG (b, c, d, a, x[ 4], S24, 0xe7d3fbc8);
+    GG (a, b, c, d, x[ 9], S21, 0x21e1cde6);
+    GG (d, a, b, c, x[14], S22, 0xc33707d6);
+    GG (c, d, a, b, x[ 3], S23, 0xf4d50d87);
+    GG (b, c, d, a, x[ 8], S24, 0x455a14ed);
+    GG (a, b, c, d, x[13], S21, 0xa9e3e905);
+    GG (d, a, b, c, x[ 2], S22, 0xfcefa3f8);
+    GG (c, d, a, b, x[ 7], S23, 0x676f02d9);
+    GG (b, c, d, a, x[12], S24, 0x8d2a4c8a);
+
+    HH (a, b, c, d, x[ 5], S31, 0xfffa3942);
+    HH (d, a, b, c, x[ 8], S32, 0x8771f681);
+    HH (c, d, a, b, x[11], S33, 0x6d9d6122);
+    HH (b, c, d, a, x[14], S34, 0xfde5380c);
+    HH (a, b, c, d, x[ 1], S31, 0xa4beea44);
+    HH (d, a, b, c, x[ 4], S32, 0x4bdecfa9);
+    HH (c, d, a, b, x[ 7], S33, 0xf6bb4b60);
+    HH (b, c, d, a, x[10], S34, 0xbebfbc70);
+    HH (a, b, c, d, x[13], S31, 0x289b7ec6);
+    HH (d, a, b, c, x[ 0], S32, 0xeaa127fa);
+    HH (c, d, a, b, x[ 3], S33, 0xd4ef3085);
+    HH (b, c, d, a, x[ 6], S34,  0x4881d05);
+    HH (a, b, c, d, x[ 9], S31, 0xd9d4d039);
+    HH (d, a, b, c, x[12], S32, 0xe6db99e5);
+    HH (c, d, a, b, x[15], S33, 0x1fa27cf8);
+    HH (b, c, d, a, x[ 2], S34, 0xc4ac5665);
+
+    II (a, b, c, d, x[ 0], S41, 0xf4292244);
+    II (d, a, b, c, x[ 7], S42, 0x432aff97);
+    II (c, d, a, b, x[14], S43, 0xab9423a7);
+    II (b, c, d, a, x[ 5], S44, 0xfc93a039);
+    II (a, b, c, d, x[12], S41, 0x655b59c3);
+    II (d, a, b, c, x[ 3], S42, 0x8f0ccc92);
+    II (c, d, a, b, x[10], S43, 0xffeff47d);
+    II (b, c, d, a, x[ 1], S44, 0x85845dd1);
+    II (a, b, c, d, x[ 8], S41, 0x6fa87e4f);
+    II (d, a, b, c, x[15], S42, 0xfe2ce6e0);
+    II (c, d, a, b, x[ 6], S43, 0xa3014314);
+    II (b, c, d, a, x[13], S44, 0x4e0811a1);
+    II (a, b, c, d, x[ 4], S41, 0xf7537e82);
+    II (d, a, b, c, x[11], S42, 0xbd3af235);
+    II (c, d, a, b, x[ 2], S43, 0x2ad7d2bb);
+    II (b, c, d, a, x[ 9], S44, 0xeb86d391);
+
+    state[0] += a;
+    state[1] += b;
+    state[2] += c;
+    state[3] += d;
+}
+
+static void MD5Init(MD5Context *context) {
+    context->count[0] = context->count[1] = 0;
+    context->state[0] = 0x67452301;
+    context->state[1] = 0xefcdab89;
+    context->state[2] = 0x98badcfe;
+    context->state[3] = 0x10325476;
+}
+
+static void MD5Update(MD5Context *context, const uint8_t *input, size_t inputLen) {
+    size_t i = 0, index = (context->count[0] >> 3) & 0x3F;
+    if ((context->count[0] += ((uint32_t)inputLen << 3)) < ((uint32_t)inputLen << 3))
+        context->count[1]++;
+    context->count[1] += ((uint32_t)inputLen >> 29);
+    size_t partLen = 64 - index;
+
+    if (inputLen >= partLen) {
+        std::memcpy(&context->buffer[index], input, partLen);
+        MD5Transform(context->state, context->buffer);
+        for (i = partLen; i + 63 < inputLen; i += 64)
+            MD5Transform(context->state, &input[i]);
+        index = 0;
+    }
+    std::memcpy(&context->buffer[index], &input[i], inputLen - i);
+}
+
+static void MD5Final(uint8_t digest[16], MD5Context *context) {
+    static const uint8_t PADDING[64] = {
+        0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
+    uint8_t bits[8];
+    for (int i = 0, j = 0; j < 8; i++, j += 4) {
+        bits[j] = (uint8_t)(context->count[i] & 0xFF);
+        bits[j+1] = (uint8_t)((context->count[i] >> 8) & 0xFF);
+        bits[j+2] = (uint8_t)((context->count[i] >> 16) & 0xFF);
+        bits[j+3] = (uint8_t)((context->count[i] >> 24) & 0xFF);
+    }
+    size_t index = (context->count[0] >> 3) & 0x3F;
+    size_t padLen = (index < 56) ? (56 - index) : (120 - index);
+    MD5Update(context, PADDING, padLen);
+    MD5Update(context, bits, 8);
+    for (int i = 0, j = 0; j < 16; i++, j += 4) {
+        digest[j] = (uint8_t)(context->state[i] & 0xFF);
+        digest[j+1] = (uint8_t)((context->state[i] >> 8) & 0xFF);
+        digest[j+2] = (uint8_t)((context->state[i] >> 16) & 0xFF);
+        digest[j+3] = (uint8_t)((context->state[i] >> 24) & 0xFF);
+    }
+}
+
+static std::string computeFileMd5(const std::string &filepath) {
+    std::ifstream file(filepath, std::ios::binary);
+    if (!file) return "";
+    MD5Context ctx;
+    MD5Init(&ctx);
+    char buffer[65536];
+    while (file.read(buffer, sizeof(buffer))) {
+        MD5Update(&ctx, reinterpret_cast<const uint8_t*>(buffer), file.gcount());
+    }
+    if (file.gcount() > 0) {
+        MD5Update(&ctx, reinterpret_cast<const uint8_t*>(buffer), file.gcount());
+    }
+    uint8_t digest[16];
+    MD5Final(digest, &ctx);
+    std::ostringstream ss;
+    for (int i = 0; i < 16; ++i) {
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)digest[i];
+    }
+    return ss.str();
+}
+
+static std::string escapeJson(const std::string &s) {
+    std::string out;
+    for (char c : s) {
+        if (c == '"') out += "\\\"";
+        else if (c == '\\') out += "\\\\";
+        else if (c == '\b') out += "\\b";
+        else if (c == '\f') out += "\\f";
+        else if (c == '\n') out += "\\n";
+        else if (c == '\r') out += "\\r";
+        else if (c == '\t') out += "\\t";
+        else out += c;
+    }
+    return out;
+}
+
+static std::pair<int, std::string> runCommand(const std::string &cmd) {
+    std::string result;
+    FILE *pipe = popen(cmd.c_str(), "r");
+    if (!pipe) return {-1, "popen failed"};
+    char buffer[512];
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        result += buffer;
+    }
+    int rc = pclose(pipe);
+    return {rc, result};
+}
+
+static bool fileExistsAndNonEmpty(const std::string &filepath) {
+    struct stat st;
+    if (stat(filepath.c_str(), &st) == 0) {
+        return st.st_size > 0;
+    }
+    return false;
+}
+
+} // anonymous namespace
+
+AtlasmirrorSdkImpl::AtlasmirrorSdkImpl()
 {
     loadPredefinedCatalog();
 }
 
-void AtlasMirrorSdkImpl::loadPredefinedCatalog()
+void AtlasmirrorSdkImpl::onContextReady()
 {
-    // Initialize standard predefined 72 regions from LP-0018
-    QStringList paths = {
+}
+
+void AtlasmirrorSdkImpl::loadPredefinedCatalog()
+{
+    std::vector<std::string> paths = {
         "asia/pakistan", "europe/germany", "europe/france", "europe/great-britain",
         "europe/italy", "europe/spain", "europe/poland", "europe/netherlands",
         "europe/belgium", "europe/switzerland", "europe/austria", "europe/czech-republic",
@@ -41,31 +288,33 @@ void AtlasMirrorSdkImpl::loadPredefinedCatalog()
         "russia/volga-fed-district", "russia/siberian-fed-district"
     };
 
-    for (const QString &path : paths) {
-        QJsonObject obj;
-        obj["path"] = path;
-        
-        if (path.startsWith("us/") || path.startsWith("india/") || path.startsWith("china/") || path.startsWith("russia/")) {
-            obj["level"] = "subregion";
-            obj["parent"] = path.section('/', 0, 0);
-            obj["name"] = path.section('/', 1, 1);
+    for (const auto &path : paths) {
+        RegionRecord r;
+        r.path = path;
+        size_t slash = path.find('/');
+        std::string prefix = (slash != std::string::npos) ? path.substr(0, slash) : "";
+        std::string suffix = (slash != std::string::npos) ? path.substr(slash + 1) : path;
+
+        if (prefix == "us" || prefix == "india" || prefix == "china" || prefix == "russia") {
+            r.level = "subregion";
+            r.parent = prefix;
+            r.name = suffix;
         } else {
-            obj["level"] = "country";
-            obj["parent"] = QJsonValue::Null;
-            obj["name"] = path.section('/', 1, 1);
+            r.level = "country";
+            r.parent = "";
+            r.name = suffix;
         }
 
-        obj["geofabrik_url"] = QString("https://download.geofabrik.de/%1-latest.osm.pbf").arg(path);
-        obj["md5_url"] = QString("https://download.geofabrik.de/%1-latest.osm.pbf.md5").arg(path);
-        obj["hosted"] = false;
-        obj["cid"] = "";
-        obj["checksum"] = "";
-        obj["version"] = "";
+        r.geofabrik_url = "https://download.geofabrik.de/" + path + "-latest.osm.pbf";
+        r.md5_url = "https://download.geofabrik.de/" + path + "-latest.osm.pbf.md5";
+        r.hosted = false;
+        r.cid = "";
+        r.checksum = "";
+        r.version = "";
 
-        m_catalog[path] = obj;
+        m_catalog[path] = r;
     }
 
-    // Populate verified on-chain hosted records from canonical Testnet state
     struct VerifiedEntry {
         const char *path;
         const char *cid;
@@ -105,230 +354,217 @@ void AtlasMirrorSdkImpl::loadPredefinedCatalog()
     };
 
     for (const auto &v : verified) {
-        if (m_catalog.contains(v.path)) {
-            m_catalog[v.path]["hosted"] = true;
-            m_catalog[v.path]["cid"] = QString(v.cid);
-            m_catalog[v.path]["checksum"] = QString(v.md5);
-            m_catalog[v.path]["version"] = QString(v.version);
-            m_hostedRecords[v.cid] = m_catalog[v.path];
+        auto it = m_catalog.find(v.path);
+        if (it != m_catalog.end()) {
+            it->second.hosted = true;
+            it->second.cid = v.cid;
+            it->second.checksum = v.md5;
+            it->second.version = v.version;
+            m_hostedRecords[v.cid] = it->second;
         }
     }
 }
 
-QJsonArray AtlasMirrorSdkImpl::discoverRegions()
-{
-    QJsonArray array;
-    for (auto it = m_catalog.constBegin(); it != m_catalog.constEnd(); ++it) {
-        array.append(it.value());
-    }
-    return array;
-}
-
-QJsonObject AtlasMirrorSdkImpl::getRegion(const QString &path)
-{
-    if (m_catalog.contains(path)) {
-        return m_catalog[path];
-    }
-    QJsonObject err;
-    err["error"] = "NOT_FOUND";
-    return err;
-}
-
-QJsonObject AtlasMirrorSdkImpl::getByCid(const QString &cid)
-{
-    if (cid.trimmed().isEmpty()) {
-        QJsonObject err;
-        err["error"] = "INVALID_CID";
-        return err;
-    }
-
-    if (m_hostedRecords.contains(cid)) {
-        return m_hostedRecords[cid];
-    }
-
-    QJsonObject err;
-    err["error"] = "CID_NOT_FOUND";
-    return err;
-}
-
-QJsonArray AtlasMirrorSdkImpl::getChildren(const QString &parent)
-{
-    QJsonArray children;
-    for (auto it = m_catalog.constBegin(); it != m_catalog.constEnd(); ++it) {
-        if (it.value()["parent"].toString() == parent) {
-            children.append(it.value());
-        }
-    }
-    return children;
-}
-
-QJsonObject AtlasMirrorSdkImpl::resolveRegion(const QString &path)
-{
-    QJsonObject res;
-    if (!m_catalog.contains(path)) {
-        res["status"] = "UNSUPPORTED_REGION";
-        return res;
-    }
-
-    QJsonObject entry = m_catalog[path];
-    if (entry["hosted"].toBool()) {
-        res["source"] = "logos_storage";
-        res["cid"] = entry["cid"].toString();
-        res["checksum"] = entry["checksum"].toString();
-        res["version"] = entry["version"].toString();
-        res["status"] = "HOSTED";
+static std::string serializeRecord(const AtlasmirrorSdkImpl::RegionRecord &r) {
+    std::ostringstream ss;
+    ss << "{"
+       << "\"path\":\"" << escapeJson(r.path) << "\","
+       << "\"name\":\"" << escapeJson(r.name) << "\","
+       << "\"level\":\"" << escapeJson(r.level) << "\",";
+    if (r.parent.empty()) {
+        ss << "\"parent\":null,";
     } else {
-        // Direct central fallback when region is not yet hosted
-        res["source"] = "geofabrik_fallback";
-        res["url"] = entry["geofabrik_url"].toString();
-        res["md5_url"] = entry["md5_url"].toString();
-        res["status"] = "CENTRAL_FALLBACK";
+        ss << "\"parent\":\"" << escapeJson(r.parent) << "\",";
     }
-    return res;
+    ss << "\"geofabrik_url\":\"" << escapeJson(r.geofabrik_url) << "\","
+       << "\"md5_url\":\"" << escapeJson(r.md5_url) << "\","
+       << "\"hosted\":" << (r.hosted ? "true" : "false") << ","
+       << "\"cid\":\"" << escapeJson(r.cid) << "\","
+       << "\"checksum\":\"" << escapeJson(r.checksum) << "\","
+       << "\"version\":\"" << escapeJson(r.version) << "\""
+       << "}";
+    return ss.str();
 }
 
-QJsonObject AtlasMirrorSdkImpl::checkUpdate(const QString &path)
+std::string AtlasmirrorSdkImpl::discoverRegions()
 {
-    QJsonObject res;
-    if (!m_catalog.contains(path)) {
-        res["status"] = "SOURCE_REGION_UNKNOWN";
-        return res;
+    std::ostringstream ss;
+    ss << "[";
+    bool first = true;
+    for (const auto &pair : m_catalog) {
+        if (!first) ss << ",";
+        first = false;
+        ss << serializeRecord(pair.second);
     }
-
-    QJsonObject entry = m_catalog[path];
-    if (!entry["hosted"].toBool()) {
-        res["status"] = "NOT_HOSTED";
-        return res;
-    }
-
-    res["status"] = "UP_TO_DATE";
-    res["current_version"] = entry["version"].toString();
-    res["upstream_version"] = entry["version"].toString();
-    return res;
+    ss << "]";
+    return ss.str();
 }
 
-QJsonObject AtlasMirrorSdkImpl::hostRegion(const QString &path)
+std::string AtlasmirrorSdkImpl::getRegion(const std::string &path)
 {
-    QJsonObject res;
-    if (!m_catalog.contains(path)) {
-        res["success"] = false;
-        res["error"] = "UNSUPPORTED_REGION";
-        return res;
+    auto it = m_catalog.find(path);
+    if (it != m_catalog.end()) {
+        return serializeRecord(it->second);
     }
+    return "{\"error\":\"NOT_FOUND\"}";
+}
 
-    QProcess proc;
-    proc.start("atlasmirror-cli", QStringList() << "host" << path << "--json");
-    if (proc.waitForFinished(120000) && proc.exitCode() == 0) {
-        QJsonDocument doc = QJsonDocument::fromJson(proc.readAllStandardOutput());
-        if (doc.isObject()) {
-            return doc.object();
+std::string AtlasmirrorSdkImpl::getByCid(const std::string &cid)
+{
+    if (cid.empty()) {
+        return "{\"error\":\"INVALID_CID\"}";
+    }
+    auto it = m_hostedRecords.find(cid);
+    if (it != m_hostedRecords.end()) {
+        return serializeRecord(it->second);
+    }
+    return "{\"error\":\"CID_NOT_FOUND\"}";
+}
+
+std::string AtlasmirrorSdkImpl::getChildren(const std::string &parent)
+{
+    std::ostringstream ss;
+    ss << "[";
+    bool first = true;
+    for (const auto &pair : m_catalog) {
+        if (pair.second.parent == parent) {
+            if (!first) ss << ",";
+            first = false;
+            ss << serializeRecord(pair.second);
         }
     }
-
-    res["success"] = false;
-    res["error"] = "HOST_FAILED";
-    res["message"] = QString::fromUtf8(proc.readAllStandardError());
-    return res;
+    ss << "]";
+    return ss.str();
 }
 
-bool AtlasMirrorSdkImpl::downloadRegion(const QString &path, const QString &destination)
+std::string AtlasmirrorSdkImpl::resolveRegion(const std::string &path)
 {
-    if (!m_catalog.contains(path)) {
+    auto it = m_catalog.find(path);
+    if (it == m_catalog.end()) {
+        return "{\"status\":\"UNSUPPORTED_REGION\"}";
+    }
+    const auto &entry = it->second;
+    std::ostringstream ss;
+    if (entry.hosted) {
+        ss << "{"
+           << "\"status\":\"HOSTED\","
+           << "\"source\":\"logos_storage\","
+           << "\"cid\":\"" << escapeJson(entry.cid) << "\","
+           << "\"checksum\":\"" << escapeJson(entry.checksum) << "\","
+           << "\"version\":\"" << escapeJson(entry.version) << "\""
+           << "}";
+    } else {
+        ss << "{"
+           << "\"status\":\"CENTRAL_FALLBACK\","
+           << "\"source\":\"geofabrik_fallback\","
+           << "\"url\":\"" << escapeJson(entry.geofabrik_url) << "\","
+           << "\"md5_url\":\"" << escapeJson(entry.md5_url) << "\""
+           << "}";
+    }
+    return ss.str();
+}
+
+std::string AtlasmirrorSdkImpl::checkUpdate(const std::string &path)
+{
+    auto it = m_catalog.find(path);
+    if (it == m_catalog.end()) {
+        return "{\"status\":\"SOURCE_REGION_UNKNOWN\"}";
+    }
+    const auto &entry = it->second;
+    if (!entry.hosted) {
+        return "{\"status\":\"NOT_HOSTED\"}";
+    }
+    std::ostringstream ss;
+    ss << "{"
+       << "\"status\":\"UP_TO_DATE\","
+       << "\"current_version\":\"" << escapeJson(entry.version) << "\","
+       << "\"upstream_version\":\"" << escapeJson(entry.version) << "\""
+       << "}";
+    return ss.str();
+}
+
+std::string AtlasmirrorSdkImpl::hostRegion(const std::string &path)
+{
+    auto it = m_catalog.find(path);
+    if (it == m_catalog.end()) {
+        return "{\"success\":false,\"error\":\"UNSUPPORTED_REGION\"}";
+    }
+
+    std::string cmd = "atlasmirror-cli host \"" + path + "\" --json 2>/dev/null";
+    auto [rc, out] = runCommand(cmd);
+    if (rc == 0 && !out.empty() && out.front() == '{') {
+        return out;
+    }
+
+    std::ostringstream ss;
+    ss << "{"
+       << "\"success\":false,"
+       << "\"error\":\"HOST_FAILED\","
+       << "\"message\":\"" << escapeJson(out) << "\""
+       << "}";
+    return ss.str();
+}
+
+bool AtlasmirrorSdkImpl::downloadRegion(const std::string &path, const std::string &destination)
+{
+    auto it = m_catalog.find(path);
+    if (it == m_catalog.end()) {
         return false;
     }
 
-    QFileInfo fi(destination);
-    QDir().mkpath(fi.absolutePath());
-
-    // Execute atlasmirror-cli download <path> --output <destination>
-    QProcess proc;
-    QStringList args;
-    args << "download" << path << "--output" << destination;
-    proc.start("atlasmirror-cli", args);
-    if (!proc.waitForFinished(60000) || proc.exitCode() != 0) {
-        // Fallback to direct curl if CLI not in standard path
-        QProcess curlProc;
-        QString url = m_catalog[path]["geofabrik_url"].toString();
-        curlProc.start("curl", QStringList() << "-sSf" << "-o" << destination << url);
-        if (!curlProc.waitForFinished(60000) || curlProc.exitCode() != 0) {
-            return false;
-        }
+    std::string cmd = "atlasmirror-cli download \"" + path + "\" --output \"" + destination + "\" 2>/dev/null";
+    auto [rc, out] = runCommand(cmd);
+    if (rc != 0 || !fileExistsAndNonEmpty(destination)) {
+        // Fallback to direct curl
+        std::string fallbackCmd = "curl -sSf -o \"" + destination + "\" \"" + it->second.geofabrik_url + "\" 2>/dev/null";
+        runCommand(fallbackCmd);
     }
 
-    QFile f(destination);
-    return f.exists() && f.size() > 0;
+    return fileExistsAndNonEmpty(destination);
 }
 
-QJsonObject AtlasMirrorSdkImpl::importLocal(const QString &path, const QString &localFilePath)
+std::string AtlasmirrorSdkImpl::importLocal(const std::string &path, const std::string &localFilePath)
 {
-    QJsonObject res;
-    if (!m_catalog.contains(path)) {
-        res["success"] = false;
-        res["error"] = "UNSUPPORTED_REGION";
-        return res;
+    auto it = m_catalog.find(path);
+    if (it == m_catalog.end()) {
+        return "{\"success\":false,\"error\":\"UNSUPPORTED_REGION\"}";
     }
 
-    QFile file(localFilePath);
-    if (!file.exists()) {
-        res["success"] = false;
-        res["error"] = "LOCAL_FILE_NOT_FOUND";
-        return res;
+    if (!fileExistsAndNonEmpty(localFilePath)) {
+        return "{\"success\":false,\"error\":\"LOCAL_FILE_NOT_FOUND\"}";
     }
 
-    if (!file.open(QIODevice::ReadOnly)) {
-        res["success"] = false;
-        res["error"] = "CANNOT_READ_FILE";
-        return res;
+    std::string computedMd5 = computeFileMd5(localFilePath);
+    if (computedMd5.empty()) {
+        return "{\"success\":false,\"error\":\"CANNOT_READ_FILE\"}";
     }
 
-    QCryptographicHash hash(QCryptographicHash::Md5);
-    while (!file.atEnd()) {
-        hash.addData(file.read(64 * 1024));
-    }
-    QString computedMd5 = hash.result().toHex().toLower();
-    file.close();
-
-    res["success"] = true;
-    res["computed_md5"] = computedMd5;
-    res["status"] = "CHECKSUM_COMPUTED";
-    return res;
+    std::ostringstream ss;
+    ss << "{"
+       << "\"success\":true,"
+       << "\"computed_md5\":\"" << computedMd5 << "\","
+       << "\"status\":\"CHECKSUM_COMPUTED\""
+       << "}";
+    return ss.str();
 }
 
-QJsonObject AtlasMirrorSdkImpl::batchRegister(const QJsonArray &records)
+std::string AtlasmirrorSdkImpl::batchRegister(const std::string &records)
 {
-    QJsonObject res;
-    if (records.isEmpty()) {
-        res["success"] = false;
-        res["error"] = "EMPTY_BATCH";
-        return res;
-    }
-    if (records.size() > 50) {
-        res["success"] = false;
-        res["error"] = "BATCH_TOO_LARGE";
-        return res;
+    if (records.empty() || records == "[]") {
+        return "{\"success\":false,\"error\":\"EMPTY_BATCH\"}";
     }
 
-    QStringList regionArgs;
-    for (int i = 0; i < records.size(); ++i) {
-        QString r = records[i].toObject()["region"].toString();
-        if (!r.isEmpty()) regionArgs << r;
+    std::string cmd = "atlasmirror-cli host --many " + records + " --json 2>/dev/null";
+    auto [rc, out] = runCommand(cmd);
+    if (rc == 0 && !out.empty() && out.front() == '{') {
+        return out;
     }
 
-    QProcess proc;
-    QStringList args;
-    args << "host" << "--many";
-    args.append(regionArgs);
-    args << "--json";
-    proc.start("atlasmirror-cli", args);
-    if (proc.waitForFinished(300000) && proc.exitCode() == 0) {
-        QJsonDocument doc = QJsonDocument::fromJson(proc.readAllStandardOutput());
-        if (doc.isObject()) {
-            return doc.object();
-        }
-    }
-
-    res["success"] = false;
-    res["error"] = "BATCH_REGISTER_FAILED";
-    res["message"] = QString::fromUtf8(proc.readAllStandardError());
-    return res;
+    std::ostringstream ss;
+    ss << "{"
+       << "\"success\":false,"
+       << "\"error\":\"BATCH_REGISTER_FAILED\","
+       << "\"message\":\"" << escapeJson(out) << "\""
+       << "}";
+    return ss.str();
 }

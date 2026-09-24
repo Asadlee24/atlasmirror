@@ -12,12 +12,14 @@
   "nix": {
     "packages": {
       "build": ["pkg-config", "cmake"],
-      "runtime": ["openssl", "curl"]
+      "runtime": ["curl"]
     },
     "external_libraries": [],
     "cmake": {
-      "find_packages": ["Qt6Core", "Qt6Network"],
-      "extra_sources": []
+      "find_packages": [],
+      "extra_sources": [],
+      "extra_include_dirs": [],
+      "extra_link_libraries": []
     }
   }
 }
