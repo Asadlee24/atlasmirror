@@ -39,18 +39,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "accounts": [
                     {
                         "is_mut": true,
-                        "is_signer": false,
-                        "name": "state",
-                        "pda": {
-                            "seeds": [
-                                { "kind": "const", "value": "state" }
-                            ]
-                        }
-                    },
-                    {
-                        "is_mut": false,
                         "is_signer": true,
-                        "name": "owner"
+                        "name": "state"
                     }
                 ],
                 "args": [],
@@ -64,18 +54,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "accounts": [
                     {
                         "is_mut": true,
-                        "is_signer": false,
-                        "name": "state",
-                        "pda": {
-                            "seeds": [
-                                { "kind": "const", "value": "state" }
-                            ]
-                        }
-                    },
-                    {
-                        "is_mut": false,
                         "is_signer": true,
-                        "name": "signer"
+                        "name": "state"
                     }
                 ],
                 "args": [
@@ -99,18 +79,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "accounts": [
                     {
                         "is_mut": true,
-                        "is_signer": false,
-                        "name": "state",
-                        "pda": {
-                            "seeds": [
-                                { "kind": "const", "value": "state" }
-                            ]
-                        }
-                    },
-                    {
-                        "is_mut": false,
                         "is_signer": true,
-                        "name": "signer"
+                        "name": "state"
                     }
                 ],
                 "args": [
