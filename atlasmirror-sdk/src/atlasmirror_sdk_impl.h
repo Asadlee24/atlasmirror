@@ -81,8 +81,6 @@ protected:
     void onContextReady() override;
 
 private:
-    void loadPredefinedCatalog();
-
     struct RegionRecord {
         std::string path;
         std::string name;
@@ -95,6 +93,9 @@ private:
         std::string checksum;
         std::string version;
     };
+
+    void loadPredefinedCatalog();
+    std::string serializeRecord(const RegionRecord &r) const;
 
     std::map<std::string, RegionRecord> m_catalog;
     std::map<std::string, RegionRecord> m_hostedRecords;

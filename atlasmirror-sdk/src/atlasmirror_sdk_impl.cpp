@@ -363,7 +363,7 @@ void AtlasmirrorSdkImpl::loadPredefinedCatalog()
     }
 }
 
-static std::string serializeRecord(const AtlasmirrorSdkImpl::RegionRecord &r) {
+std::string AtlasmirrorSdkImpl::serializeRecord(const RegionRecord &r) const {
     std::ostringstream ss;
     ss << "{"
        << "\"path\":\"" << escapeJson(r.path) << "\","
