@@ -1,7 +1,11 @@
 use crate::storage::LogosStorageClient;
 use colored::Colorize;
-use serde_json::{json, Value};
-use std::path::Path;
+use futures_util::StreamExt;
+use indicatif::{ProgressBar, ProgressStyle};
+use serde_json::json;
+use std::fs::File;
+use std::io::Write;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 pub async fn execute(
@@ -16,13 +20,28 @@ pub async fn execute(
         .as_ref()
         .and_then(|records| records.iter().find(|e| e.region == region).cloned());
 
-    let regions_bytes = include_bytes!("../../../metadata/regions.json");
-    let catalog: Value = serde_json::from_slice(regions_bytes).unwrap_or(json!({}));
+    let catalog_bytes = include_bytes!("../../../metadata/regions.json");
+    let catalog: serde_json::Value = serde_json::from_slice(catalog_bytes).unwrap_or(json!({}));
     let catalog_regions = catalog
         .get("regions")
         .and_then(|r| r.as_array())
         .cloned()
         .unwrap_or_default();
+
+    let cat_item = catalog_regions
+        .iter()
+        .find(|r| r.get("path").and_then(|p| p.as_str()) == Some(region));
+
+    if cat_item.is_none() {
+        return Err(format!("Region '{}' is not in the predefined LP-0018 catalog.", region).into());
+    }
+    let cat_item = cat_item.unwrap();
+
+    let temp_dest = if let Some(ext) = output.extension() {
+        output.with_extension(format!("{}.part", ext.to_string_lossy()))
+    } else {
+        PathBuf::from(format!("{}.part", output.display()))
+    };
 
     if let Some(entry) = hosted_entry {
         let cid = entry.cid;
@@ -30,49 +49,78 @@ pub async fn execute(
 
         println!("  Status: {}", "HOSTED ON-CHAIN".green());
         println!("  Logos Storage CID: {}", cid.cyan());
-        println!("  Downloading from Logos Storage (official storage_module)...");
+        println!("  Expected MD5:      {}", expected_md5);
+        println!("  Retrieving via Logos Storage peers...");
 
         let storage = LogosStorageClient::new(None, 3, 500);
+        let mut download_source = "logos_storage";
 
-        let download_success = match storage.get(&cid, output).await {
-            Ok(_) => true,
+        let storage_result = storage.get(&cid, &temp_dest).await;
+        let mut download_success = false;
+
+        match storage_result {
+            Ok(_) => {
+                download_success = true;
+            }
             Err(e) => {
                 eprintln!(
-                    "  {} Local daemon unreachable ({}), using peer replica...",
+                    "  {} Direct local storage node error: {}",
                     "⚠".yellow(),
                     e
                 );
-                if !entry.source_url.is_empty() {
-                    download_http(&entry.source_url, output).await?
+                // Attempt peer retrieval from remote VPS peer
+                let vps_url = format!("http://199.231.187.97:8070/api/v1/storage/download/{}", cid);
+                if let Ok(true) = stream_http_download(&vps_url, &temp_dest).await {
+                    download_success = true;
                 } else {
-                    false
+                    eprintln!("  {} Peer retrieval unavailable.", "✖".red());
                 }
             }
-        };
+        }
 
-        if !download_success || !output.exists() {
-            eprintln!("{} Failed to download hosted snapshot.", "✖".red());
+        // If Logos Storage fails completely, explicitly fall back to Geofabrik and truthfully report source
+        if !download_success {
+            eprintln!(
+                "  {} Falling back to upstream Geofabrik snapshot...",
+                "ℹ".blue()
+            );
+            download_source = "geofabrik_fallback";
+            let url = if !entry.source_url.is_empty() {
+                &entry.source_url
+            } else {
+                cat_item["geofabrik_url"].as_str().unwrap_or_default()
+            };
+            download_success = stream_http_download(url, &temp_dest).await?;
+        }
+
+        if !download_success || !temp_dest.exists() {
+            eprintln!("{} Failed to download snapshot.", "✖".red());
             std::process::exit(1);
         }
 
-        let computed_md5 = crate::geofabrik::compute_file_md5(output)?;
-        let file_size = output.metadata()?.len();
+        let computed_md5 = crate::geofabrik::compute_file_md5(&temp_dest)?;
+        let file_size = temp_dest.metadata()?.len();
 
         println!("  Destination: {}", output.display());
         println!("  File Size:   {} bytes", file_size);
         println!("  Local MD5:   {}", computed_md5);
 
         if !expected_md5.is_empty() && computed_md5 != expected_md5 {
+            let _ = std::fs::remove_file(&temp_dest);
             eprintln!(
-                "{} Integrity check failed! Expected MD5: {}",
+                "{} Integrity check failed! Expected MD5: {}, got: {}",
                 "✖".red(),
-                expected_md5
+                expected_md5,
+                computed_md5
             );
             std::process::exit(1);
         }
 
+        // Atomic rename after checksum verification
+        std::fs::rename(&temp_dest, output)?;
+
         println!(
-            "{} Download complete. Integrity verified against CID & snapshot checksum.",
+            "{} Download complete. Integrity verified against published checksum.",
             "✔".green()
         );
 
@@ -81,7 +129,7 @@ pub async fn execute(
                 "{}",
                 json!({
                     "region": region,
-                    "source": "logos_storage",
+                    "source": download_source,
                     "cid": cid,
                     "output": output.display().to_string(),
                     "size": file_size,
@@ -98,30 +146,44 @@ pub async fn execute(
             "[CENTRAL FALLBACK] Downloading directly from Geofabrik...".yellow()
         );
 
-        let cat_entry = catalog_regions
-            .iter()
-            .find(|r| r["path"].as_str() == Some(region));
-        let url = if let Some(cat) = cat_entry {
-            cat["geofabrik_url"].as_str().unwrap_or("").to_string()
-        } else {
-            format!("https://download.geofabrik.de/{}-latest.osm.pbf", region)
-        };
+        let url = cat_item["geofabrik_url"].as_str().unwrap_or_default();
+        let md5_url = cat_item["md5_url"].as_str().unwrap_or_default();
 
-        println!("  Source URL:  {}", url);
-        println!("  Destination: {}", output.display());
+        let expected_md5 = reqwest::get(md5_url)
+            .await?
+            .text()
+            .await?
+            .split_whitespace()
+            .next()
+            .unwrap_or_default()
+            .to_string();
 
-        let ok = download_http(&url, output).await?;
-        if !ok || !output.exists() {
+        let ok = stream_http_download(url, &temp_dest).await?;
+        if !ok || !temp_dest.exists() {
             eprintln!("{} Failed to download from Geofabrik.", "✖".red());
             std::process::exit(1);
         }
 
-        let computed_md5 = crate::geofabrik::compute_file_md5(output)?;
-        let file_size = output.metadata()?.len();
+        let computed_md5 = crate::geofabrik::compute_file_md5(&temp_dest)?;
+        let file_size = temp_dest.metadata()?.len();
 
-        println!("  File Size:   {} bytes", file_size);
-        println!("  Local MD5:   {}", computed_md5);
-        println!("{} Download complete via Geofabrik fallback.", "✔".green());
+        if !expected_md5.is_empty() && computed_md5 != expected_md5 {
+            let _ = std::fs::remove_file(&temp_dest);
+            eprintln!(
+                "{} Integrity check failed! Expected: {}, got: {}",
+                "✖".red(),
+                expected_md5,
+                computed_md5
+            );
+            std::process::exit(1);
+        }
+
+        std::fs::rename(&temp_dest, output)?;
+
+        println!(
+            "{} Central fallback download complete & verified.",
+            "✔".green()
+        );
 
         if json_output {
             println!(
@@ -129,7 +191,6 @@ pub async fn execute(
                 json!({
                     "region": region,
                     "source": "geofabrik_fallback",
-                    "url": url,
                     "output": output.display().to_string(),
                     "size": file_size,
                     "md5": computed_md5,
@@ -142,21 +203,38 @@ pub async fn execute(
     Ok(())
 }
 
-async fn download_http(url: &str, destination: &Path) -> Result<bool, Box<dyn std::error::Error>> {
+/// Streams large file download with progress bar without loading entire file in memory
+async fn stream_http_download(
+    url: &str,
+    output: &Path,
+) -> Result<bool, Box<dyn std::error::Error>> {
     let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(300))
+        .timeout(Duration::from_secs(600))
         .build()?;
 
-    let resp = client.get(url).send().await?;
-    if !resp.status().is_success() {
-        eprintln!("HTTP error {}: {}", resp.status(), url);
+    let res = client.get(url).send().await?;
+    if !res.status().is_success() {
         return Ok(false);
     }
 
-    let bytes = resp.bytes().await?;
-    if let Some(parent) = destination.parent() {
-        std::fs::create_dir_all(parent)?;
+    let total_size = res.content_length().unwrap_or(0);
+    let pb = ProgressBar::new(total_size);
+    pb.set_style(
+        ProgressStyle::default_bar()
+            .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")?
+            .progress_chars("#>-"),
+    );
+
+    let mut file = File::create(output)?;
+    let mut stream = res.bytes_stream();
+
+    while let Some(chunk_res) = stream.next().await {
+        let chunk = chunk_res?;
+        file.write_all(&chunk)?;
+        pb.inc(chunk.len() as u64);
     }
-    std::fs::write(destination, bytes)?;
+
+    file.flush()?;
+    pb.finish_with_message("Download finished");
     Ok(true)
 }

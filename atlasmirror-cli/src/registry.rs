@@ -1,4 +1,7 @@
+use borsh::BorshDeserialize;
+use osm_registry_core::RegistryState;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::process::Command;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -14,16 +17,68 @@ pub struct OnChainRecord {
     pub timestamp: u64,
 }
 
-/// Queries the genuine on-chain LEZ registry via the runner query action.
-/// The manifest is NOT used as the runtime registry backend.
+/// Queries the genuine on-chain LEZ registry.
+/// Uses direct RPC call to the sequencer first, falling back to LEZ_RUNNER_BIN if configured.
 pub fn query_on_chain_registry() -> Result<Vec<OnChainRecord>, Box<dyn std::error::Error>> {
+    let rpc_url = std::env::var("LEZ_RPC_URL")
+        .unwrap_or_else(|_| "https://testnet.lez.logos.co/".to_string());
+    let account_id = std::env::var("LEZ_ACCOUNT_ID")
+        .unwrap_or_else(|_| "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci".to_string());
+
+    // 1. Attempt direct RPC query
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build();
+
+    if let Ok(cli) = client {
+        let payload = json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "getAccount",
+            "params": [account_id]
+        });
+
+        if let Ok(resp) = cli.post(&rpc_url).json(&payload).send() {
+            if resp.status().is_success() {
+                if let Ok(body) = resp.json::<serde_json::Value>() {
+                    if let Some(data_arr) = body["result"]["data"].as_array() {
+                        let raw_bytes: Vec<u8> = data_arr
+                            .iter()
+                            .filter_map(|v| v.as_u64().map(|n| n as u8))
+                            .collect();
+
+                        if !raw_bytes.is_empty() {
+                            if let Ok(state) = RegistryState::try_from_slice(&raw_bytes) {
+                                let records: Vec<OnChainRecord> = state
+                                    .records
+                                    .into_iter()
+                                    .map(|r| OnChainRecord {
+                                        region: r.region,
+                                        parent: r.parent,
+                                        level: format!("{:?}", r.level).to_lowercase(),
+                                        cid: r.cid,
+                                        source_url: r.source_url,
+                                        checksum: r.checksum,
+                                        version: r.version,
+                                        hosted: r.hosted,
+                                        timestamp: r.timestamp,
+                                    })
+                                    .collect();
+                                return Ok(records);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Fallback to LEZ_RUNNER_BIN if direct RPC is unavailable
     let runner_bin = std::env::var("LEZ_RUNNER_BIN").unwrap_or_else(|_| {
         "/root/lez-testnet-compatible/target/release/run_osm_registry".to_string()
     });
     let program_bin =
         std::env::var("OSM_REGISTRY_BIN").unwrap_or_else(|_| "/root/osm_registry.bin".to_string());
-    let account_id = std::env::var("LEZ_ACCOUNT_ID")
-        .unwrap_or_else(|_| "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci".to_string());
 
     let output = Command::new(&runner_bin)
         .arg(&program_bin)
@@ -96,7 +151,7 @@ pub fn query_on_chain_registry() -> Result<Vec<OnChainRecord>, Box<dyn std::erro
             Err(format!("On-chain query failed: {}", err).into())
         }
         Err(e) => Err(format!(
-            "LEZ runner binary unreachable at '{}': {}. Set LEZ_RUNNER_BIN to a valid path.",
+            "LEZ RPC unreachable and runner binary unavailable at '{}': {}",
             runner_bin, e
         )
         .into()),

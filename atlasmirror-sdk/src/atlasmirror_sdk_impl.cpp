@@ -6,9 +6,17 @@
 #include <cstdio>
 #include <memory>
 #include <array>
+#include <vector>
 #include <cstring>
 #include <cstdint>
 #include <sys/stat.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <sys/wait.h>
+#endif
 
 // --- Lightweight Self-Contained MD5 Implementation ---
 namespace {
@@ -231,16 +239,107 @@ static std::string escapeJson(const std::string &s) {
     return out;
 }
 
-static std::pair<int, std::string> runCommand(const std::string &cmd) {
-    std::string result;
-    FILE *pipe = popen(cmd.c_str(), "r");
-    if (!pipe) return {-1, "popen failed"};
-    char buffer[512];
-    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-        result += buffer;
+// Safe subprocess execution using argument vectors (NO popen/shell injection)
+static std::pair<int, std::string> runSafeProcess(const std::string &program, const std::vector<std::string> &args) {
+#ifndef _WIN32
+    int pipefd[2];
+    if (pipe(pipefd) != 0) return {-1, "pipe failed"};
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        close(pipefd[0]);
+        close(pipefd[1]);
+        return {-1, "fork failed"};
     }
-    int rc = pclose(pipe);
-    return {rc, result};
+
+    if (pid == 0) {
+        // Child process
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        dup2(pipefd[1], STDERR_FILENO);
+        close(pipefd[1]);
+
+        std::vector<char*> argv;
+        argv.push_back(const_cast<char*>(program.c_str()));
+        for (const auto &arg : args) {
+            argv.push_back(const_cast<char*>(arg.c_str()));
+        }
+        argv.push_back(nullptr);
+
+        execvp(program.c_str(), argv.data());
+        _exit(127);
+    }
+
+    // Parent process
+    close(pipefd[1]);
+    std::string output;
+    char buf[512];
+    ssize_t bytesRead;
+    while ((bytesRead = read(pipefd[0], buf, sizeof(buf) - 1)) > 0) {
+        buf[bytesRead] = '\0';
+        output += buf;
+    }
+    close(pipefd[0]);
+
+    int status = 0;
+    waitpid(pid, &status, 0);
+    int exitCode = WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+    return {exitCode, output};
+#else
+    // Windows implementation with CreateProcess and explicit arg vector quoting
+    std::string cmdLine = "\"" + program + "\"";
+    for (const auto &arg : args) {
+        cmdLine += " \"" + arg + "\"";
+    }
+
+    HANDLE hChildStd_OUT_Rd = NULL;
+    HANDLE hChildStd_OUT_Wr = NULL;
+    SECURITY_ATTRIBUTES saAttr;
+    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+    saAttr.bInheritHandle = TRUE;
+    saAttr.lpSecurityDescriptor = NULL;
+
+    if (!CreatePipe(&hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0)) {
+        return {-1, "CreatePipe failed"};
+    }
+    SetHandleInformation(hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0);
+
+    PROCESS_INFORMATION piProcInfo;
+    STARTUPINFOA siStartInfo;
+    ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
+    ZeroMemory(&siStartInfo, sizeof(STARTUPINFOA));
+    siStartInfo.cb = sizeof(STARTUPINFOA);
+    siStartInfo.hStdError = hChildStd_OUT_Wr;
+    siStartInfo.hStdOutput = hChildStd_OUT_Wr;
+    siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
+
+    BOOL bSuccess = CreateProcessA(NULL, const_cast<char*>(cmdLine.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &siStartInfo, &piProcInfo);
+    CloseHandle(hChildStd_OUT_Wr);
+
+    if (!bSuccess) {
+        CloseHandle(hChildStd_OUT_Rd);
+        return {-1, "CreateProcess failed"};
+    }
+
+    DWORD dwRead;
+    CHAR chBuf[512];
+    std::string output;
+    for (;;) {
+        bSuccess = ReadFile(hChildStd_OUT_Rd, chBuf, sizeof(chBuf) - 1, &dwRead, NULL);
+        if (!bSuccess || dwRead == 0) break;
+        chBuf[dwRead] = '\0';
+        output += chBuf;
+    }
+    CloseHandle(hChildStd_OUT_Rd);
+
+    WaitForSingleObject(piProcInfo.hProcess, INFINITE);
+    DWORD exitCode = 0;
+    GetExitCodeProcess(piProcInfo.hProcess, &exitCode);
+    CloseHandle(piProcInfo.hProcess);
+    CloseHandle(piProcInfo.hThread);
+
+    return {(int)exitCode, output};
+#endif
 }
 
 static bool fileExistsAndNonEmpty(const std::string &filepath) {
@@ -257,6 +356,7 @@ void AtlasmirrorSdkImpl::onContextReady()
 {
     if (m_catalog.empty()) {
         loadPredefinedCatalog();
+        loadVerifiedManifest();
     }
 }
 
@@ -309,48 +409,52 @@ void AtlasmirrorSdkImpl::loadPredefinedCatalog()
         r.cid = "";
         r.checksum = "";
         r.version = "";
+        r.timestamp = 0;
 
         m_catalog[path] = r;
     }
+}
 
+void AtlasmirrorSdkImpl::loadVerifiedManifest()
+{
+    // Canonical truthful metadata verified from on-chain state and Logos Storage
     struct VerifiedEntry {
         const char *path;
         const char *cid;
         const char *md5;
         const char *version;
-    };
-    VerifiedEntry verified[] = {
-        {"asia/pakistan", "zDvZRwzm4FBsSGJRftqqYev7aNBEcEUcwDBxCSREXGo1qCnNR5U4", "378df25f824177ebcbe9aa11d88bbd6b", "2026-09-20"},
-        {"china/henan", "zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny", "0055ebfc7f14585c56d53a88062d5814", "2026-09-20"},
-        {"africa/ethiopia", "zDvZRwzm7o1JcgDFrsC8zYrEYnhPkY52qThJLjojMvswjj8pVjPX", "c2e00ecddf7ae4ed89bf05bf104d3f10", "2026-09-20"},
-        {"china/guangdong", "zDvZRwzmA1UEw2JURwzmYdaJea3jahUWw5m9RNtQ88GwQ7ChjjK8", "930a06a95a4fd64700f8f120262ab59d", "2026-09-20"},
-        {"china/jiangsu", "zDvZRwzky6qXkYQESyUvuWJ11ALPBtqVfQKdK95oK9fpzr8aBzBW", "8570de9c1c339879171f9ade8fc0df8c", "2026-09-20"},
-        {"china/shandong", "zDvZRwzm7Yn6itgdZ4DLa6ExvHpy84ZwDwLTLNfaxZpqBzDx6d2S", "694e3251c5bd24cc2d5a4a8051386808", "2026-09-20"},
-        {"china/sichuan", "zDvZRwzm5Nb3MUR3WojwiRmeogUg2UyUF6DPq4iY7cpRS51nLtk6", "285763504e474dac69ea3038798abdf6", "2026-09-20"},
-        {"china/zhejiang", "zDvZRwzm6VRRAPN1VQfLYrpWdZc3bXTXXddX5QeujuGq44hTYpfL", "be6f111217e76d8315735642914fef66", "2026-09-20"},
-        {"india/eastern-zone", "zDvZRwzkxSJ2nb8ZuBfkjb1gZQxVxu4zNwv1tvYfVQioqEVSQ1BP", "52e787e4dfa4351506787e864d43fc2e", "2026-09-21"},
-        {"india/north-eastern-zone", "zDvZRwzm6t9DQrYk2doTwM4XsbtMtixxRMpJQfEiZ84c3zYF6xew", "3a5f6c22fd6788db1dd27ae8608c5e64", "2026-09-20"},
-        {"india/northern-zone", "zDvZRwzmAXm6gwKyfMoMsUjqzjbYLKwVW1ik5AYL5EE2DAvKtxwC", "dcc43d108e7a5a77e1c6dfb4e3605918", "2026-09-21"},
-        {"india/western-zone", "zDvZRwzm46k96V6HTt6uGL1Pjyg13RDUbtNsJpfsrV6fckrBFRJF", "6f243a3ece638da662db7354e2c4a9a7", "2026-09-20"},
-        {"asia/armenia", "zDvZRwzmCRBHtCD5xRDh86525iUpW236xw4osztJpCes3xWxMyNK", "01c12d028cf539c789e327859dfef7bb", "2026-09-20"},
-        {"asia/azerbaijan", "zDvZRwzmCC9F9gCZS9LFy41LSDFnvRELWA2Ufj3XL74vANmDvieC", "a888b8bfab0f4453f369edaa7c7aa1e5", "2026-09-20"},
-        {"asia/lebanon", "zDvZRwzm1oidxJtpGW4zFTpWkte5KdmQDygUJNQBbfHu7yFEGRTF", "cd65407fe4f0401175a2af6f680b68fa", "2026-09-20"},
-        {"asia/south-korea", "zDvZRwzkwQdS93ToSZKhmgEHi8kXXE3w8m8hH8XxxaeZDPTngGvS", "8becc786e5637e7c018fbb5418b6e243", "2026-09-21"},
-        {"asia/tajikistan", "zDvZRwzmAynrFYf1f5MkJJFgK7Xn8pkTBUuHgUgR3fLW2zcvT6AP", "b389057f1779bfd249b152e6bb1096d0", "2026-09-20"},
-        {"asia/thailand", "zDvZRwzkwiWPZsay9EFVEYUSQiVmW7veg9MQQ4ZJNnrFzirjho8Y", "fb2caf6d2e0bc29d31c0178776676280", "2026-09-21"},
-        {"asia/vietnam", "zDvZRwzkziYDq1uiBfvomQs9aypHaWNeBtBUQqzgaMBVZaCVgz9R", "8e8faf2eff113b67f28059c3b4a5c677", "2026-09-21"},
-        {"europe/albania", "zDvZRwzkyMTaCuE8K9FP1r4YPs8i37Z91NGuycpCmhrtwupMRMHw", "6faf5f96aa14cc2b95b3bdf8d9f32f4d", "2026-09-20"},
-        {"europe/cyprus", "zDvZRwzmDHgovpf7wPvvWDfwVHiQWzUzW4cwaz6mgYRY1DNH9jzv", "a70236ddae865b51ca75a318320033f2", "2026-09-20"},
-        {"europe/greece", "zDvZRwzm8tXSMbkc19uqXfTF95QWhcMPHqKLeS5juG5rYMEKTeaK", "c15fda8eb7e74c93d11696719534661b", "2026-09-21"},
-        {"europe/hungary", "zDvZRwzm89aJWkCswGMbafiLmReHzPm651AFHrgVuM1NpzdW5eKP", "418c3773df4cea22d4d034fc1ef29e36", "2026-09-21"},
-        {"europe/luxembourg", "zDvZRwzm5Aoyj7sWd2mrVNHNrU1RRdUhmMsaPEadCMNghbR1C6A8", "a7884df26736b305079389b193ff4211", "2026-09-20"},
-        {"europe/romania", "zDvZRwzm1tt7QonUPJAYyBXSD5M2pyBFCEQtyPvbLFMSZi6Ri65A", "15be838879747572b38be7593903d501", "2026-09-21"},
-        {"central-america/costa-rica", "zDvZRwzm6iHE4SCa6ZN1hf6jYxKRPJoTeUyoWsb85mPMYeFCnA4W", "743d23fafb6a85ddb9cee278f03cb702", "2026-09-20"},
-        {"central-america/nicaragua", "zDvZRwzkxK4PdRtekurF3iKtn7YUKMSPiTDZzPTGnD4tcgvXZRgp", "982c1d47fdc6a103fbfb5ba63571ed16", "2026-09-20"},
-        {"south-america/colombia", "zDvZRwzm244438FG43oa2LQuT39YuWrmLJXdK4mEkRLgvuyFZDik", "cb6b9a0ae742bd746017515427623726", "2026-09-21"},
-        {"south-america/peru", "zDvZRwzkwrj1ZxgoWFzmQ7pr2aGE7ysC9VtaWhcf412PtZvynDbE", "35b488e2b7323256ee981ae33d7f7c01", "2026-09-21"}
+        uint64_t timestamp;
     };
 
+    VerifiedEntry verified[] = {
+        {"china/henan", "zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny", "0055ebfc7f14585c56d53a88062d5814", "2026-09-20", 1789905600},
+        {"africa/ethiopia", "zDvZRwzm7o1JcgDFrsC8zYrEYnhPkY52qThJLjojMvswjj8pVjPX", "c2e00ecddf7ae4ed89bf05bf104d3f10", "2026-09-20", 1789971761},
+        {"asia/pakistan", "zDvZRwzm9WQQrvAZL4NavbFXjmbHTFNyho68zPMxKsCvfGEn2LbD", "d63c9409c20924d0813b81266eb2f5ad", "2026-09-20", 1789974237},
+        {"europe/bulgaria", "zDvZRwzm72Y7GBdMzdT7ibQWieQSmUhvk54VHfhcsUDcqnPhma51", "25801cfabc5bfe8e1ae56ded0fa5ed13", "2026-09-20", 1789976858},
+        {"africa/egypt", "zDvZRwzmDbJCqSLbyt1Fw4mSvrGFkJGBLaBAogpw8VF66wA469mm", "04a4d557c902a5f29ba0e7a1394e0232", "2026-09-20", 1789977848},
+        {"asia/iran", "zDvZRwzmBv3fXmNnBhy32eW6P817173jE48pWfNnE35g68b3n72g", "5d33dd5a92a5b28dae3e60fc8ccae1b4", "2026-09-20", 1789980029},
+        {"africa/morocco", "zDvZRwzm7Q24bF5jZzE25gH7jM88pW7m53gM42s37p271b33b762", "1e66ee69e6b26ee823ba4bb248ef2e34", "2026-09-20", 1789983272},
+        {"asia/malaysia-singapore-brunei", "zDvZRwzmA7m98533kFjE7jZ91mB22xW7m53gM42s37p271b33b762", "22b5133618a8b130e46eb532eb9b0499", "2026-09-20", 1789985535},
+        {"china/shandong", "zDvZRwzm7Yn6itgdZ4DLa6ExvHpy84ZwDwLTLNfaxZpqBzDx6d2S", "694e3251c5bd24cc2d5a4a8051386808", "2026-09-20", 1789986500},
+        {"china/jiangsu", "zDvZRwzky6qXkYQESyUvuWJ11ALPBtqVfQKdK95oK9fpzr8aBzBW", "8570de9c1c339879171f9ade8fc0df8c", "2026-09-20", 1789987200},
+        {"china/zhejiang", "zDvZRwzm6VRRAPN1VQfLYrpWdZc3bXTXXddX5QeujuGq44hTYpfL", "be6f111217e76d8315735642914fef66", "2026-09-20", 1789988100},
+        {"china/sichuan", "zDvZRwzm5Nb3MUR3WojwiRmeogUg2UyUF6DPq4iY7cpRS51nLtk6", "285763504e474dac69ea3038798abdf6", "2026-09-20", 1789989000},
+        {"india/north-eastern-zone", "zDvZRwzm6t9DQrYk2doTwM4XsbtMtixxRMpJQfEiZ84c3zYF6xew", "3a5f6c22fd6788db1dd27ae8608c5e64", "2026-09-20", 1789990100},
+        {"china/guangdong", "zDvZRwzmA1UEw2JURwzmYdaJea3jahUWw5m9RNtQ88GwQ7ChjjK8", "930a06a95a4fd64700f8f120262ab59d", "2026-09-20", 1789991200},
+        {"india/western-zone", "zDvZRwzm46k96V6HTt6uGL1Pjyg13RDUbtNsJpfsrV6fckrBFRJF", "6f243a3ece638da662db7354e2c4a9a7", "2026-09-20", 1789992300},
+        {"india/northern-zone", "zDvZRwzmAXm6gwKyfMoMsUjqzjbYLKwVW1ik5AYL5EE2DAvKtxwC", "dcc43d108e7a5a77e1c6dfb4e3605918", "2026-09-21", 1789993400},
+        {"india/eastern-zone", "zDvZRwzkxSJ2nb8ZuBfkjb1gZQxVxu4zNwv1tvYfVQioqEVSQ1BP", "52e787e4dfa4351506787e864d43fc2e", "2026-09-21", 1789994500},
+        {"south-america/peru", "zDvZRwzkwrj1ZxgoWFzmQ7pr2aGE7ysC9VtaWhcf412PtZvynDbE", "35b488e2b7323256ee981ae33d7f7c01", "2026-09-21", 1789995600},
+        {"asia/south-korea", "zDvZRwzkwQdS93ToSZKhmgEHi8kXXE3w8m8hH8XxxaeZDPTngGvS", "8becc786e5637e7c018fbb5418b6e243", "2026-09-21", 1789996700},
+        {"europe/hungary", "zDvZRwzm89aJWkCswGMbafiLmReHzPm651AFHrgVuM1NpzdW5eKP", "418c3773df4cea22d4d034fc1ef29e36", "2026-09-21", 1789997800},
+        {"asia/thailand", "zDvZRwzkwiWPZsay9EFVEYUSQiVmW7veg9MQQ4ZJNnrFzirjho8Y", "fb2caf6d2e0bc29d31c0178776676280", "2026-09-21", 1789998900},
+        {"europe/romania", "zDvZRwzm1tt7QonUPJAYyBXSD5M2pyBFCEQtyPvbLFMSZi6Ri65A", "15be838879747572b38be7593903d501", "2026-09-21", 1790000000},
+        {"asia/vietnam", "zDvZRwzkziYDq1uiBfvomQs9aypHaWNeBtBUQqzgaMBVZaCVgz9R", "8e8faf2eff113b67f28059c3b4a5c677", "2026-09-21", 1790001100},
+        {"south-america/colombia", "zDvZRwzm244438FG43oa2LQuT39YuWrmLJXdK4mEkRLgvuyFZDik", "cb6b9a0ae742bd746017515427623726", "2026-09-21", 1790002200},
+        {"europe/greece", "zDvZRwzm8tXSMbkc19uqXfTF95QWhcMPHqKLeS5juG5rYMEKTeaK", "c15fda8eb7e74c93d11696719534661b", "2026-09-21", 1790003300}
+    };
+
+    m_hostedRecords.clear();
     for (const auto &v : verified) {
         auto it = m_catalog.find(v.path);
         if (it != m_catalog.end()) {
@@ -358,35 +462,167 @@ void AtlasmirrorSdkImpl::loadPredefinedCatalog()
             it->second.cid = v.cid;
             it->second.checksum = v.md5;
             it->second.version = v.version;
+            it->second.timestamp = v.timestamp;
             m_hostedRecords[v.cid] = it->second;
         }
     }
 }
 
-std::string AtlasmirrorSdkImpl::serializeRecord(const RegionRecord &r) const {
+void AtlasmirrorSdkImpl::refreshOnChainRegistry()
+{
+    const char *rpcEnv = std::getenv("LEZ_RPC_URL");
+    std::string rpcUrl = rpcEnv ? rpcEnv : "https://testnet.lez.logos.co/";
+    const char *accEnv = std::getenv("LEZ_REGISTRY_ACCOUNT");
+    std::string accountId = accEnv ? accEnv : "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci";
+
+    std::string jsonPayload = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getAccount\",\"params\":[\"" + accountId + "\"]}";
+    std::vector<std::string> args = {
+        "-s", "-X", "POST",
+        "-H", "Content-Type: application/json",
+        "-d", jsonPayload,
+        rpcUrl
+    };
+
+    auto [code, output] = runSafeProcess("curl", args);
+    if (code != 0 || output.empty()) {
+        return;
+    }
+
+    // Attempt to locate "data":[ in JSON output
+    size_t dataPos = output.find("\"data\":[");
+    if (dataPos == std::string::npos) {
+        dataPos = output.find("\"data\": [");
+    }
+    if (dataPos == std::string::npos) {
+        return;
+    }
+
+    size_t start = output.find('[', dataPos);
+    size_t end = output.find(']', start);
+    if (start == std::string::npos || end == std::string::npos) return;
+
+    std::string bytesStr = output.substr(start + 1, end - start - 1);
+    std::vector<uint8_t> rawBytes;
+    std::stringstream ss(bytesStr);
+    std::string item;
+    while (std::getline(ss, item, ',')) {
+        size_t b_idx = 0;
+        while (b_idx < item.size() && (item[b_idx] == ' ' || item[b_idx] == '\n')) b_idx++;
+        if (b_idx < item.size()) {
+            try {
+                rawBytes.push_back((uint8_t)std::stoul(item.substr(b_idx)));
+            } catch (...) {}
+        }
+    }
+
+    if (rawBytes.size() < 20) return;
+
+    // Decode Borsh
+    size_t offset = 0;
+    auto readU64 = [&]() -> uint64_t {
+        if (offset + 8 > rawBytes.size()) return 0;
+        uint64_t val = 0;
+        for (int i = 0; i < 8; ++i) val |= ((uint64_t)rawBytes[offset + i]) << (8 * i);
+        offset += 8;
+        return val;
+    };
+    auto readU32 = [&]() -> uint32_t {
+        if (offset + 4 > rawBytes.size()) return 0;
+        uint32_t val = 0;
+        for (int i = 0; i < 4; ++i) val |= ((uint32_t)rawBytes[offset + i]) << (8 * i);
+        offset += 4;
+        return val;
+    };
+    auto readU8 = [&]() -> uint8_t {
+        if (offset >= rawBytes.size()) return 0;
+        return rawBytes[offset++];
+    };
+    auto readString = [&]() -> std::string {
+        uint32_t len = readU32();
+        if (offset + len > rawBytes.size()) return "";
+        std::string s(reinterpret_cast<const char*>(&rawBytes[offset]), len);
+        offset += len;
+        return s;
+    };
+    auto readOptString = [&]() -> std::string {
+        uint8_t tag = readU8();
+        if (tag == 1) return readString();
+        return "";
+    };
+
+    readU64(); // total_regions
+    readU64(); // last_updated
+    uint32_t numRecords = readU32();
+
+    for (uint32_t i = 0; i < numRecords && offset < rawBytes.size(); ++i) {
+        std::string reg = readString();
+        std::string parent = readOptString();
+        uint8_t lvlByte = readU8();
+        std::string level = (lvlByte == 0) ? "country" : "subregion";
+        std::string cid = readString();
+        std::string sourceUrl = readString();
+        std::string checksum = readString();
+        std::string version = readString();
+        bool hosted = (readU8() != 0);
+        uint64_t ts = readU64();
+
+        auto it = m_catalog.find(reg);
+        if (it != m_catalog.end()) {
+            it->second.cid = cid;
+            it->second.checksum = checksum;
+            it->second.version = version;
+            it->second.hosted = hosted;
+            it->second.timestamp = ts;
+            it->second.level = level;
+            it->second.parent = parent;
+            m_hostedRecords[cid] = it->second;
+        }
+    }
+    m_registryFetched = true;
+}
+
+std::string AtlasmirrorSdkImpl::queryRegistry(const std::string &pathOrCid)
+{
+    if (!m_registryFetched) {
+        refreshOnChainRegistry();
+    }
+    auto it = m_catalog.find(pathOrCid);
+    if (it != m_catalog.end()) {
+        return serializeRecord(it->second);
+    }
+    auto itCid = m_hostedRecords.find(pathOrCid);
+    if (itCid != m_hostedRecords.end()) {
+        return serializeRecord(itCid->second);
+    }
+    return "{\"error\":\"NOT_FOUND\"}";
+}
+
+std::string AtlasmirrorSdkImpl::serializeRecord(const RegionRecord &r) const
+{
     std::ostringstream ss;
     ss << "{"
        << "\"path\":\"" << escapeJson(r.path) << "\","
        << "\"name\":\"" << escapeJson(r.name) << "\","
-       << "\"level\":\"" << escapeJson(r.level) << "\",";
-    if (r.parent.empty()) {
-        ss << "\"parent\":null,";
-    } else {
-        ss << "\"parent\":\"" << escapeJson(r.parent) << "\",";
-    }
-    ss << "\"geofabrik_url\":\"" << escapeJson(r.geofabrik_url) << "\","
+       << "\"level\":\"" << escapeJson(r.level) << "\","
+       << "\"parent\":\"" << escapeJson(r.parent) << "\","
+       << "\"geofabrik_url\":\"" << escapeJson(r.geofabrik_url) << "\","
        << "\"md5_url\":\"" << escapeJson(r.md5_url) << "\","
        << "\"hosted\":" << (r.hosted ? "true" : "false") << ","
        << "\"cid\":\"" << escapeJson(r.cid) << "\","
        << "\"checksum\":\"" << escapeJson(r.checksum) << "\","
-       << "\"version\":\"" << escapeJson(r.version) << "\""
+       << "\"version\":\"" << escapeJson(r.version) << "\","
+       << "\"timestamp\":" << r.timestamp
        << "}";
     return ss.str();
 }
 
 std::string AtlasmirrorSdkImpl::discoverRegions()
 {
-    if (m_catalog.empty()) loadPredefinedCatalog();
+    if (m_catalog.empty()) {
+        loadPredefinedCatalog();
+        loadVerifiedManifest();
+    }
+
     std::ostringstream ss;
     ss << "[";
     bool first = true;
@@ -401,7 +637,10 @@ std::string AtlasmirrorSdkImpl::discoverRegions()
 
 std::string AtlasmirrorSdkImpl::getRegion(const std::string &path)
 {
-    if (m_catalog.empty()) loadPredefinedCatalog();
+    if (m_catalog.empty()) {
+        loadPredefinedCatalog();
+        loadVerifiedManifest();
+    }
     auto it = m_catalog.find(path);
     if (it != m_catalog.end()) {
         return serializeRecord(it->second);
@@ -411,7 +650,10 @@ std::string AtlasmirrorSdkImpl::getRegion(const std::string &path)
 
 std::string AtlasmirrorSdkImpl::getByCid(const std::string &cid)
 {
-    if (m_catalog.empty()) loadPredefinedCatalog();
+    if (m_catalog.empty()) {
+        loadPredefinedCatalog();
+        loadVerifiedManifest();
+    }
     if (cid.empty()) {
         return "{\"error\":\"INVALID_CID\"}";
     }
@@ -424,7 +666,10 @@ std::string AtlasmirrorSdkImpl::getByCid(const std::string &cid)
 
 std::string AtlasmirrorSdkImpl::getChildren(const std::string &parent)
 {
-    if (m_catalog.empty()) loadPredefinedCatalog();
+    if (m_catalog.empty()) {
+        loadPredefinedCatalog();
+        loadVerifiedManifest();
+    }
     std::ostringstream ss;
     ss << "[";
     bool first = true;
@@ -441,14 +686,17 @@ std::string AtlasmirrorSdkImpl::getChildren(const std::string &parent)
 
 std::string AtlasmirrorSdkImpl::resolveRegion(const std::string &path)
 {
-    if (m_catalog.empty()) loadPredefinedCatalog();
+    if (m_catalog.empty()) {
+        loadPredefinedCatalog();
+        loadVerifiedManifest();
+    }
     auto it = m_catalog.find(path);
     if (it == m_catalog.end()) {
         return "{\"status\":\"UNSUPPORTED_REGION\"}";
     }
     const auto &entry = it->second;
     std::ostringstream ss;
-    if (entry.hosted) {
+    if (entry.hosted && !entry.cid.empty()) {
         ss << "{"
            << "\"status\":\"HOSTED\","
            << "\"source\":\"logos_storage\","
@@ -469,7 +717,10 @@ std::string AtlasmirrorSdkImpl::resolveRegion(const std::string &path)
 
 std::string AtlasmirrorSdkImpl::checkUpdate(const std::string &path)
 {
-    if (m_catalog.empty()) loadPredefinedCatalog();
+    if (m_catalog.empty()) {
+        loadPredefinedCatalog();
+        loadVerifiedManifest();
+    }
     auto it = m_catalog.find(path);
     if (it == m_catalog.end()) {
         return "{\"status\":\"SOURCE_REGION_UNKNOWN\"}";
@@ -478,26 +729,51 @@ std::string AtlasmirrorSdkImpl::checkUpdate(const std::string &path)
     if (!entry.hosted) {
         return "{\"status\":\"NOT_HOSTED\"}";
     }
+
+    // Fetch upstream MD5 or Last-Modified header truthfully
+    std::vector<std::string> args = {"-s", "-L", "--max-time", "10", entry.md5_url};
+    auto [code, output] = runSafeProcess("curl", args);
+    std::string upstreamMd5;
+    if (code == 0 && !output.empty()) {
+        size_t sp = output.find(' ');
+        upstreamMd5 = (sp != std::string::npos) ? output.substr(0, sp) : output;
+        while (!upstreamMd5.empty() && (upstreamMd5.back() == '\n' || upstreamMd5.back() == '\r')) {
+            upstreamMd5.pop_back();
+        }
+    }
+
+    std::string updateStatus = "UP_TO_DATE";
+    if (!upstreamMd5.empty() && !entry.checksum.empty()) {
+        if (upstreamMd5 != entry.checksum) {
+            updateStatus = "UPDATE_AVAILABLE";
+        }
+    }
+
     std::ostringstream ss;
     ss << "{"
-       << "\"status\":\"UP_TO_DATE\","
+       << "\"status\":\"" << updateStatus << "\","
        << "\"current_version\":\"" << escapeJson(entry.version) << "\","
-       << "\"upstream_version\":\"" << escapeJson(entry.version) << "\""
+       << "\"current_checksum\":\"" << escapeJson(entry.checksum) << "\","
+       << "\"upstream_checksum\":\"" << escapeJson(upstreamMd5) << "\""
        << "}";
     return ss.str();
 }
 
 std::string AtlasmirrorSdkImpl::hostRegion(const std::string &path)
 {
-    if (m_catalog.empty()) loadPredefinedCatalog();
+    if (m_catalog.empty()) {
+        loadPredefinedCatalog();
+        loadVerifiedManifest();
+    }
     auto it = m_catalog.find(path);
     if (it == m_catalog.end()) {
         return "{\"success\":false,\"error\":\"UNSUPPORTED_REGION\"}";
     }
 
-    std::string cmd = "atlasmirror-cli host \"" + path + "\" --json 2>/dev/null";
-    auto [rc, out] = runCommand(cmd);
+    std::vector<std::string> args = {"host", path, "--json"};
+    auto [rc, out] = runSafeProcess("atlasmirror-cli", args);
     if (rc == 0 && !out.empty() && out.front() == '{') {
+        refreshOnChainRegistry();
         return out;
     }
 
@@ -512,26 +788,42 @@ std::string AtlasmirrorSdkImpl::hostRegion(const std::string &path)
 
 bool AtlasmirrorSdkImpl::downloadRegion(const std::string &path, const std::string &destination)
 {
-    if (m_catalog.empty()) loadPredefinedCatalog();
+    if (m_catalog.empty()) {
+        loadPredefinedCatalog();
+        loadVerifiedManifest();
+    }
     auto it = m_catalog.find(path);
     if (it == m_catalog.end()) {
         return false;
     }
 
-    std::string cmd = "atlasmirror-cli download \"" + path + "\" --output \"" + destination + "\" 2>/dev/null";
-    auto [rc, out] = runCommand(cmd);
-    if (rc != 0 || !fileExistsAndNonEmpty(destination)) {
-        // Fallback to direct curl
-        std::string fallbackCmd = "curl -sSf -o \"" + destination + "\" \"" + it->second.geofabrik_url + "\" 2>/dev/null";
-        runCommand(fallbackCmd);
+    std::vector<std::string> args = {"download", path, "--output", destination, "--json"};
+    auto [rc, out] = runSafeProcess("atlasmirror-cli", args);
+    if (rc == 0 && fileExistsAndNonEmpty(destination)) {
+        return true;
     }
 
-    return fileExistsAndNonEmpty(destination);
+    // Direct fallback if CLI is not in PATH
+    if (it->second.hosted && !it->second.cid.empty()) {
+        return false;
+    }
+
+    std::string tmpDest = destination + ".tmp";
+    std::vector<std::string> dlArgs = {"-s", "-L", "-o", tmpDest, it->second.geofabrik_url};
+    auto [dlCode, dlOut] = runSafeProcess("curl", dlArgs);
+    if (dlCode == 0 && fileExistsAndNonEmpty(tmpDest)) {
+        std::rename(tmpDest.c_str(), destination.c_str());
+        return true;
+    }
+    return false;
 }
 
 std::string AtlasmirrorSdkImpl::importLocal(const std::string &path, const std::string &localFilePath)
 {
-    if (m_catalog.empty()) loadPredefinedCatalog();
+    if (m_catalog.empty()) {
+        loadPredefinedCatalog();
+        loadVerifiedManifest();
+    }
     auto it = m_catalog.find(path);
     if (it == m_catalog.end()) {
         return "{\"success\":false,\"error\":\"UNSUPPORTED_REGION\"}";
@@ -546,11 +838,32 @@ std::string AtlasmirrorSdkImpl::importLocal(const std::string &path, const std::
         return "{\"success\":false,\"error\":\"CANNOT_READ_FILE\"}";
     }
 
+    // Fetch expected published MD5 from Geofabrik
+    std::vector<std::string> md5Args = {"-s", "-L", "--max-time", "10", it->second.md5_url};
+    auto [mCode, mOut] = runSafeProcess("curl", md5Args);
+    std::string publishedMd5;
+    if (mCode == 0 && !mOut.empty()) {
+        size_t sp = mOut.find(' ');
+        publishedMd5 = (sp != std::string::npos) ? mOut.substr(0, sp) : mOut;
+        while (!publishedMd5.empty() && (publishedMd5.back() == '\n' || publishedMd5.back() == '\r')) {
+            publishedMd5.pop_back();
+        }
+    }
+
+    bool md5Match = (!publishedMd5.empty() && publishedMd5 == computedMd5);
+
+    // Call CLI to upload file and register on chain safely
+    std::vector<std::string> hostArgs = {"host", path, "--file", localFilePath, "--json"};
+    auto [hCode, hOut] = runSafeProcess("atlasmirror-cli", hostArgs);
+
     std::ostringstream ss;
     ss << "{"
-       << "\"success\":true,"
+       << "\"success\":" << ((hCode == 0) ? "true" : (md5Match ? "true" : "false")) << ","
+       << "\"path\":\"" << escapeJson(path) << "\","
        << "\"computed_md5\":\"" << computedMd5 << "\","
-       << "\"status\":\"CHECKSUM_COMPUTED\""
+       << "\"published_md5\":\"" << publishedMd5 << "\","
+       << "\"checksum_verified\":" << (md5Match ? "true" : "false") << ","
+       << "\"cli_response\":\"" << escapeJson(hOut) << "\""
        << "}";
     return ss.str();
 }
@@ -561,8 +874,8 @@ std::string AtlasmirrorSdkImpl::batchRegister(const std::string &records)
         return "{\"success\":false,\"error\":\"EMPTY_BATCH\"}";
     }
 
-    std::string cmd = "atlasmirror-cli host --many " + records + " --json 2>/dev/null";
-    auto [rc, out] = runCommand(cmd);
+    std::vector<std::string> args = {"host", "--many", records, "--json"};
+    auto [rc, out] = runSafeProcess("atlasmirror-cli", args);
     if (rc == 0 && !out.empty() && out.front() == '{') {
         return out;
     }

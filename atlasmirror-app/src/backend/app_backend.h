@@ -4,6 +4,7 @@
 #include <QtCore/QString>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
+#include <QtCore/QVariantList>
 
 class AppBackend : public QObject
 {
@@ -12,6 +13,10 @@ class AppBackend : public QObject
     Q_PROPERTY(QString statusFilter READ statusFilter WRITE setStatusFilter NOTIFY statusFilterChanged)
     Q_PROPERTY(int maxConcurrency READ maxConcurrency WRITE setMaxConcurrency NOTIFY maxConcurrencyChanged)
     Q_PROPERTY(bool telemetryEnabled READ telemetryEnabled WRITE setTelemetryEnabled NOTIFY telemetryEnabledChanged)
+    Q_PROPERTY(QJsonArray regions READ regions NOTIFY regionsUpdated)
+    Q_PROPERTY(QJsonArray queue READ queue NOTIFY queueUpdated)
+    Q_PROPERTY(QJsonArray downloads READ downloads NOTIFY downloadsUpdated)
+    Q_PROPERTY(QJsonObject lastOperationResult READ lastOperationResult NOTIFY operationResultChanged)
 
 public:
     explicit AppBackend(QObject *parent = nullptr);
@@ -29,30 +34,51 @@ public:
     bool telemetryEnabled() const { return m_telemetryEnabled; }
     void setTelemetryEnabled(bool val);
 
+    QJsonArray regions() const { return m_regions; }
+    QJsonArray queue() const { return m_queue; }
+    QJsonArray downloads() const { return m_downloads; }
+    QJsonObject lastOperationResult() const { return m_lastResult; }
+
     Q_INVOKABLE QJsonArray getFilteredRegions();
     Q_INVOKABLE QJsonArray getQueueItems();
     Q_INVOKABLE QJsonArray getDownloadItems();
 
-    Q_INVOKABLE void startHosting(const QString &regionPath);
+    // Real Operations (Replacements for console.log)
+    Q_INVOKABLE void refreshIndex();
+    Q_INVOKABLE void hostRegion(const QString &regionPath);
     Q_INVOKABLE void startBulkHost(const QJsonArray &regionPaths);
     Q_INVOKABLE void cancelHost(const QString &regionPath);
     Q_INVOKABLE void retryHost(const QString &regionPath);
+    Q_INVOKABLE void clearCompletedQueue();
+    Q_INVOKABLE void retryAllFailed();
+
     Q_INVOKABLE void startDownload(const QString &regionPath);
+    Q_INVOKABLE void copyToClipboard(const QString &text);
+    Q_INVOKABLE QString queryRegistry(const QString &queryType, const QString &queryValue);
+    Q_INVOKABLE QString importLocal(const QString &regionPath, const QString &localFilePath);
+    Q_INVOKABLE QString updateCheck(const QString &regionPath);
 
 signals:
     void searchFilterChanged();
     void statusFilterChanged();
     void maxConcurrencyChanged();
     void telemetryEnabledChanged();
+    void regionsUpdated();
     void queueUpdated();
     void downloadsUpdated();
+    void operationResultChanged();
 
 private:
+    void loadPredefinedCatalog();
+    void applyOnChainData(const QJsonArray &records);
+
     QString m_searchFilter;
     QString m_statusFilter{"ALL"};
     int m_maxConcurrency{2};
     bool m_telemetryEnabled{false};
 
+    QJsonArray m_regions;
     QJsonArray m_queue;
     QJsonArray m_downloads;
+    QJsonObject m_lastResult;
 };

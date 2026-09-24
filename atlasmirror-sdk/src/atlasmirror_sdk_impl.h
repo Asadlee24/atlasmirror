@@ -14,6 +14,9 @@
 class AtlasmirrorSdkImpl : public LogosModuleContext
 {
 public:
+    AtlasmirrorSdkImpl() = default;
+    virtual ~AtlasmirrorSdkImpl() = default;
+
     /**
      * @brief Discovers all regions in the predefined non-overlapping set.
      * @return JSON array string of region objects with path, name, level, parent, and status.
@@ -77,6 +80,16 @@ public:
      */
     std::string batchRegister(const std::string &records);
 
+    /**
+     * @brief Refreshes live on-chain registry state from LEZ sequencer.
+     */
+    void refreshOnChainRegistry();
+
+    /**
+     * @brief Queries live on-chain registry directly.
+     */
+    std::string queryRegistry(const std::string &pathOrCid);
+
 protected:
     void onContextReady() override;
 
@@ -92,11 +105,14 @@ private:
         std::string cid;
         std::string checksum;
         std::string version;
+        uint64_t timestamp{0};
     };
 
     void loadPredefinedCatalog();
+    void loadVerifiedManifest();
     std::string serializeRecord(const RegionRecord &r) const;
 
     std::map<std::string, RegionRecord> m_catalog;
     std::map<std::string, RegionRecord> m_hostedRecords;
+    bool m_registryFetched{false};
 };

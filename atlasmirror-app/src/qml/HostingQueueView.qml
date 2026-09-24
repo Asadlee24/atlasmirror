@@ -7,12 +7,9 @@ Item {
 
     ListModel {
         id: queueModel
-        ListElement { region: "us/texas"; state: "DOWNLOADING"; progress: 0.45; error: "" }
-        ListElement { region: "china/guangdong"; state: "VERIFYING"; progress: 0.80; error: "" }
-        ListElement { region: "europe/poland"; state: "UPLOADING_STORAGE"; progress: 0.60; error: "" }
-        ListElement { region: "africa/egypt"; state: "REGISTERING"; progress: 0.95; error: "" }
-        ListElement { region: "asia/iran"; state: "FAILED"; progress: 0.20; error: "CHECKSUM_MISMATCH: corrupt download" }
-        ListElement { region: "south-america/brazil"; state: "COMPLETE"; progress: 1.0; error: "" }
+        ListElement { region: "africa/ethiopia"; state: "COMPLETE"; progress: 1.0; error: "" }
+        ListElement { region: "asia/pakistan"; state: "COMPLETE"; progress: 1.0; error: "" }
+        ListElement { region: "china/henan"; state: "COMPLETE"; progress: 1.0; error: "" }
     }
 
     ColumnLayout {
@@ -35,12 +32,25 @@ Item {
 
             Button {
                 text: "Clear Completed"
-                onClicked: console.log("Cleared finished jobs")
+                onClicked: {
+                    if (typeof backend !== "undefined" && backend.clearCompletedQueue) {
+                        backend.clearCompletedQueue()
+                    }
+                    for (var i = queueModel.count - 1; i >= 0; --i) {
+                        if (queueModel.get(i).state === "COMPLETE") {
+                            queueModel.remove(i)
+                        }
+                    }
+                }
             }
 
             Button {
-                text: "Retry All Failed"
-                onClicked: console.log("Retrying failed jobs")
+                text: "Retry Failed"
+                onClicked: {
+                    if (typeof backend !== "undefined" && backend.retryAllFailed) {
+                        backend.retryAllFailed()
+                    }
+                }
             }
         }
 
@@ -57,7 +67,7 @@ Item {
                 spacing: 16
 
                 Text { text: "Pipeline States:"; color: "#888888"; font.bold: true }
-                Text { text: "QUEUED → FETCHING_METADATA → DOWNLOADING → VERIFYING → UPLOADING_STORAGE → REGISTERING → CONFIRMING → COMPLETE"; color: "#AAAAAA"; font.family: "monospace"; font.pixelSize: 11 }
+                Text { text: "QUEUED → DOWNLOADING → VERIFYING MD5 → UPLOADING STORAGE → ON-CHAIN REGISTER → COMPLETE"; color: "#AAAAAA"; font.family: "monospace"; font.pixelSize: 11 }
             }
         }
 
@@ -82,7 +92,7 @@ Item {
                     spacing: 16
 
                     ColumnLayout {
-                        Layout.preferredWidth: 200
+                        Layout.preferredWidth: 220
                         spacing: 4
 
                         Text {
@@ -93,7 +103,7 @@ Item {
                         }
                         Text {
                             text: model.error !== "" ? model.error : "Phase: " + model.state
-                            color: model.state === "FAILED" ? "#FF5555" : "#888888"
+                            color: model.state === "FAILED" ? "#FF5555" : (model.state === "COMPLETE" ? "#4CAF50" : "#888888")
                             font.pixelSize: 11
                             elide: Text.ElideRight
                         }
@@ -111,25 +121,22 @@ Item {
                         Layout.preferredWidth: 48
                     }
 
-                    Rectangle {
-                        Layout.preferredWidth: 140
-                        Layout.preferredHeight: 28
-                        color: model.state === "COMPLETE" ? "#1B5E20" : (model.state === "FAILED" ? "#B71C1C" : "#0D47A1")
-                        radius: 2
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: model.state
-                            color: "#FFFFFF"
-                            font.bold: true
-                            font.pixelSize: 11
-                        }
-                    }
-
                     Button {
                         text: model.state === "FAILED" ? "Retry" : "Cancel"
                         enabled: model.state !== "COMPLETE"
-                        onClicked: console.log("Action on job:", model.region)
+                        Layout.preferredWidth: 80
+                        onClicked: {
+                            if (model.state === "FAILED") {
+                                if (typeof backend !== "undefined" && backend.retryHost) {
+                                    backend.retryHost(model.region)
+                                }
+                            } else {
+                                if (typeof backend !== "undefined" && backend.cancelHost) {
+                                    backend.cancelHost(model.region)
+                                }
+                                model.state = "CANCELLED"
+                            }
+                        }
                     }
                 }
             }

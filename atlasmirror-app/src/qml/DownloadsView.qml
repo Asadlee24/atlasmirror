@@ -7,9 +7,9 @@ Item {
 
     ListModel {
         id: downloadsModel
-        ListElement { region: "asia/pakistan"; source: "Logos Storage (CID: bafybeic7vj...)"; size: "118 MB"; progress: 1.0; status: "VERIFIED" }
-        ListElement { region: "europe/germany"; source: "Logos Storage (CID: bafybeih4nm...)"; size: "3.8 GB"; progress: 0.65; status: "DOWNLOADING" }
-        ListElement { region: "us/texas"; source: "Geofabrik (Central Fallback)"; size: "1.4 GB"; progress: 0.30; status: "DOWNLOADING" }
+        ListElement { region: "asia/pakistan"; source: "Logos Storage (CID: zDvZRwzm9WQQ...)"; size: "148 MB"; progress: 1.0; status: "VERIFIED" }
+        ListElement { region: "china/henan"; source: "Logos Storage (CID: zDvZRwzm4i6c...)"; size: "46 MB"; progress: 1.0; status: "VERIFIED" }
+        ListElement { region: "africa/ethiopia"; source: "Logos Storage (CID: zDvZRwzm7o1J...)"; size: "133 MB"; progress: 1.0; status: "VERIFIED" }
     }
 
     ColumnLayout {
@@ -32,7 +32,11 @@ Item {
 
             Button {
                 text: "Open Download Directory"
-                onClicked: console.log("Opening downloads directory...")
+                onClicked: {
+                    if (typeof backend !== "undefined" && backend.openDownloadDir) {
+                        backend.openDownloadDir()
+                    }
+                }
             }
         }
 
@@ -56,7 +60,7 @@ Item {
                     spacing: 16
 
                     ColumnLayout {
-                        Layout.preferredWidth: 220
+                        Layout.preferredWidth: 260
                         spacing: 2
 
                         Text {
@@ -67,7 +71,7 @@ Item {
                         }
                         Text {
                             text: model.source
-                            color: model.source.indexOf("Central Fallback") !== -1 ? "#FF9800" : "#888888"
+                            color: model.source.indexOf("Central Fallback") !== -1 ? "#FF9800" : "#81D4FA"
                             font.pixelSize: 11
                             elide: Text.ElideRight
                         }
@@ -101,9 +105,9 @@ Item {
                         Text {
                             anchors.centerIn: parent
                             text: model.status
-                            color: "#FFFFFF"
+                            color: model.status === "VERIFIED" ? "#81C784" : "#AAAAAA"
                             font.bold: true
-                            font.pixelSize: 10
+                            font.pixelSize: 11
                         }
                     }
                 }
