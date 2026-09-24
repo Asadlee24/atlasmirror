@@ -46,6 +46,14 @@ tar -xf "${TMP_SETUP}/storage_module.lgx" -C "${MODULES_DIR}/storage_module"
 cp "${MODULES_DIR}/storage_module/variants/linux-amd64/"* "${MODULES_DIR}/storage_module/"
 printf "linux-amd64" > "${MODULES_DIR}/storage_module/variant"
 
+# 4. Set up preconfigured CI wallet
+WALLET_HOME="${HOME}/.lee/wallet"
+mkdir -p "${WALLET_HOME}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "${SCRIPT_DIR}/ci_wallet.tar.gz" ]; then
+    tar -xzf "${SCRIPT_DIR}/ci_wallet.tar.gz" -C "${WALLET_HOME}"
+fi
+
 echo "========================================================"
 echo " Infrastructure setup complete:"
 echo "   logoscore:         $(which logoscore)"
