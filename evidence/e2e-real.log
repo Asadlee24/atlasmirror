@@ -33,3 +33,87 @@ Retrieved SHA256: 0a3909c05ff412119b5adae82fc9174952088f6c4ba7e4ae235a722e93b46c
   storage_module:  PRESENT
   spel CLI:        PRESENT
   OSM Program ID:  bcdc104271bd670da3b1afddcb758286c619de87365d6488c9c2f563947f8b4f
+=== [Step 1] Fetching live published MD5 from Geofabrik ===
+Published MD5: 033f7c5309095fedb084484ff4ba5ef1
+=== [Step 2] Downloading real PBF snapshot ===
+Downloaded 49243242 bytes.
+=== [Step 3] Stream-computing local MD5 and asserting equality ===
+Computed MD5:    033f7c5309095fedb084484ff4ba5ef1
+Original SHA256: 618fc37bdf99a130aa2764e0946cc69136fda3d63a446f2728fc49c2909cf8db
+[PASS] Checksum equality verified.
+=== [Step 4] Starting logoscore daemon and storage_module ===
+{"dependencies_loaded":[],"module":"storage_module","status":"ok"}
+{"method":"init","module":"storage_module","result":true,"status":"ok"}
+{"method":"start","module":"storage_module","result":true,"status":"ok"}
+=== [Step 5] Streaming upload to Logos Storage via uploadUrl ===
+{"method":"uploadUrl","module":"storage_module","result":{"error":null,"success":true,"value":"0"},"status":"ok"}
+Waiting for storageUploadDone event...
+[FAIL] storageUploadDone did not return a valid CID
+=== [Step 1] Fetching live published MD5 from Geofabrik ===
+Published MD5: 033f7c5309095fedb084484ff4ba5ef1
+=== [Step 2] Downloading real PBF snapshot ===
+Downloaded 49243242 bytes.
+=== [Step 3] Stream-computing local MD5 and asserting equality ===
+Computed MD5:    033f7c5309095fedb084484ff4ba5ef1
+Original SHA256: 618fc37bdf99a130aa2764e0946cc69136fda3d63a446f2728fc49c2909cf8db
+[PASS] Checksum equality verified.
+=== [Step 4] Starting logoscore daemon and storage_module ===
+{"dependencies_loaded":[],"module":"storage_module","status":"ok"}
+{"method":"init","module":"storage_module","result":false,"status":"ok"}
+{"method":"start","module":"storage_module","result":false,"status":"ok"}
+=== [Step 5] Streaming upload to Logos Storage via uploadUrl ===
+{"method":"uploadUrl","module":"storage_module","result":{"error":"Invalid arguments.","success":false,"value":null},"status":"ok"}
+Waiting for storageUploadDone event...
+=== [Step 1] Fetching live published MD5 from Geofabrik ===
+Published MD5: 033f7c5309095fedb084484ff4ba5ef1
+=== [Step 2] Downloading real PBF snapshot ===
+Downloaded 49243242 bytes.
+=== [Step 3] Stream-computing local MD5 and asserting equality ===
+Computed MD5:    033f7c5309095fedb084484ff4ba5ef1
+Original SHA256: 618fc37bdf99a130aa2764e0946cc69136fda3d63a446f2728fc49c2909cf8db
+[PASS] Checksum equality verified.
+=== [Step 4] Starting logoscore daemon and storage_module ===
+{"dependencies_loaded":[],"module":"storage_module","status":"ok"}
+{"method":"init","module":"storage_module","result":true,"status":"ok"}
+{"method":"start","module":"storage_module","result":true,"status":"ok"}
+=== [Step 5] Streaming upload to Logos Storage via uploadUrl ===
+{"method":"uploadUrl","module":"storage_module","result":{"error":null,"success":true,"value":"0"},"status":"ok"}
+Waiting for storageUploadDone event...
+Real CID from storage_module: zDvZRwzkxFMbvk26mAAxWJJ5iBwbwwwp5PfEir9uh5u6fqz7vyrD
+=== [Step 6] Submitting on-chain registration to LEZ via spel CLI ===
+📋 Instruction: register_region
+
+=== Dry Run ===
+Program ID: bcdc104271bd670da3b1afddcb758286c619de87365d6488c9c2f563947f8b4f
+Instruction: register_region
+
+Accounts:
+  PDA state → 5KPnAnnPHKQDyBu66p3oWjzwkCtL4nEnE17RGp3Cry3q
+    seeds: [program_id, "state"]
+  signer → 0xac52def9a41094b8db385c91cbdcfb59d6b2261e6ccafbf194c87db95de3bdf7
+
+Arguments:
+  --region "china/henan"
+  --parent Some("china")
+  --level Subregion
+  --cid "zDvZRwzkxFMbvk26mAAxWJJ5iBwbwwwp5PfEir9uh5u6fqz7vyrD"
+  --source-url "https://download.geofabrik.de/asia/china/henan-latest.osm.pbf"
+  --checksum "033f7c5309095fedb084484ff4ba5ef1"
+  --version "2026-09-24"
+  --hosted true
+  --timestamp 1790240842
+
+Instruction data: 0x010000000b0000006368696e612f68656e616e0001000000050000006368696e6100000001000000340000007a44765a52777a6b78464d62766b32366d414178574a4a35694277627777777035506645697239756835753666717a37767972443d00000068747470733a2f2f646f776e6c6f61642e67656f66616272696b2e64652f617369612f6368696e612f68656e616e2d6c61746573742e6f736d2e7062660000002000000030333366376335333039303935666564623038343438346666346261356566310a000000323032362d30392d32340000010000004ae8b46a00000000
+================
+Dry run complete — not submitted.
+=== [Step 7] Querying on-chain state via spel inspect ===
+{
+  "last_updated": "1790240842",
+  "total_regions": "1"
+}
+=== [Step 8] Downloading snapshot by CID from Logos Storage ===
+{"method":"downloadToUrl","module":"storage_module","result":{"error":null,"success":true,"value":"zDvZRwzkxFMbvk26mAAxWJJ5iBwbwwwp5PfEir9uh5u6fqz7vyrD"},"status":"ok"}
+Waiting for storageDownloadDone event...
+=== [Step 9] Verifying byte-for-byte SHA256 equality ===
+Retrieved SHA256: 618fc37bdf99a130aa2764e0946cc69136fda3d63a446f2728fc49c2909cf8db
+========================================================

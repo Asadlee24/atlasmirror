@@ -42,5 +42,4 @@ jobs:
       - name: Run Real Standalone E2E Test
         run: |
           chmod +x scripts/*.sh
-          chmod +x scripts/standalone/*
           bash scripts/run_e2e_real.sh

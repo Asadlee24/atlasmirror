@@ -74,7 +74,10 @@
           "name": "state",
           "pda": {
             "seeds": [
-              "literal:state"
+              {
+                "kind": "const",
+                "value": "state"
+              }
             ]
           }
         },
@@ -95,7 +98,9 @@
         155,
         237
       ],
-      "execution": "public",
+      "execution": {
+        "public": true
+      },
       "name": "initialize"
     },
     {
@@ -106,29 +111,10 @@
           "name": "state",
           "pda": {
             "seeds": [
-              "literal:state"
-            ]
-          }
-        },
-        {
-          "is_mut": true,
-          "is_signer": false,
-          "name": "region_account",
-          "pda": {
-            "seeds": [
-              "literal:region",
-              "arg:region"
-            ]
-          }
-        },
-        {
-          "is_mut": true,
-          "is_signer": false,
-          "name": "cid_account",
-          "pda": {
-            "seeds": [
-              "literal:cid",
-              "arg:cid"
+              {
+                "kind": "const",
+                "value": "state"
+              }
             ]
           }
         },
@@ -190,7 +176,9 @@
         241,
         117
       ],
-      "execution": "public",
+      "execution": {
+        "public": true
+      },
       "name": "register_region"
     },
     {
@@ -201,7 +189,10 @@
           "name": "state",
           "pda": {
             "seeds": [
-              "literal:state"
+              {
+                "kind": "const",
+                "value": "state"
+              }
             ]
           }
         },
@@ -231,73 +222,71 @@
         102,
         194
       ],
-      "execution": "public",
+      "execution": {
+        "public": true
+      },
       "name": "batch_register"
     }
   ],
   "name": "osm_registry",
   "types": [
     {
+      "kind": "enum",
       "name": "RegionLevel",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "Country"
-          },
-          {
-            "name": "Subregion"
-          }
-        ]
-      }
+      "variants": [
+        {
+          "name": "Country"
+        },
+        {
+          "name": "Subregion"
+        }
+      ]
     },
     {
-      "name": "RegisterRegionArgs",
-      "type": {
-        "fields": [
-          {
-            "name": "region",
-            "type": "string"
-          },
-          {
-            "name": "parent",
-            "type": {
-              "option": "string"
-            }
-          },
-          {
-            "name": "level",
-            "type": {
-              "defined": "RegionLevel"
-            }
-          },
-          {
-            "name": "cid",
-            "type": "string"
-          },
-          {
-            "name": "source_url",
-            "type": "string"
-          },
-          {
-            "name": "checksum",
-            "type": "string"
-          },
-          {
-            "name": "version",
-            "type": "string"
-          },
-          {
-            "name": "hosted",
-            "type": "bool"
-          },
-          {
-            "name": "timestamp",
-            "type": "u64"
+      "fields": [
+        {
+          "name": "region",
+          "type": "string"
+        },
+        {
+          "name": "parent",
+          "type": {
+            "option": "string"
           }
-        ],
-        "kind": "struct"
-      }
+        },
+        {
+          "name": "level",
+          "type": {
+            "defined": "RegionLevel"
+          }
+        },
+        {
+          "name": "cid",
+          "type": "string"
+        },
+        {
+          "name": "source_url",
+          "type": "string"
+        },
+        {
+          "name": "checksum",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        },
+        {
+          "name": "hosted",
+          "type": "bool"
+        },
+        {
+          "name": "timestamp",
+          "type": "u64"
+        }
+      ],
+      "kind": "struct",
+      "name": "RegisterRegionArgs"
     }
   ],
   "version": "0.1.0"

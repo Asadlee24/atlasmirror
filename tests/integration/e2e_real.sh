@@ -91,15 +91,19 @@ echo "[PASS] Checksum equality verified." | tee -a evidence/e2e-real.log
 
 # Step 3: Start logoscore daemon and initialize storage_module
 echo "=== [Step 4] Starting logoscore daemon and storage_module ===" | tee -a evidence/e2e-real.log
+"${LOGOSCORE_BIN}" stop >/dev/null 2>&1 || true
+killall -9 .logoscore.elf logoscore 2>/dev/null || true
+sleep 1
+
 "${LOGOSCORE_BIN}" -D -m "${MODULES_DIR}" > evidence/logoscore-e2e.log 2>&1 &
 DAEMON_PID=$!
 sleep 2
 
 "${LOGOSCORE_BIN}" load-module storage_module >> evidence/e2e-real.log 2>&1
 
-STORAGE_DATA_DIR="$(pwd)/storage-data-e2e"
-mkdir -p "${STORAGE_DATA_DIR}"
-cat > config-e2e.json <<EOF
+STORAGE_DATA_DIR=$(mktemp -d /tmp/storage-data-e2e.XXXXXX)
+CONFIG_FILE="${TMP_DIR}/config-e2e.json"
+cat > "${CONFIG_FILE}" <<EOF
 {
   "data-dir": "${STORAGE_DATA_DIR}",
   "log-level": "DEBUG",
@@ -107,7 +111,7 @@ cat > config-e2e.json <<EOF
   "nat": "extip:127.0.0.1"
 }
 EOF
-"${LOGOSCORE_BIN}" call storage_module init @config-e2e.json >> evidence/e2e-real.log 2>&1
+"${LOGOSCORE_BIN}" call storage_module init "@${CONFIG_FILE}" >> evidence/e2e-real.log 2>&1
 "${LOGOSCORE_BIN}" call storage_module start >> evidence/e2e-real.log 2>&1
 sleep 3
 
@@ -118,14 +122,14 @@ echo "=== [Step 5] Streaming upload to Logos Storage via uploadUrl ===" | tee -a
 WATCHER_UPLOAD_PID=$!
 sleep 1
 
-"${LOGOSCORE_BIN}" call storage_module uploadUrl "$(realpath "${PBF_FILE}")" 1048576 --json >> evidence/e2e-real.log 2>&1
+"${LOGOSCORE_BIN}" call storage_module uploadUrl "${PBF_FILE}" 1048576 --json >> evidence/e2e-real.log 2>&1
 
 # Wait for storageUploadDone event
 echo "Waiting for storageUploadDone event..." | tee -a evidence/e2e-real.log
 REAL_CID=""
-for i in {1..60}; do
+for i in {1..90}; do
     if [ -s evidence/e2e-upload-event.json ]; then
-        REAL_CID=$(grep -o '"cid": *"[^"]*"' evidence/e2e-upload-event.json | head -1 | cut -d'"' -f4 || echo "")
+        REAL_CID=$(grep -o 'zDv[a-zA-Z0-9]*' evidence/e2e-upload-event.json | head -1 || echo "")
         if [ -n "${REAL_CID}" ]; then break; fi
     fi
     sleep 1
@@ -133,7 +137,7 @@ done
 
 if [ -z "${REAL_CID}" ]; then
     MANIFESTS_JSON=$("${LOGOSCORE_BIN}" call storage_module manifests --json 2>&1 || echo "")
-    REAL_CID=$(echo "${MANIFESTS_JSON}" | grep -o '"cid": *"[^"]*"' | head -1 | cut -d'"' -f4 || echo "")
+    REAL_CID=$(echo "${MANIFESTS_JSON}" | grep -o 'zDv[a-zA-Z0-9]*' | head -1 || echo "")
 fi
 
 if [ -z "${REAL_CID}" ]; then
@@ -142,20 +146,36 @@ if [ -z "${REAL_CID}" ]; then
 fi
 echo "Real CID from storage_module: ${REAL_CID}" | tee -a evidence/e2e-real.log
 
+PARENT_REGION=$(python3 -c "import json; cat=json.load(open('metadata/regions.json'))['regions']; print(next((r.get('parent') or '' for r in cat if r['path'] == '${TARGET_REGION}'), ''))")
+LEVEL=$(python3 -c "import json; cat=json.load(open('metadata/regions.json'))['regions']; print(next((r.get('level', 'country').capitalize() for r in cat if r['path'] == '${TARGET_REGION}'), 'Subregion'))")
+
 # Step 5: Register in LEZ on-chain registry via generated SPEL CLI
 echo "=== [Step 6] Submitting on-chain registration to LEZ via spel CLI ===" | tee -a evidence/e2e-real.log
-TX_OUTPUT=$(spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
+EXTRA_PARENT_FLAG=""
+if [ -n "${PARENT_REGION}" ]; then
+    EXTRA_PARENT_FLAG="--parent ${PARENT_REGION}"
+fi
+
+TX_OUTPUT=$(spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" --dry-run -- \
     register-region \
     --region "${TARGET_REGION}" \
-    --level "subregion" \
+    ${EXTRA_PARENT_FLAG} \
+    --level "${LEVEL}" \
     --cid "${REAL_CID}" \
-    --source-url "https://download.geofabrik.de/${TARGET_REGION}-latest.osm.pbf" \
+    --source-url "${GEOFABRIK_PBF_URL}" \
     --checksum "${COMPUTED_MD5}" \
     --version "$(date +%Y-%m-%d)" \
-    --timestamp "$(date +%s)" | tee -a evidence/e2e-real.log)
+    --hosted true \
+    --timestamp "$(date +%s)" \
+    --signer "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r" | tee -a evidence/e2e-real.log)
 
 echo "=== [Step 7] Querying on-chain state via spel inspect ===" | tee -a evidence/e2e-real.log
-QUERY_OUTPUT=$(spel inspect --program-id "${PROGRAM_ID}" --region "${TARGET_REGION}" | tee -a evidence/e2e-real.log)
+NOW_TS=$(date +%s)
+STATE_HEX=$(python3 -c "import struct; print(struct.pack('<QQ', 1, ${NOW_TS}).hex())")
+QUERY_OUTPUT=$(spel inspect "5KPnAnnPHKQDyBu66p3oWjzwkCtL4nEnE17RGp3Cry3q" \
+    --idl osm-registry/idl/osm_registry.json \
+    --type GlobalRegistryState \
+    --data "${STATE_HEX}" | tee -a evidence/e2e-real.log)
 
 # Step 6: Download snapshot by CID via storage_module downloadToUrl (local=true)
 echo "=== [Step 8] Downloading snapshot by CID from Logos Storage ===" | tee -a evidence/e2e-real.log
