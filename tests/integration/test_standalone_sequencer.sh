@@ -89,7 +89,12 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
             "allowed_routes": [],
             "expected_block_signing_pubkeys": [],
             "min_committee_size": 0,
-            "minimum_sequencer_stake": 1000000
+            "minimum_sequencer_stake": 1000000,
+            "posting_timeframe": "10s",
+            "challenge_timeframe": "10s",
+            "finalization_timeframe": "10s",
+            "max_blob_size": "1 MiB",
+            "max_blobs_per_block": 10
         }
     },
     "genesis": [
