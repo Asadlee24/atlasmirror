@@ -1,0 +1,45 @@
+========================================================
+ AtlasMirror Standalone Sequencer Verification
+========================================================
+Found sequencer_service binary at: /usr/local/bin/sequencer_service
+=== Step 1: Querying sequencer_service version & help ===
+sequencer_service 0.1.0
+Usage: sequencer_service [OPTIONS] <config>
+
+Arguments:
+  <config>  
+
+Options:
+  -p, --port <PORT>
+          [default: 3040]
+      --listen-address <LISTEN_ADDRESS>
+          Interface the RPC server binds to. The RPC has no caller auth — bind loopback unless the port is firewalled [default: 0.0.0.0]
+      --home <HOME>
+          Override the config's home directory (`RocksDB` + bedrock signing key), so multiple instances can share one config file
+      --metrics-address <METRICS_ADDRESS>
+          Override the config's `metrics_address`, so multiple instances can share one config file without fighting over the exporter port
+      --signing-key <SIGNING_KEY>
+          File holding the 32-byte key to sign blocks with, overriding the config's `signing_key`. It is the only thing that has to differ between the sequencers of one committee, so passing it separately lets them all run off one config file
+  -h, --help
+          Print help
+  -V, --version
+          Print version
+=== Step 2: Querying spel CLI integration ===
+spel binary: /usr/local/bin/spel
+Usage: spel [OPTIONS] -- <COMMAND> [ARGS]
+
+Tip: create a spel.toml with [program] or [programs.<name>] to avoid passing flags.
+
+Commands that don't need --idl:
+  init <name>              Scaffold a new SPEL project
+  program-id <FILE> [FILE...]  Extract ProgramId from program .bin (R0BF) binary(ies)
+  inspect <ACCOUNT-ID> --idl <IDL> --type <TYPE>   Decode account data
+  generate-idl [PATH]      Generate IDL JSON from a program source file or project directory
+
+  pda <ACCOUNT> [--seed-arg VALUE...]  Compute a PDA defined in the IDL
+      [--npk HEX --vpk HEX [--identifier U128]]  (private PDAs; identifier defaults to 0)
+  pda --program <HEX> <SEED> [SEED...]  Compute arbitrary PDA (no IDL needed)
+For all other commands, provide an IDL file via --idl or spel.toml.
+========================================================
+[PASS] STANDALONE SEQUENCER TOOLING VERIFIED SUCCESSFULLY
+========================================================

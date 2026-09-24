@@ -912,7 +912,14 @@ std::string AtlasmirrorSdkImpl::batchRegister(const std::string &records)
         }
         if (cand.find('/') != std::string::npos) {
             if (m_catalog.find(cand) != m_catalog.end()) {
-                if (std::find(regionList.begin(), regionList.end(), cand) == regionList.end()) {
+                bool exists = false;
+                for (const auto &item : regionList) {
+                    if (item == cand) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
                     regionList.push_back(cand);
                 }
             }
