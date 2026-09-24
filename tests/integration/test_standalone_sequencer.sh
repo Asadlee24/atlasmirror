@@ -133,10 +133,24 @@ EOF
 # 3. Start LEZ Standalone Sequencer on port 3040
 echo "=== [Step 2] Starting LEZ Standalone Sequencer on 127.0.0.1:3040 ===" | tee -a "${EVIDENCE_FILE}"
 export RUST_LOG=info
+# Dump binary help and try key generation subcommands
+echo "=== [Diagnostics] sequencer_service binary usage ===" | tee -a "${EVIDENCE_FILE}"
+"${SEQ_BIN}" --help 2>&1 | tee -a "${EVIDENCE_FILE}" || true
+"${SEQ_BIN}" --version 2>&1 | tee -a "${EVIDENCE_FILE}" || true
+echo "--- Trying 'init' subcommand ---" | tee -a "${EVIDENCE_FILE}"
+timeout 5s "${SEQ_BIN}" init --home "${WORK_DIR}/data" 2>&1 | tee -a "${EVIDENCE_FILE}" || true
+echo "--- Trying 'generate-keys' subcommand ---" | tee -a "${EVIDENCE_FILE}"
+timeout 5s "${SEQ_BIN}" generate-keys --home "${WORK_DIR}/data" 2>&1 | tee -a "${EVIDENCE_FILE}" || true
+echo "--- Files in home dir after init attempts ---" | tee -a "${EVIDENCE_FILE}"
+find "${WORK_DIR}/data" -type f 2>/dev/null | tee -a "${EVIDENCE_FILE}" || true
+echo "--- Current config ---" | tee -a "${EVIDENCE_FILE}"
+cat "${WORK_DIR}/sequencer_config.json" | tee -a "${EVIDENCE_FILE}"
+
 # Self-healing config: probe for serde errors and auto-patch before real start
 echo "=== [Pre-flight] Auto-patching sequencer config ===" | tee -a "${EVIDENCE_FILE}"
 for probe in $(seq 1 20); do
     PROBE_ERR=$(timeout 3s "${SEQ_BIN}" --port 3041 --home "${WORK_DIR}/data_probe" "${WORK_DIR}/sequencer_config.json" 2>&1 || true)
+    echo "[probe ${probe}] Raw output: ${PROBE_ERR}" | tee -a "${EVIDENCE_FILE}"
     MISSING=$(echo "${PROBE_ERR}" | grep -oP "missing field \`\K[^\`]+" || true)
     BAD_TYPE=$(echo "${PROBE_ERR}" | grep -oP "invalid type: \K[^,]+" || true)
     if [ -z "${MISSING}" ] && [ -z "${BAD_TYPE}" ]; then
