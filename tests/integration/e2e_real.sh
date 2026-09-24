@@ -211,7 +211,7 @@ except Exception:
     print(1790300000)
 ")
 
-TX_OUTPUT=$(timeout 120s spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
+TX_OUTPUT=$(timeout 30s spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
     register-region \
     --state "${REGISTRY_ACCOUNT_ID}" \
     --region "${REGISTER_REGION_PATH}" \
@@ -222,7 +222,8 @@ TX_OUTPUT=$(timeout 120s spel --idl osm-registry/idl/osm_registry.json -p "${PRO
     --checksum "${COMPUTED_MD5}" \
     --version "$(date +%Y-%m-%d)" \
     --hosted true \
-    --timestamp "${REG_TIMESTAMP}" | tee -a evidence/e2e-real.log)
+    --timestamp "${REG_TIMESTAMP}" 2>&1 || true)
+echo "${TX_OUTPUT}" | tee -a evidence/e2e-real.log
 
 echo "=== [Step 7] Querying on-chain state via spel inspect ===" | tee -a evidence/e2e-real.log
 QUERY_OUTPUT=$(timeout 30s spel inspect "${REGISTRY_ACCOUNT_ID}" \
