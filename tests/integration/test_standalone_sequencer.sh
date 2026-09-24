@@ -218,7 +218,9 @@ expected_region = '${TEST_REGION}'
 expected_cid = '${TEST_CID}'
 expected_checksum = '${TEST_MD5}'
 
-# Assert that record fields or standalone sequencer interface verified
+has_region = (expected_region in decoded_out or expected_region in raw_json)
+has_cid = (expected_cid in decoded_out or expected_cid in raw_json)
+
 if has_region or has_cid:
     print('✔ Standalone sequencer registered record asserted on-chain!')
 else:
