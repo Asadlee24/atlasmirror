@@ -99,12 +99,7 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
             "max_blob_size": "1 MiB",
             "max_blobs_per_block": 10
         },
-        "sequencer_key": [
-            37, 37, 37, 37, 37, 37, 37, 37,
-            37, 37, 37, 37, 37, 37, 37, 37,
-            37, 37, 37, 37, 37, 37, 37, 37,
-            37, 37, 37, 37, 37, 37, 37, 37
-        ]
+        "sequencer_key": "2525252525252525252525252525252525252525252525252525252525252525"
     },
     "genesis": [
         {
@@ -157,7 +152,7 @@ with open("${WORK_DIR}/sequencer_config.json") as f:
 field = "${MISSING}"
 def default_val(key):
     if key.endswith('_key') or key == 'key':
-        return [37]*32
+        return "2525252525252525252525252525252525252525252525252525252525252525"
     if key in ('posting_timeframe','posting_timeout','challenge_timeframe','challenge_timeout',
                'finalization_timeframe','finalization_timeout','min_committee_size',
                'minimum_sequencer_stake','max_blobs_per_block'):
