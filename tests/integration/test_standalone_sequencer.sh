@@ -115,7 +115,8 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
         37, 37, 37, 37, 37, 37, 37, 37,
         37, 37, 37, 37, 37, 37, 37, 37,
         37, 37, 37, 37, 37, 37, 37, 37
-    ]
+    ],
+    "minimum_sequencer_stake": 1000000
 }
 EOF
 
