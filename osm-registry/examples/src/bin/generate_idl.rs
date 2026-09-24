@@ -5,63 +5,77 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Generating SPEL IDL for osm_registry...");
 
     let idl = serde_json::json!({
-        "version": "0.1.0",
-        "name": "osm_registry",
-        "instructions": [
+        "accounts": [
             {
-                "name": "initialize",
-                "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
-                "execution": "public",
-                "accounts": [
-                    {
-                        "name": "state",
-                        "is_mut": true,
-                        "is_signer": false,
-                        "pda": {
-                            "seeds": ["literal:state"]
-                        }
-                    },
-                    {
-                        "name": "owner",
-                        "is_mut": false,
-                        "is_signer": true
-                    }
-                ],
-                "args": []
+                "name": "GlobalRegistryState",
+                "type": {
+                    "fields": [
+                        { "name": "total_regions", "type": "u64" },
+                        { "name": "last_updated", "type": "u64" }
+                    ],
+                    "kind": "struct"
+                }
             },
             {
-                "name": "register_region",
-                "discriminator": [211, 8, 232, 43, 249, 138, 241, 117],
-                "execution": "public",
+                "name": "RegionRecord",
+                "type": {
+                    "fields": [
+                        { "name": "region", "type": "string" },
+                        { "name": "parent", "type": { "option": "string" } },
+                        { "name": "level", "type": { "defined": "RegionLevel" } },
+                        { "name": "cid", "type": "string" },
+                        { "name": "source_url", "type": "string" },
+                        { "name": "checksum", "type": "string" },
+                        { "name": "version", "type": "string" },
+                        { "name": "hosted", "type": "bool" },
+                        { "name": "timestamp", "type": "u64" }
+                    ],
+                    "kind": "struct"
+                }
+            }
+        ],
+        "instructions": [
+            {
                 "accounts": [
                     {
+                        "is_mut": true,
+                        "is_signer": false,
                         "name": "state",
-                        "is_mut": true,
-                        "is_signer": false,
                         "pda": {
-                            "seeds": ["literal:state"]
+                            "seeds": [
+                                { "kind": "const", "value": "state" }
+                            ]
                         }
                     },
                     {
-                        "name": "region_account",
-                        "is_mut": true,
-                        "is_signer": false,
-                        "pda": {
-                            "seeds": ["literal:region", "arg:region"]
-                        }
-                    },
-                    {
-                        "name": "cid_account",
-                        "is_mut": true,
-                        "is_signer": false,
-                        "pda": {
-                            "seeds": ["literal:cid", "arg:cid"]
-                        }
-                    },
-                    {
-                        "name": "signer",
                         "is_mut": false,
-                        "is_signer": true
+                        "is_signer": true,
+                        "name": "owner"
+                    }
+                ],
+                "args": [],
+                "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
+                "execution": {
+                    "public": true
+                },
+                "name": "initialize"
+            },
+            {
+                "accounts": [
+                    {
+                        "is_mut": true,
+                        "is_signer": false,
+                        "name": "state",
+                        "pda": {
+                            "seeds": [
+                                { "kind": "const", "value": "state" }
+                            ]
+                        }
+                    },
+                    {
+                        "is_mut": false,
+                        "is_signer": true,
+                        "name": "signer"
                     }
                 ],
                 "args": [
@@ -74,25 +88,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     { "name": "version", "type": "string" },
                     { "name": "hosted", "type": "bool" },
                     { "name": "timestamp", "type": "u64" }
-                ]
+                ],
+                "discriminator": [211, 8, 232, 43, 249, 138, 241, 117],
+                "execution": {
+                    "public": true
+                },
+                "name": "register_region"
             },
             {
-                "name": "batch_register",
-                "discriminator": [92, 144, 215, 68, 12, 88, 102, 194],
-                "execution": "public",
                 "accounts": [
                     {
-                        "name": "state",
                         "is_mut": true,
                         "is_signer": false,
+                        "name": "state",
                         "pda": {
-                            "seeds": ["literal:state"]
+                            "seeds": [
+                                { "kind": "const", "value": "state" }
+                            ]
                         }
                     },
                     {
-                        "name": "signer",
                         "is_mut": false,
-                        "is_signer": true
+                        "is_signer": true,
+                        "name": "signer"
                     }
                 ],
                 "args": [
@@ -102,67 +120,41 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             "vec": { "defined": "RegisterRegionArgs" }
                         }
                     }
-                ]
+                ],
+                "discriminator": [92, 144, 215, 68, 12, 88, 102, 194],
+                "execution": {
+                    "public": true
+                },
+                "name": "batch_register"
             }
         ],
-        "accounts": [
-            {
-                "name": "GlobalRegistryState",
-                "type": {
-                    "kind": "struct",
-                    "fields": [
-                        { "name": "total_regions", "type": "u64" },
-                        { "name": "last_updated", "type": "u64" }
-                    ]
-                }
-            },
-            {
-                "name": "RegionRecord",
-                "type": {
-                    "kind": "struct",
-                    "fields": [
-                        { "name": "region", "type": "string" },
-                        { "name": "parent", "type": { "option": "string" } },
-                        { "name": "level", "type": { "defined": "RegionLevel" } },
-                        { "name": "cid", "type": "string" },
-                        { "name": "source_url", "type": "string" },
-                        { "name": "checksum", "type": "string" },
-                        { "name": "version", "type": "string" },
-                        { "name": "hosted", "type": "bool" },
-                        { "name": "timestamp", "type": "u64" }
-                    ]
-                }
-            }
-        ],
+        "name": "osm_registry",
         "types": [
             {
+                "kind": "enum",
                 "name": "RegionLevel",
-                "type": {
-                    "kind": "enum",
-                    "variants": [
-                        { "name": "Country" },
-                        { "name": "Subregion" }
-                    ]
-                }
+                "variants": [
+                    { "name": "Country" },
+                    { "name": "Subregion" }
+                ]
             },
             {
-                "name": "RegisterRegionArgs",
-                "type": {
-                    "kind": "struct",
-                    "fields": [
-                        { "name": "region", "type": "string" },
-                        { "name": "parent", "type": { "option": "string" } },
-                        { "name": "level", "type": { "defined": "RegionLevel" } },
-                        { "name": "cid", "type": "string" },
-                        { "name": "source_url", "type": "string" },
-                        { "name": "checksum", "type": "string" },
-                        { "name": "version", "type": "string" },
-                        { "name": "hosted", "type": "bool" },
-                        { "name": "timestamp", "type": "u64" }
-                    ]
-                }
+                "fields": [
+                    { "name": "region", "type": "string" },
+                    { "name": "parent", "type": { "option": "string" } },
+                    { "name": "level", "type": { "defined": "RegionLevel" } },
+                    { "name": "cid", "type": "string" },
+                    { "name": "source_url", "type": "string" },
+                    { "name": "checksum", "type": "string" },
+                    { "name": "version", "type": "string" },
+                    { "name": "hosted", "type": "bool" },
+                    { "name": "timestamp", "type": "u64" }
+                ],
+                "kind": "struct",
+                "name": "RegisterRegionArgs"
             }
-        ]
+        ],
+        "version": "0.1.0"
     });
 
     let idl_dir = Path::new("idl");
