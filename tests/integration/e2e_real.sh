@@ -218,15 +218,19 @@ else
     echo "Account already initialized: ${ACCOUNT_DATA_LEN} bytes on-chain." | tee -a evidence/e2e-real.log
 fi
 
-REG_TIMESTAMP=$(python3 -c "import urllib.request, json, struct, time;
+# Snapshot last_updated timestamp BEFORE TX — proves THIS run's TX caused a state change
+PRE_TX_TIMESTAMP=$(python3 -c "import urllib.request, json, struct;
 try:
     req = urllib.request.Request('https://testnet.lez.logos.co/', data=json.dumps({'jsonrpc':'2.0','id':1,'method':'getAccount','params':['${REGISTRY_ACCOUNT_ID}']}).encode(), headers={'Content-Type':'application/json'})
     raw = bytes(json.loads(urllib.request.urlopen(req, timeout=10).read().decode())['result']['data'])
     last_updated = struct.unpack_from('<Q', raw, 8)[0]
-    print(max(int(time.time()), last_updated + 100))
+    print(last_updated)
 except Exception:
-    print(1790300000)
+    print(0)
 ")
+echo "Pre-TX last_updated timestamp: ${PRE_TX_TIMESTAMP}" | tee -a evidence/e2e-real.log
+
+REG_TIMESTAMP=$(python3 -c "import time; print(max(int(time.time()), ${PRE_TX_TIMESTAMP} + 100))")
 
 # Submit TX in background; capture tx_hash immediately; then poll RPC ourselves.
 # This avoids being blocked by spel's internal confirmation poller on a slow testnet.
@@ -293,6 +297,22 @@ if [ "${CONFIRMED}" != "true" ]; then
     echo "[FAIL] CID ${REAL_CID} not found in on-chain account state after 180s." | tee -a evidence/e2e-real.log
     exit 1
 fi
+
+# Verify state-change: last_updated AFTER TX must be strictly greater than BEFORE TX
+POST_TX_TIMESTAMP=$(python3 -c "import urllib.request, json, struct;
+try:
+    req = urllib.request.Request('https://testnet.lez.logos.co/', data=json.dumps({'jsonrpc':'2.0','id':1,'method':'getAccount','params':['${REGISTRY_ACCOUNT_ID}']}).encode(), headers={'Content-Type':'application/json'})
+    raw = bytes(json.loads(urllib.request.urlopen(req, timeout=10).read().decode())['result']['data'])
+    print(struct.unpack_from('<Q', raw, 8)[0])
+except Exception:
+    print(0)
+")
+echo "Post-TX last_updated timestamp: ${POST_TX_TIMESTAMP}" | tee -a evidence/e2e-real.log
+if [ "${POST_TX_TIMESTAMP}" -le "${PRE_TX_TIMESTAMP}" ]; then
+    echo "[FAIL] last_updated (${POST_TX_TIMESTAMP}) did not advance past pre-TX value (${PRE_TX_TIMESTAMP}). No real state change occurred." | tee -a evidence/e2e-real.log
+    exit 1
+fi
+echo "[PASS] State change confirmed: last_updated advanced from ${PRE_TX_TIMESTAMP} to ${POST_TX_TIMESTAMP}" | tee -a evidence/e2e-real.log
 
 # Also run spel inspect for structured output evidence
 echo "=== [Step 7b] spel inspect for structured record evidence ===" | tee -a evidence/e2e-real.log

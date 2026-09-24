@@ -94,13 +94,19 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
     "genesis": [
         {
             "supply_bridge_account": {
-                "balance": 1000000
+                "balance": 10000000
             }
         },
         {
             "supply_account": {
                 "account_id": "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r",
-                "balance": 100000
+                "balance": 1000000
+            }
+        },
+        {
+            "supply_stake_account": {
+                "account_id": "DqyLaEh7Kso3LtVpmWM8f8dpyWHXG7C1TkKwKoKiaFn5",
+                "balance": 10000000
             }
         }
     ],
