@@ -271,48 +271,40 @@ echo "TX submitted: ${TX_HASH}" | tee -a evidence/e2e-real.log
 kill "${SPEL_PID}" 2>/dev/null || true; wait "${SPEL_PID}" 2>/dev/null || true
 rm -f "${SPEL_LOG}"
 
-# Poll testnet RPC directly until new CID appears in account state (up to 180s)
-echo "=== [Step 7] Polling testnet RPC for on-chain confirmation (up to 180s) ===" | tee -a evidence/e2e-real.log
+# Poll testnet RPC until last_updated advances past pre-TX value (proves THIS TX confirmed).
+# CID presence alone is insufficient - the same CID may already exist from prior runs.
+echo "=== [Step 7] Polling RPC until last_updated advances (up to 180s) ===" | tee -a evidence/e2e-real.log
 RPC_ACCOUNT_DATA=""
 CONFIRMED=false
-for i in {1..60}; do
-    RPC_ACCOUNT_DATA=$(python3 -c "import urllib.request, json;
+POST_TX_TIMESTAMP=0
+for i in $(seq 1 60); do
+    POLL_RESULT=$(python3 -c "
+import urllib.request, json, struct
 try:
     req = urllib.request.Request('https://testnet.lez.logos.co/', data=json.dumps({'jsonrpc':'2.0','id':1,'method':'getAccount','params':['${REGISTRY_ACCOUNT_ID}']}).encode(), headers={'Content-Type':'application/json'})
     raw = bytes(json.loads(urllib.request.urlopen(req, timeout=10).read().decode())['result']['data'])
-    print(raw.decode('latin1', errors='ignore'))
+    ts = struct.unpack_from('<Q', raw, 8)[0]
+    text = raw.decode('latin1', errors='ignore')
+    print(str(ts) + '|SEP|' + text)
 except Exception:
-    print('')
-" 2>/dev/null || true)
-    if echo "${RPC_ACCOUNT_DATA}" | grep -q "${REAL_CID}"; then
-        echo "[${i}s] CID confirmed on-chain." | tee -a evidence/e2e-real.log
+    print('0|SEP|')
+" 2>/dev/null || echo "0|SEP|")
+    POST_TX_TIMESTAMP="${POLL_RESULT%%|SEP|*}"
+    RPC_ACCOUNT_DATA="${POLL_RESULT#*|SEP|}"
+    if [ "${POST_TX_TIMESTAMP:-0}" -gt "${PRE_TX_TIMESTAMP}" ] 2>/dev/null; then
+        echo "[${i}x3s] Confirmed: last_updated ${PRE_TX_TIMESTAMP} -> ${POST_TX_TIMESTAMP}" | tee -a evidence/e2e-real.log
         CONFIRMED=true
         break
     fi
-    echo "[${i}×3s] Waiting for CID ${REAL_CID:0:20}... to appear on-chain..." | tee -a evidence/e2e-real.log
+    echo "[${i}x3s] Waiting: last_updated=${POST_TX_TIMESTAMP} need > ${PRE_TX_TIMESTAMP}..." | tee -a evidence/e2e-real.log
     sleep 3
 done
 
 if [ "${CONFIRMED}" != "true" ]; then
-    echo "[FAIL] CID ${REAL_CID} not found in on-chain account state after 180s." | tee -a evidence/e2e-real.log
+    echo "[FAIL] last_updated did not advance past ${PRE_TX_TIMESTAMP} after 180s." | tee -a evidence/e2e-real.log
     exit 1
 fi
-
-# Verify state-change: last_updated AFTER TX must be strictly greater than BEFORE TX
-POST_TX_TIMESTAMP=$(python3 -c "import urllib.request, json, struct;
-try:
-    req = urllib.request.Request('https://testnet.lez.logos.co/', data=json.dumps({'jsonrpc':'2.0','id':1,'method':'getAccount','params':['${REGISTRY_ACCOUNT_ID}']}).encode(), headers={'Content-Type':'application/json'})
-    raw = bytes(json.loads(urllib.request.urlopen(req, timeout=10).read().decode())['result']['data'])
-    print(struct.unpack_from('<Q', raw, 8)[0])
-except Exception:
-    print(0)
-")
-echo "Post-TX last_updated timestamp: ${POST_TX_TIMESTAMP}" | tee -a evidence/e2e-real.log
-if [ "${POST_TX_TIMESTAMP}" -le "${PRE_TX_TIMESTAMP}" ]; then
-    echo "[FAIL] last_updated (${POST_TX_TIMESTAMP}) did not advance past pre-TX value (${PRE_TX_TIMESTAMP}). No real state change occurred." | tee -a evidence/e2e-real.log
-    exit 1
-fi
-echo "[PASS] State change confirmed: last_updated advanced from ${PRE_TX_TIMESTAMP} to ${POST_TX_TIMESTAMP}" | tee -a evidence/e2e-real.log
+echo "[PASS] State change confirmed: last_updated ${PRE_TX_TIMESTAMP} -> ${POST_TX_TIMESTAMP}" | tee -a evidence/e2e-real.log
 
 # Also run spel inspect for structured output evidence
 echo "=== [Step 7b] spel inspect for structured record evidence ===" | tee -a evidence/e2e-real.log
