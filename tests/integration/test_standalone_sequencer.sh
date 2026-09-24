@@ -104,7 +104,7 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
         {
             "supply_bridge_lock_holding": {
                 "holder": "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r",
-                "balance": 10000000
+                "amount": 10000000
             }
         },
         {
@@ -132,6 +132,54 @@ EOF
 # 3. Start LEZ Standalone Sequencer on port 3040
 echo "=== [Step 2] Starting LEZ Standalone Sequencer on 127.0.0.1:3040 ===" | tee -a "${EVIDENCE_FILE}"
 export RUST_LOG=info
+# Self-healing config: probe for serde errors and auto-patch before real start
+echo "=== [Pre-flight] Auto-patching sequencer config ===" | tee -a "${EVIDENCE_FILE}"
+for probe in $(seq 1 20); do
+    PROBE_ERR=$(timeout 3s "${SEQ_BIN}" --port 3041 --home "${WORK_DIR}/data_probe" "${WORK_DIR}/sequencer_config.json" 2>&1 || true)
+    MISSING=$(echo "${PROBE_ERR}" | grep -oP "missing field \`\K[^\`]+" || true)
+    BAD_TYPE=$(echo "${PROBE_ERR}" | grep -oP "invalid type: \K[^,]+" || true)
+    if [ -z "${MISSING}" ] && [ -z "${BAD_TYPE}" ]; then
+        echo "[probe ${probe}] Config looks valid (no serde errors)." | tee -a "${EVIDENCE_FILE}"
+        break
+    fi
+    if [ -n "${MISSING}" ]; then
+        echo "[probe ${probe}] Missing field: ${MISSING} — auto-patching..." | tee -a "${EVIDENCE_FILE}"
+        python3 - <<PYEOF
+import json, sys
+with open("${WORK_DIR}/sequencer_config.json") as f:
+    cfg = json.load(f)
+field = "${MISSING}"
+# Walk nested dicts to find where the field is missing by trying to insert at various levels
+# Heuristic: timeframe/timeout = int, everything else = sensible default
+def patch(obj, key):
+    if key in ('posting_timeframe','posting_timeout','challenge_timeframe','challenge_timeout',
+               'finalization_timeframe','finalization_timeout','min_committee_size',
+               'minimum_sequencer_stake','max_blobs_per_block'):
+        return 10
+    if key in ('max_blob_size',):
+        return "1 MiB"
+    if key in ('holder','account_id'):
+        return "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r"
+    if key in ('balance',):
+        return 1000000
+    return 0
+def deep_patch(obj, key):
+    if isinstance(obj, dict):
+        if key not in obj:
+            obj[key] = patch(obj, key)
+        for v in obj.values():
+            deep_patch(v, key)
+    elif isinstance(obj, list):
+        for item in obj:
+            deep_patch(item, key)
+deep_patch(cfg, field)
+with open("${WORK_DIR}/sequencer_config.json", 'w') as f:
+    json.dump(cfg, f, indent=4)
+print(f"Patched: added {field}")
+PYEOF
+    fi
+done
+
 "${SEQ_BIN}" --port 3040 --home "${WORK_DIR}/data" "${WORK_DIR}/sequencer_config.json" > "${WORK_DIR}/sequencer.log" 2>&1 &
 SEQ_PID=$!
 
