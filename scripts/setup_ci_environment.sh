@@ -54,6 +54,24 @@ if [ -f "${SCRIPT_DIR}/ci_wallet.tar.gz" ]; then
     tar -xzf "${SCRIPT_DIR}/ci_wallet.tar.gz" -C "${WALLET_HOME}"
 fi
 
+cat > "${WALLET_HOME}/wallet_config.json" <<EOF
+{
+  "sequencers": [
+    {
+      "sequencer_addr": "https://testnet.lez.logos.co/"
+    }
+  ],
+  "seq_poll_timeout": "120s",
+  "seq_tx_poll_max_blocks": 60,
+  "seq_poll_max_retries": 30,
+  "seq_block_poll_max_amount": 100,
+  "multi_sequencer_client_config": {
+    "distribution_limit": 1,
+    "calibration_limit": 100
+  }
+}
+EOF
+
 echo "========================================================"
 echo " Infrastructure setup complete:"
 echo "   logoscore:         $(which logoscore)"

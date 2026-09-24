@@ -173,8 +173,19 @@ if [ -n "${PARENT_REGION}" ]; then
     EXTRA_PARENT_FLAG="--parent ${PARENT_REGION}"
 fi
 
+REG_TIMESTAMP=$(python3 -c "import urllib.request, json, struct, time;
+try:
+    req = urllib.request.Request('https://testnet.lez.logos.co/', data=json.dumps({'jsonrpc':'2.0','id':1,'method':'getAccount','params':['${REGISTRY_ACCOUNT_ID:-T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci}']}).encode(), headers={'Content-Type':'application/json'})
+    raw = bytes(json.loads(urllib.request.urlopen(req, timeout=10).read().decode())['result']['data'])
+    last_updated = struct.unpack_from('<Q', raw, 8)[0]
+    print(max(int(time.time()), last_updated + 100))
+except Exception:
+    print(1790300000)
+")
+
 TX_OUTPUT=$(spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
     register-region \
+    --state "${REGISTRY_ACCOUNT_ID:-T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci}" \
     --region "${TARGET_REGION}" \
     ${EXTRA_PARENT_FLAG} \
     --level "${LEVEL}" \
@@ -183,8 +194,7 @@ TX_OUTPUT=$(spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- 
     --checksum "${COMPUTED_MD5}" \
     --version "$(date +%Y-%m-%d)" \
     --hosted true \
-    --timestamp "$(date +%s)" \
-    --signer "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r" | tee -a evidence/e2e-real.log)
+    --timestamp "${REG_TIMESTAMP}" | tee -a evidence/e2e-real.log)
 
 echo "=== [Step 7] Querying on-chain state via spel inspect ===" | tee -a evidence/e2e-real.log
 QUERY_OUTPUT=$(spel inspect "${REGISTRY_ACCOUNT_ID:-T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci}" \
