@@ -14,9 +14,6 @@
 class AtlasmirrorSdkImpl : public LogosModuleContext
 {
 public:
-    AtlasmirrorSdkImpl() = default;
-    virtual ~AtlasmirrorSdkImpl() = default;
-
     /**
      * @brief Discovers all regions in the predefined non-overlapping set.
      * @return JSON array string of region objects with path, name, level, parent, and status.

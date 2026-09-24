@@ -897,17 +897,34 @@ std::string AtlasmirrorSdkImpl::batchRegister(const std::string &records)
         return "{\"success\":false,\"error\":\"EMPTY_BATCH\"}";
     }
 
-    // Parse region paths from records JSON or delimiter-separated string
+    if (m_catalog.empty()) {
+        loadPredefinedCatalog();
+        loadVerifiedManifest();
+    }
+
+    // Parse region paths from records JSON or delimiter-separated string.
+    // Strictly validate against m_catalog so that URLs (e.g. source_url) are never misidentified as regions.
     std::vector<std::string> regionList;
+    auto tryAddCandidate = [&](const std::string &cand) {
+        if (cand.empty() || cand == "path" || cand.find("://") != std::string::npos) {
+            return;
+        }
+        if (cand.find('/') != std::string::npos) {
+            if (m_catalog.find(cand) != m_catalog.end()) {
+                if (std::find(regionList.begin(), regionList.end(), cand) == regionList.end()) {
+                    regionList.push_back(cand);
+                }
+            }
+        }
+    };
+
     std::string current;
     bool inQuote = false;
     for (size_t i = 0; i < records.size(); ++i) {
         char c = records[i];
         if (c == '"') {
             if (inQuote) {
-                if (!current.empty() && current.find('/') != std::string::npos && current != "path") {
-                    regionList.push_back(current);
-                }
+                tryAddCandidate(current);
                 current.clear();
                 inQuote = false;
             } else {
@@ -918,17 +935,15 @@ std::string AtlasmirrorSdkImpl::batchRegister(const std::string &records)
             current += c;
         } else if (c == ',' || c == ' ' || c == '\n' || c == '\r' || c == '\t') {
             if (!current.empty()) {
-                if (current.find('/') != std::string::npos) {
-                    regionList.push_back(current);
-                }
+                tryAddCandidate(current);
                 current.clear();
             }
         } else if (c != '[' && c != ']' && c != '{' && c != '}' && c != ':') {
             current += c;
         }
     }
-    if (!current.empty() && current.find('/') != std::string::npos) {
-        regionList.push_back(current);
+    if (!current.empty()) {
+        tryAddCandidate(current);
     }
 
     if (regionList.empty()) {
