@@ -7,6 +7,7 @@
 #include <memory>
 #include <array>
 #include <vector>
+#include <algorithm>
 #include <cstring>
 #include <cstdint>
 #include <sys/stat.h>
