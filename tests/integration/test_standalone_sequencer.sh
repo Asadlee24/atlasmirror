@@ -102,7 +102,7 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
     },
     "genesis": [
         {
-            "supply_bridge_account": {
+            "supply_bridge_lock_holding": {
                 "balance": 10000000
             }
         },
@@ -113,7 +113,7 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
             }
         },
         {
-            "supply_stake_account": {
+            "stake_sequencer": {
                 "account_id": "DqyLaEh7Kso3LtVpmWM8f8dpyWHXG7C1TkKwKoKiaFn5",
                 "balance": 10000000
             }
