@@ -9,7 +9,8 @@ set -euo pipefail
 
 TARGET_REGION="${ATLASMIRROR_REGION:-china/henan}"
 MODULES_DIR="${LOGOS_MODULES_DIR:-./modules}"
-PROGRAM_ID="${OSM_REGISTRY_PROGRAM_ID:-}"
+PROGRAM_ID="${OSM_REGISTRY_PROGRAM_ID:-bcdc104271bd670da3b1afddcb758286c619de87365d6488c9c2f563947f8b4f}"
+REGISTRY_ACCOUNT_ID="${OSM_REGISTRY_ACCOUNT_ID:-T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci}"
 
 mkdir -p evidence
 
@@ -156,7 +157,7 @@ if [ -n "${PARENT_REGION}" ]; then
     EXTRA_PARENT_FLAG="--parent ${PARENT_REGION}"
 fi
 
-TX_OUTPUT=$(spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" --dry-run -- \
+TX_OUTPUT=$(spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
     register-region \
     --region "${TARGET_REGION}" \
     ${EXTRA_PARENT_FLAG} \
@@ -170,12 +171,9 @@ TX_OUTPUT=$(spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" --d
     --signer "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r" | tee -a evidence/e2e-real.log)
 
 echo "=== [Step 7] Querying on-chain state via spel inspect ===" | tee -a evidence/e2e-real.log
-NOW_TS=$(date +%s)
-STATE_HEX=$(python3 -c "import struct; print(struct.pack('<QQ', 1, ${NOW_TS}).hex())")
-QUERY_OUTPUT=$(spel inspect "5KPnAnnPHKQDyBu66p3oWjzwkCtL4nEnE17RGp3Cry3q" \
+QUERY_OUTPUT=$(spel inspect "${REGISTRY_ACCOUNT_ID:-T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci}" \
     --idl osm-registry/idl/osm_registry.json \
-    --type GlobalRegistryState \
-    --data "${STATE_HEX}" | tee -a evidence/e2e-real.log)
+    --type GlobalRegistryState | tee -a evidence/e2e-real.log)
 
 # Step 6: Download snapshot by CID via storage_module downloadToUrl (local=true)
 echo "=== [Step 8] Downloading snapshot by CID from Logos Storage ===" | tee -a evidence/e2e-real.log
