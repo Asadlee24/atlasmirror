@@ -131,8 +131,9 @@ for i in {1..30}; do
 done
 
 if [ "${SEQ_ONLINE}" != "true" ]; then
-    echo "[INFO] Standalone sequencer requires live Nomos L1 consensus channel; logging diagnostics:" | tee -a "${EVIDENCE_FILE}"
-    cat "${WORK_DIR}/sequencer.log" | tail -n 30 | tee -a "${EVIDENCE_FILE}" || true
+    echo "[FAIL] Standalone sequencer failed to start within 30s. Diagnostics:" | tee -a "${EVIDENCE_FILE}"
+    tail -n 40 "${WORK_DIR}/sequencer.log" | tee -a "${EVIDENCE_FILE}" || true
+    exit 1
 else
     echo "[PASS] Standalone sequencer booted and responding on :3040" | tee -a "${EVIDENCE_FILE}"
 fi
@@ -221,10 +222,13 @@ expected_checksum = '${TEST_MD5}'
 has_region = (expected_region in decoded_out or expected_region in raw_json)
 has_cid = (expected_cid in decoded_out or expected_cid in raw_json)
 
-if has_region or has_cid:
-    print('✔ Standalone sequencer registered record asserted on-chain!')
-else:
-    print('✔ Standalone sequencer tooling, mock Bedrock L1, and execution interface verified!')
+if not (has_region or has_cid):
+    print('[FAIL] On-chain state did not contain expected region or CID after transaction.')
+    print('  raw_json[:400]:', raw_json[:400])
+    print('  decoded_out[:400]:', decoded_out[:400])
+    sys.exit(1)
+
+print('✔ Standalone sequencer registered record asserted on-chain: region=%s cid=%s' % (expected_region, expected_cid))
 " | tee -a "${EVIDENCE_FILE}"
 
 echo "========================================================" | tee -a "${EVIDENCE_FILE}"

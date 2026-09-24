@@ -11,8 +11,10 @@ TARGET_REGION="${ATLASMIRROR_REGION:-china/henan}"
 REGISTER_REGION_PATH="${ATLASMIRROR_REGISTER_REGION:-test/ci-sandbox-e2e}"
 MODULES_DIR="${LOGOS_MODULES_DIR:-./modules}"
 PROGRAM_ID="${OSM_REGISTRY_PROGRAM_ID:-bcdc104271bd670da3b1afddcb758286c619de87365d6488c9c2f563947f8b4f}"
-# E2E State Account: Use initialized testnet account with dedicated isolated test path (test/ci-sandbox-e2e)
-REGISTRY_ACCOUNT_ID="${OSM_REGISTRY_ACCOUNT_ID:-T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci}"
+# Production counting registry account (read-only in E2E – do NOT write here):
+PRODUCTION_REGISTRY_ACCOUNT_ID="${OSM_REGISTRY_ACCOUNT_ID:-T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci}"
+# Isolated CI-only account that E2E is allowed to write to:
+REGISTRY_ACCOUNT_ID="${ATLASMIRROR_E2E_ACCOUNT:-HrVNrQYVDGEGr9AbbEiuNLLDyLfJPTMjn68KPiCHPFB}"
 export LEE_WALLET_HOME_DIR="${LEE_WALLET_HOME_DIR:-${HOME}/.lee/wallet}"
 
 mkdir -p evidence

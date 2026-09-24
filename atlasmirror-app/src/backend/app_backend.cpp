@@ -4,6 +4,8 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QProcess>
 #include <QtCore/QFileInfo>
+#include <QtCore/QDir>
+#include <QtCore/QCoreApplication>
 #include <QtCore/QCryptographicHash>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QClipboard>
@@ -439,6 +441,20 @@ void AppBackend::startDownload(const QString &regionPath)
     });
 
     proc->start("atlasmirror-cli", QStringList() << "download" << regionPath << "--output" << destFile << "--json");
+}
+
+void AppBackend::openDownloadDir()
+{
+    QString destDir = QDir::toNativeSeparators(
+        QDir(QCoreApplication::applicationDirPath()).filePath("downloads"));
+    QDir().mkpath(destDir);
+#if defined(Q_OS_WIN)
+    QProcess::startDetached("explorer.exe", QStringList() << destDir);
+#elif defined(Q_OS_MACOS)
+    QProcess::startDetached("open", QStringList() << destDir);
+#else
+    QProcess::startDetached("xdg-open", QStringList() << destDir);
+#endif
 }
 
 void AppBackend::copyToClipboard(const QString &text)
