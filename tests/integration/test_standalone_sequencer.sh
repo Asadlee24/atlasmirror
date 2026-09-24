@@ -91,8 +91,11 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
             "min_committee_size": 0,
             "minimum_sequencer_stake": 1000000,
             "posting_timeframe": 10,
+            "posting_timeout": 30,
             "challenge_timeframe": 10,
+            "challenge_timeout": 30,
             "finalization_timeframe": 10,
+            "finalization_timeout": 30,
             "max_blob_size": "1 MiB",
             "max_blobs_per_block": 10
         }
