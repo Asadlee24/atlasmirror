@@ -1,0 +1,167 @@
+[
+  {
+    "region": "africa/ethiopia",
+    "parent": null,
+    "level": "Country",
+    "cid": "zDvZRwzm7o1JcgDFrsC8zYrEYnhPkY52qThJLjojMvswjj8pVjPX",
+    "source_url": "https://download.geofabrik.de/africa/ethiopia-latest.osm.pbf",
+    "checksum": "c2e00ecddf7ae4ed89bf05bf104d3f10",
+    "version": "2026-09-20",
+    "hosted": true,
+    "timestamp": 1790248996
+  },
+  {
+    "region": "asia/pakistan",
+    "parent": null,
+    "level": "Country",
+    "cid": "zDvZRwzm9WQQrvAZL4NavbFXjmbHTFNyho68zPMxKsCvfGEn2LbD",
+    "source_url": "https://download.geofabrik.de/asia/pakistan-latest.osm.pbf",
+    "checksum": "d63c9409c20924d0813b81266eb2f5ad",
+    "version": "2026-09-20",
+    "hosted": true,
+    "timestamp": 1790248996
+  },
+  {
+    "region": "europe/bulgaria",
+    "parent": null,
+    "level": "Country",
+    "cid": "zDvZRwzm72Y7GBdMzdT7ibQWieQSmUhvk54VHfhcsUDcqnPhma51",
+    "source_url": "https://download.geofabrik.de/europe/bulgaria-latest.osm.pbf",
+    "checksum": "25801cfabc5bfe8e1ae56ded0fa5ed13",
+    "version": "2026-09-20",
+    "hosted": true,
+    "timestamp": 1790248996
+  },
+  {
+    "region": "africa/egypt",
+    "parent": null,
+    "level": "Country",
+    "cid": "zDvZRwzmDbJCqSLbyt1Fw4mSvrGFkJGBLaBAogpw8VF66wA469mm",
+    "source_url": "https://download.geofabrik.de/africa/egypt-latest.osm.pbf",
+    "checksum": "04a4d557c902a5f29ba0e7a1394e0232",
+    "version": "2026-09-20",
+    "hosted": true,
+    "timestamp": 1790248996
+  },
+  {
+    "region": "asia/iran",
+    "parent": null,
+    "level": "Country",
+    "cid": "zDvZRwzkybLEXZoEjDetaF4yKT73jszhgkMTboXedKCt4En1gUKV",
+    "source_url": "https://download.geofabrik.de/asia/iran-latest.osm.pbf",
+    "checksum": "e503562d3826bec67e6f87b899da4098",
+    "version": "2026-09-20",
+    "hosted": true,
+    "timestamp": 1790248996
+  },
+  {
+    "region": "africa/morocco",
+    "parent": null,
+    "level": "Country",
+    "cid": "zDvZRwzmD3VCUxT9UqAh7mXpT4XmWarwKBFR6p2eRiY7PxjQg3kt",
+    "source_url": "https://download.geofabrik.de/africa/morocco-latest.osm.pbf",
+    "checksum": "ac60aed8b36bac264f2c17c89a584b94",
+    "version": "2026-09-20",
+    "hosted": true,
+    "timestamp": 1790248996
+  },
+  {
+    "region": "asia/malaysia-singapore-brunei",
+    "parent": null,
+    "level": "Country",
+    "cid": "zDvZRwzkxgamWxqXcSCp2m8Z5WicCRd79MVy8B3duQ8gCZJSc11Y",
+    "source_url": "https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf",
+    "checksum": "203cebee0dbaa4e8464b777cd10698e6",
+    "version": "2026-09-20",
+    "hosted": true,
+    "timestamp": 1790248996
+  },
+  {
+    "region": "south-america/peru",
+    "parent": null,
+    "level": "Country",
+    "cid": "zDvZRwzkwrj1ZxgoWFzmQ7pr2aGE7ysC9VtaWhcf412PtZvynDbE",
+    "source_url": "https://download.geofabrik.de/south-america/peru-latest.osm.pbf",
+    "checksum": "35b488e2b7323256ee981ae33d7f7c01",
+    "version": "2026-09-21",
+    "hosted": true,
+    "timestamp": 1790248996
+  },
+  {
+    "region": "asia/south-korea",
+    "parent": null,
+    "level": "Country",
+    "cid": "zDvZRwzkwQdS93ToSZKhmgEHi8kXXE3w8m8hH8XxxaeZDPTngGvS",
+    "source_url": "https://download.geofabrik.de/asia/south-korea-latest.osm.pbf",
+    "checksum": "8becc786e5637e7c018fbb5418b6e243",
+    "version": "2026-09-21",
+    "hosted": true,
+    "timestamp": 1790248996
+  },
+  {
+    "region": "europe/hungary",
+    "parent": null,
+    "level": "Country",
+    "cid": "zDvZRwzm89aJWkCswGMbafiLmReHzPm651AFHrgVuM1NpzdW5eKP",
+    "source_url": "https://download.geofabrik.de/europe/hungary-latest.osm.pbf",
+    "checksum": "418c3773df4cea22d4d034fc1ef29e36",
+    "version": "2026-09-21",
+    "hosted": true,
+    "timestamp": 1790248996
+  },
+  {
+    "region": "asia/thailand",
+    "parent": null,
+    "level": "Country",
+    "cid": "zDvZRwzkwiWPZsay9EFVEYUSQiVmW7veg9MQQ4ZJNnrFzirjho8Y",
+    "source_url": "https://download.geofabrik.de/asia/thailand-latest.osm.pbf",
+    "checksum": "fb2caf6d2e0bc29d31c0178776676280",
+    "version": "2026-09-21",
+    "hosted": true,
+    "timestamp": 1790248996
+  },
+  {
+    "region": "europe/romania",
+    "parent": null,
+    "level": "Country",
+    "cid": "zDvZRwzm1tt7QonUPJAYyBXSD5M2pyBFCEQtyPvbLFMSZi6Ri65A",
+    "source_url": "https://download.geofabrik.de/europe/romania-latest.osm.pbf",
+    "checksum": "15be838879747572b38be7593903d501",
+    "version": "2026-09-21",
+    "hosted": true,
+    "timestamp": 1790248996
+  },
+  {
+    "region": "asia/vietnam",
+    "parent": null,
+    "level": "Country",
+    "cid": "zDvZRwzkziYDq1uiBfvomQs9aypHaWNeBtBUQqzgaMBVZaCVgz9R",
+    "source_url": "https://download.geofabrik.de/asia/vietnam-latest.osm.pbf",
+    "checksum": "8e8faf2eff113b67f28059c3b4a5c677",
+    "version": "2026-09-21",
+    "hosted": true,
+    "timestamp": 1790248996
+  },
+  {
+    "region": "south-america/colombia",
+    "parent": null,
+    "level": "Country",
+    "cid": "zDvZRwzm244438FG43oa2LQuT39YuWrmLJXdK4mEkRLgvuyFZDik",
+    "source_url": "https://download.geofabrik.de/south-america/colombia-latest.osm.pbf",
+    "checksum": "cb6b9a0ae742bd746017515427623726",
+    "version": "2026-09-21",
+    "hosted": true,
+    "timestamp": 1790248996
+  },
+  {
+    "region": "europe/greece",
+    "parent": null,
+    "level": "Country",
+    "cid": "zDvZRwzm8tXSMbkc19uqXfTF95QWhcMPHqKLeS5juG5rYMEKTeaK",
+    "source_url": "https://download.geofabrik.de/europe/greece-latest.osm.pbf",
+    "checksum": "c15fda8eb7e74c93d11696719534661b",
+    "version": "2026-09-21",
+    "hosted": true,
+    "timestamp": 1790248996
+  }
+]
