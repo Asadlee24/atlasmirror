@@ -13,6 +13,11 @@ mkdir -p "${MODULES_DIR}/storage_module"
 TMP_SETUP=$(mktemp -d /tmp/ci-setup.XXXXXX)
 trap 'rm -rf "${TMP_SETUP}"' EXIT
 
+# Install system dependencies
+if command -v apt-get >/dev/null 2>&1; then
+    sudo apt-get update -qq && sudo apt-get install -y -qq libpcsclite1 || true
+fi
+
 # 1. Download official sequencer_service, wallet, and spel
 echo "==> Downloading official LEZ sequencer, wallet, and spel..."
 curl -sSfL -o "${TMP_SETUP}/ci_bin.tar.gz" "https://github.com/Asadlee24/atlasmirror/releases/download/v0.1.0-e2e-tools/ci_bin.tar.gz"
