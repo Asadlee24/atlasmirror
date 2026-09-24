@@ -52,6 +52,11 @@ generated_code/
 *_signing_key
 rocksdb-*
 credentials.json
+storage.json
+statistics.json
+wallet_config.json
+ci_wallet.tar.gz
+*.wallet
 
 # Python
 __pycache__/

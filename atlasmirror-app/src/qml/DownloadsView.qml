@@ -7,9 +7,33 @@ Item {
 
     ListModel {
         id: downloadsModel
-        ListElement { region: "asia/pakistan"; source: "Logos Storage (CID: zDvZRwzm9WQQ...)"; size: "148 MB"; progress: 1.0; status: "VERIFIED" }
-        ListElement { region: "china/henan"; source: "Logos Storage (CID: zDvZRwzm4i6c...)"; size: "46 MB"; progress: 1.0; status: "VERIFIED" }
-        ListElement { region: "africa/ethiopia"; source: "Logos Storage (CID: zDvZRwzm7o1J...)"; size: "133 MB"; progress: 1.0; status: "VERIFIED" }
+    }
+
+    Connections {
+        target: (typeof backend !== "undefined") ? backend : null
+        function onDownloadsUpdated() {
+            syncDownloads()
+        }
+    }
+
+    Component.onCompleted: {
+        syncDownloads()
+    }
+
+    function syncDownloads() {
+        downloadsModel.clear()
+        if (typeof backend !== "undefined" && backend.downloads) {
+            for (var i = 0; i < backend.downloads.length; ++i) {
+                var item = backend.downloads[i]
+                downloadsModel.append({
+                    region: item.region || "",
+                    source: item.source || "Logos Storage",
+                    size: item.size || "Unknown",
+                    progress: item.progress !== undefined ? item.progress : 1.0,
+                    status: item.status || "VERIFIED"
+                })
+            }
+        }
     }
 
     ColumnLayout {

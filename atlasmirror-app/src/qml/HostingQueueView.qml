@@ -7,9 +7,32 @@ Item {
 
     ListModel {
         id: queueModel
-        ListElement { region: "africa/ethiopia"; state: "COMPLETE"; progress: 1.0; error: "" }
-        ListElement { region: "asia/pakistan"; state: "COMPLETE"; progress: 1.0; error: "" }
-        ListElement { region: "china/henan"; state: "COMPLETE"; progress: 1.0; error: "" }
+    }
+
+    Connections {
+        target: (typeof backend !== "undefined") ? backend : null
+        function onQueueUpdated() {
+            syncQueue()
+        }
+    }
+
+    Component.onCompleted: {
+        syncQueue()
+    }
+
+    function syncQueue() {
+        queueModel.clear()
+        if (typeof backend !== "undefined" && backend.queue) {
+            for (var i = 0; i < backend.queue.length; ++i) {
+                var item = backend.queue[i]
+                queueModel.append({
+                    region: item.region || "",
+                    state: item.state || "QUEUED",
+                    progress: item.progress !== undefined ? item.progress : 0.0,
+                    error: item.error || ""
+                })
+            }
+        }
     }
 
     ColumnLayout {

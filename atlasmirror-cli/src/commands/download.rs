@@ -57,44 +57,22 @@ pub async fn execute(
         println!("  Retrieving via Logos Storage peers...");
 
         let storage = LogosStorageClient::new(None, 3, 500);
-        let mut download_source = "logos_storage";
+        let download_source = "logos_storage";
 
-        let storage_result = storage.get(&cid, &temp_dest).await;
-        let mut download_success = false;
-
-        match storage_result {
-            Ok(_) => {
-                download_success = true;
-            }
+        match storage.get(&cid, &temp_dest).await {
+            Ok(_) => {}
             Err(e) => {
-                eprintln!("  {} Direct local storage node error: {}", "⚠".yellow(), e);
-                // Attempt peer retrieval from remote VPS peer
-                let vps_url = format!("http://199.231.187.97:8070/api/v1/storage/download/{}", cid);
-                if let Ok(true) = stream_http_download(&vps_url, &temp_dest).await {
-                    download_success = true;
-                } else {
-                    eprintln!("  {} Peer retrieval unavailable.", "✖".red());
-                }
+                eprintln!("  {} Logos Storage retrieval failed: {}", "✖".red(), e);
+                eprintln!(
+                    "  {} Under LP-0018 requirements, hosted snapshots must be retrieved independently via Logos Storage.",
+                    "✖".red()
+                );
+                std::process::exit(1);
             }
         }
 
-        // If Logos Storage fails completely, explicitly fall back to Geofabrik and truthfully report source
-        if !download_success {
-            eprintln!(
-                "  {} Falling back to upstream Geofabrik snapshot...",
-                "ℹ".blue()
-            );
-            download_source = "geofabrik_fallback";
-            let url = if !entry.source_url.is_empty() {
-                &entry.source_url
-            } else {
-                cat_item["geofabrik_url"].as_str().unwrap_or_default()
-            };
-            download_success = stream_http_download(url, &temp_dest).await?;
-        }
-
-        if !download_success || !temp_dest.exists() {
-            eprintln!("{} Failed to download snapshot.", "✖".red());
+        if !temp_dest.exists() {
+            eprintln!("{} Failed to download snapshot from Logos Storage.", "✖".red());
             std::process::exit(1);
         }
 

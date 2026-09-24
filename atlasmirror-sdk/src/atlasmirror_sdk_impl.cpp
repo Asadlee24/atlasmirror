@@ -781,9 +781,11 @@ std::string AtlasmirrorSdkImpl::hostRegion(const std::string &path)
 
     std::vector<std::string> args = {"host", path, "--json"};
     auto [rc, out] = runSafeProcess("atlasmirror-cli", args);
-    if (rc == 0 && !out.empty() && out.front() == '{') {
+    auto firstBrace = out.find('{');
+    auto lastBrace = out.rfind('}');
+    if (rc == 0 && firstBrace != std::string::npos && lastBrace != std::string::npos && lastBrace >= firstBrace) {
         refreshOnChainRegistry();
-        return out;
+        return out.substr(firstBrace, lastBrace - firstBrace + 1);
     }
 
     std::ostringstream ss;
@@ -895,10 +897,56 @@ std::string AtlasmirrorSdkImpl::batchRegister(const std::string &records)
         return "{\"success\":false,\"error\":\"EMPTY_BATCH\"}";
     }
 
-    std::vector<std::string> args = {"host", "--many", records, "--json"};
+    // Parse region paths from records JSON or delimiter-separated string
+    std::vector<std::string> regionList;
+    std::string current;
+    bool inQuote = false;
+    for (size_t i = 0; i < records.size(); ++i) {
+        char c = records[i];
+        if (c == '"') {
+            if (inQuote) {
+                if (!current.empty() && current.find('/') != std::string::npos && current != "path") {
+                    regionList.push_back(current);
+                }
+                current.clear();
+                inQuote = false;
+            } else {
+                inQuote = true;
+                current.clear();
+            }
+        } else if (inQuote) {
+            current += c;
+        } else if (c == ',' || c == ' ' || c == '\n' || c == '\r' || c == '\t') {
+            if (!current.empty()) {
+                if (current.find('/') != std::string::npos) {
+                    regionList.push_back(current);
+                }
+                current.clear();
+            }
+        } else if (c != '[' && c != ']' && c != '{' && c != '}' && c != ':') {
+            current += c;
+        }
+    }
+    if (!current.empty() && current.find('/') != std::string::npos) {
+        regionList.push_back(current);
+    }
+
+    if (regionList.empty()) {
+        return "{\"success\":false,\"error\":\"NO_VALID_REGIONS_FOUND\"}";
+    }
+
+    std::vector<std::string> args = {"host", "--many"};
+    for (const auto &reg : regionList) {
+        args.push_back(reg);
+    }
+    args.push_back("--json");
+
     auto [rc, out] = runSafeProcess("atlasmirror-cli", args);
-    if (rc == 0 && !out.empty() && out.front() == '{') {
-        return out;
+    auto firstBrace = out.find('{');
+    auto lastBrace = out.rfind('}');
+    if (rc == 0 && firstBrace != std::string::npos && lastBrace != std::string::npos && lastBrace >= firstBrace) {
+        refreshOnChainRegistry();
+        return out.substr(firstBrace, lastBrace - firstBrace + 1);
     }
 
     std::ostringstream ss;

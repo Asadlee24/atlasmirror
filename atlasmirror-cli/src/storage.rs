@@ -167,42 +167,87 @@ impl LogosStorageClient {
             std::fs::create_dir_all(parent)?;
         }
 
-        // Call official downloadToUrl(cid, filePath, local, chunkSize)
-        let output = Command::new(&self.logoscore_bin)
-            .arg("call")
-            .arg("storage_module")
-            .arg("downloadToUrl")
-            .arg(cid)
-            .arg(abs_dest.to_str().unwrap_or_default())
-            .arg("true") // local=true for local storage node
-            .arg(self.chunk_size.to_string())
-            .arg("--json")
-            .output()
-            .map_err(|e| {
-                StorageError::BinaryUnavailable(format!("{}: {}", self.logoscore_bin.display(), e))
-            })?;
+        let mut last_err = String::new();
+        let attempts = self.max_retries.max(1);
 
-        if !output.status.success() {
-            return Err(StorageError::DownloadFailed {
-                cid: cid.to_string(),
-                last_error: String::from_utf8_lossy(&output.stderr).to_string(),
-            });
-        }
-
-        // Wait for file to be flushed to disk
-        for _ in 0..30 {
-            if abs_dest.exists() && abs_dest.metadata()?.len() > 0 {
-                return Ok(());
+        for attempt in 0..attempts {
+            if attempt > 0 {
+                let delay = self.base_backoff_ms * (1 << (attempt - 1));
+                tokio::time::sleep(Duration::from_millis(delay)).await;
             }
-            tokio::time::sleep(Duration::from_millis(500)).await;
+
+            // In LP-0018, retrieval must be possible across nodes (network peer retrieval) as well as locally.
+            // On first attempt try peer retrieval (local=false); on retry fallback to local=true.
+            let local_flag = if attempt == 0 { "false" } else { "true" };
+
+            let output_res = Command::new(&self.logoscore_bin)
+                .arg("call")
+                .arg("storage_module")
+                .arg("downloadToUrl")
+                .arg(cid)
+                .arg(abs_dest.to_str().unwrap_or_default())
+                .arg(local_flag)
+                .arg(self.chunk_size.to_string())
+                .arg("--json")
+                .output();
+
+            match output_res {
+                Ok(output) => {
+                    if output.status.success() {
+                        // Wait for file to be flushed to disk
+                        for _ in 0..30 {
+                            if abs_dest.exists()
+                                && abs_dest.metadata().map(|m| m.len() > 0).unwrap_or(false)
+                            {
+                                return Ok(());
+                            }
+                            tokio::time::sleep(Duration::from_millis(200)).await;
+                        }
+                    }
+                    last_err = String::from_utf8_lossy(&output.stderr).to_string();
+                }
+                Err(e) => {
+                    last_err = format!("{}: {}", self.logoscore_bin.display(), e);
+                }
+            }
+
+            // If network peer attempt didn't produce file, also try local=true directly
+            if local_flag == "false" {
+                let fallback = Command::new(&self.logoscore_bin)
+                    .arg("call")
+                    .arg("storage_module")
+                    .arg("downloadToUrl")
+                    .arg(cid)
+                    .arg(abs_dest.to_str().unwrap_or_default())
+                    .arg("true")
+                    .arg(self.chunk_size.to_string())
+                    .arg("--json")
+                    .output();
+                if let Ok(out) = fallback {
+                    if out.status.success() {
+                        for _ in 0..30 {
+                            if abs_dest.exists()
+                                && abs_dest.metadata().map(|m| m.len() > 0).unwrap_or(false)
+                            {
+                                return Ok(());
+                            }
+                            tokio::time::sleep(Duration::from_millis(200)).await;
+                        }
+                    }
+                }
+            }
         }
 
-        if abs_dest.exists() {
+        if abs_dest.exists() && abs_dest.metadata().map(|m| m.len() > 0).unwrap_or(false) {
             Ok(())
         } else {
             Err(StorageError::DownloadFailed {
                 cid: cid.to_string(),
-                last_error: "File was not written to destination by storage module".to_string(),
+                last_error: if last_err.is_empty() {
+                    "File was not written to destination by storage module".to_string()
+                } else {
+                    last_err
+                },
             })
         }
     }

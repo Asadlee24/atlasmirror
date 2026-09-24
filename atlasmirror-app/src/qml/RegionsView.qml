@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
 
 Item {
     id: regionsView
@@ -86,25 +87,74 @@ Item {
         id: regionsModel
     }
 
+    Connections {
+        target: (typeof backend !== "undefined") ? backend : null
+        function onRegionsUpdated() {
+            populateModel()
+        }
+    }
+
+    FileDialog {
+        id: importFileDialog
+        title: "Select Local .osm.pbf File to Import"
+        nameFilters: ["OSM PBF files (*.osm.pbf *.pbf)", "All files (*)"]
+        onAccepted: {
+            var pathStr = currentFile ? currentFile.toString() : selectedFile.toString()
+            if (typeof backend !== "undefined" && backend.importLocal && selectedItem) {
+                var resStr = backend.importLocal(selectedItem.path, pathStr)
+                try {
+                    var resObj = JSON.parse(resStr)
+                    if (resObj.success) {
+                        statusNotification = "Successfully imported " + selectedItem.path + " (MD5: " + (resObj.computed_md5 || "verified") + ")"
+                        populateModel()
+                    } else {
+                        statusNotification = "Import failed for " + selectedItem.path + ": " + (resObj.error || resObj.message || "Unknown error")
+                    }
+                } catch(e) {
+                    statusNotification = "Import result: " + resStr
+                }
+            }
+        }
+    }
+
     Component.onCompleted: {
         populateModel()
     }
 
     function populateModel() {
         regionsModel.clear()
-        var s = searchField.text.trim().toLowerCase()
-        var f = filterCombo.currentText
+        var s = (typeof searchField !== "undefined" && searchField) ? searchField.text.trim().toLowerCase() : ""
+        var f = (typeof filterCombo !== "undefined" && filterCombo) ? filterCombo.currentText : "All"
 
-        for (var i = 0; i < allCatalogRegions.length; ++i) {
-            var item = allCatalogRegions[i]
-            var pathMatch = s === "" || item.path.toLowerCase().indexOf(s) !== -1 || item.name.toLowerCase().indexOf(s) !== -1
+        var sourceList = allCatalogRegions
+        if (typeof backend !== "undefined" && backend.regions && backend.regions.length > 0) {
+            sourceList = backend.regions
+        }
+
+        for (var i = 0; i < sourceList.length; ++i) {
+            var item = sourceList[i]
+            var p = item.path || ""
+            var n = item.name || p
+            var pathMatch = s === "" || p.toLowerCase().indexOf(s) !== -1 || n.toLowerCase().indexOf(s) !== -1
             if (!pathMatch) continue
 
-            if (f === "Hosted" && !item.hosted) continue
-            if (f === "Not hosted" && item.hosted) continue
-            if (f === "Update available" && item.updateStatus !== "UPDATE_AVAILABLE") continue
+            var isHosted = !!item.hosted
+            var updateSt = item.updateStatus || (isHosted ? "UP_TO_DATE" : "NOT_HOSTED")
 
-            regionsModel.append(item)
+            if (f === "Hosted" && !isHosted) continue
+            if (f === "Not hosted" && isHosted) continue
+            if (f === "Update available" && updateSt !== "UPDATE_AVAILABLE") continue
+
+            regionsModel.append({
+                path: p,
+                name: n,
+                level: item.level || "country",
+                version: item.version || "—",
+                hosted: isHosted,
+                cid: item.cid || "—",
+                checksum: item.checksum || "—",
+                updateStatus: updateSt
+            })
         }
     }
 
@@ -411,7 +461,7 @@ Item {
                             Layout.fillWidth: true
                             enabled: selectedItem !== null
                             onClicked: {
-                                statusNotification = "Local import dialog ready. Verifying checksum against published Geofabrik MD5."
+                                importFileDialog.open()
                             }
                         }
                     }

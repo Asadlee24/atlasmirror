@@ -67,7 +67,7 @@ enum RegionsSubcommand {
 #[derive(Args)]
 struct HostArgs {
     /// Single canonical region path to host
-    #[arg(conflicts_with_all = &["many", "file"])]
+    #[arg(conflicts_with = "many")]
     region: Option<String>,
 
     /// Host multiple regions in batch
@@ -75,7 +75,7 @@ struct HostArgs {
     many: Option<Vec<String>>,
 
     /// Host a local .osm.pbf file after import-time checksum verification
-    #[arg(long, value_names = ["REGION", "FILE"], num_args = 2)]
+    #[arg(long, num_args = 1..=2)]
     file: Option<Vec<String>>,
 
     /// Calculate estimated download size and simulate without transferring data
@@ -96,7 +96,19 @@ struct DownloadArgs {
 #[derive(Args)]
 struct LookupArgs {
     #[command(subcommand)]
-    subcommand: LookupSubcommand,
+    subcommand: Option<LookupSubcommand>,
+
+    /// Look up on-chain record by canonical region path
+    #[arg(long)]
+    region: Option<String>,
+
+    /// Look up all subregions for a decomposed parent country (e.g. "us")
+    #[arg(long)]
+    parent: Option<String>,
+
+    /// Look up region record by Logos Storage CID
+    #[arg(long)]
+    cid: Option<String>,
 }
 
 #[derive(Subcommand)]
@@ -111,8 +123,17 @@ enum LookupSubcommand {
 
 #[derive(Args)]
 struct UpdatesArgs {
+    #[command(subcommand)]
+    subcommand: Option<UpdatesSubcommand>,
+
     /// Optional specific region path to check
     region: Option<String>,
+}
+
+#[derive(Subcommand)]
+enum UpdatesSubcommand {
+    /// Check updates for a specific region
+    Check { region: String },
 }
 
 #[derive(Args)]
@@ -144,9 +165,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         Commands::Host(args) => {
             if let Some(ref file_args) = args.file {
-                let region = &file_args[0];
-                let path = PathBuf::from(&file_args[1]);
-                commands::host::execute_host_file(region, &path, cli.json).await?;
+                let (region, path) = if file_args.len() == 2 {
+                    (file_args[0].clone(), PathBuf::from(&file_args[1]))
+                } else if file_args.len() == 1 {
+                    if let Some(ref reg) = args.region {
+                        (reg.clone(), PathBuf::from(&file_args[0]))
+                    } else {
+                        eprintln!(
+                            "Error: Region path must be specified: atlasmirror-cli host <region> --file <path>"
+                        );
+                        std::process::exit(1);
+                    }
+                } else {
+                    eprintln!("Error: Invalid arguments for --file");
+                    std::process::exit(1);
+                };
+                commands::host::execute_host_file(&region, &path, cli.json).await?;
             } else if let Some(ref many) = args.many {
                 commands::host::execute_host_many(many, args.dry_run, cli.json).await?;
             } else if let Some(ref region) = args.region {
@@ -161,19 +195,43 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Download(args) => {
             commands::download::execute(&args.region, &args.output, cli.json).await?;
         }
-        Commands::Lookup(args) => match args.subcommand {
-            LookupSubcommand::Region { path } => {
+        Commands::Lookup(args) => {
+            if let Some(sub) = args.subcommand {
+                match sub {
+                    LookupSubcommand::Region { path } => {
+                        commands::lookup::execute_region(&path, cli.json)?;
+                    }
+                    LookupSubcommand::Parent { parent } => {
+                        commands::lookup::execute_parent(&parent, cli.json)?;
+                    }
+                    LookupSubcommand::Cid { cid } => {
+                        commands::lookup::execute_cid(&cid, cli.json)?;
+                    }
+                }
+            } else if let Some(path) = args.region {
                 commands::lookup::execute_region(&path, cli.json)?;
-            }
-            LookupSubcommand::Parent { parent } => {
+            } else if let Some(parent) = args.parent {
                 commands::lookup::execute_parent(&parent, cli.json)?;
-            }
-            LookupSubcommand::Cid { cid } => {
+            } else if let Some(cid) = args.cid {
                 commands::lookup::execute_cid(&cid, cli.json)?;
+            } else {
+                eprintln!("Error: Specify lookup target (region, parent, or cid)");
+                std::process::exit(1);
             }
-        },
+        }
         Commands::Updates(args) => {
-            commands::updates::execute(args.region.as_deref(), cli.json).await?;
+            let target_region = if let Some(UpdatesSubcommand::Check { region }) = args.subcommand {
+                Some(region)
+            } else if let Some(r) = args.region {
+                if r == "check" {
+                    None
+                } else {
+                    Some(r)
+                }
+            } else {
+                None
+            };
+            commands::updates::execute(target_region.as_deref(), cli.json).await?;
         }
         Commands::Registry(args) => match args.subcommand {
             RegistrySubcommand::ProgramId => {

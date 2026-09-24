@@ -24,6 +24,35 @@ ApplicationWindow {
 
         readonly property var cBackend: (typeof appBackend !== "undefined" && appBackend) ? appBackend : null
 
+        property var regions: cBackend ? cBackend.regions : []
+        property var queue: cBackend ? cBackend.queue : []
+        property var downloads: cBackend ? cBackend.downloads : []
+
+        signal regionsUpdated()
+        signal queueUpdated()
+        signal downloadsUpdated()
+
+        Component.onCompleted: {
+            if (cBackend) {
+                try {
+                    cBackend.regionsUpdated.connect(function() {
+                        backend.regions = cBackend.regions;
+                        backend.regionsUpdated();
+                    });
+                    cBackend.queueUpdated.connect(function() {
+                        backend.queue = cBackend.queue;
+                        backend.queueUpdated();
+                    });
+                    cBackend.downloadsUpdated.connect(function() {
+                        backend.downloads = cBackend.downloads;
+                        backend.downloadsUpdated();
+                    });
+                } catch(e) {
+                    console.log("Signal connection note:", e);
+                }
+            }
+        }
+
         function refreshIndex() {
             if (cBackend) cBackend.refreshIndex();
         }

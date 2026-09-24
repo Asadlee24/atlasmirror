@@ -457,17 +457,17 @@ void AppBackend::copyToClipboard(const QString &text)
 
 QString AppBackend::queryRegistry(const QString &queryType, const QString &queryValue)
 {
-    QString arg;
+    QString subcmd;
     if (queryType.contains("CID", Qt::CaseInsensitive)) {
-        arg = "--cid";
+        subcmd = "cid";
     } else if (queryType.contains("Parent", Qt::CaseInsensitive)) {
-        arg = "--parent";
+        subcmd = "parent";
     } else {
-        arg = "--region";
+        subcmd = "region";
     }
 
     QProcess proc;
-    proc.start("atlasmirror-cli", QStringList() << "lookup" << arg << queryValue << "--json");
+    proc.start("atlasmirror-cli", QStringList() << "lookup" << subcmd << queryValue << "--json");
     if (proc.waitForFinished(10000) && proc.exitCode() == 0) {
         return QString::fromUtf8(proc.readAllStandardOutput());
     }
@@ -495,12 +495,23 @@ QString AppBackend::queryRegistry(const QString &queryType, const QString &query
 
 QString AppBackend::importLocal(const QString &regionPath, const QString &localFilePath)
 {
-    QFileInfo fi(localFilePath);
+    QString cleanPath = localFilePath;
+    if (cleanPath.startsWith("file:///")) {
+#ifdef Q_OS_WIN
+        cleanPath = cleanPath.mid(8);
+#else
+        cleanPath = cleanPath.mid(7);
+#endif
+    } else if (cleanPath.startsWith("file://")) {
+        cleanPath = cleanPath.mid(7);
+    }
+
+    QFileInfo fi(cleanPath);
     if (!fi.exists() || fi.size() == 0) {
         return "{\"success\":false,\"error\":\"LOCAL_FILE_NOT_FOUND\"}";
     }
 
-    QFile file(localFilePath);
+    QFile file(cleanPath);
     if (!file.open(QIODevice::ReadOnly)) {
         return "{\"success\":false,\"error\":\"CANNOT_READ_FILE\"}";
     }
@@ -510,11 +521,32 @@ QString AppBackend::importLocal(const QString &regionPath, const QString &localF
         return "{\"success\":false,\"error\":\"CHECKSUM_FAILED\"}";
     }
     QString computedMd5 = QString::fromUtf8(hash.result().toHex());
+    file.close();
 
     QProcess proc;
-    proc.start("atlasmirror-cli", QStringList() << "host" << regionPath << "--file" << localFilePath << "--json");
-    if (proc.waitForFinished(30000) && proc.exitCode() == 0) {
-        return QString::fromUtf8(proc.readAllStandardOutput());
+    proc.start("atlasmirror-cli", QStringList() << "host" << regionPath << "--file" << cleanPath << "--json");
+    if (!proc.waitForFinished(30000)) {
+        QJsonObject err;
+        err["success"] = false;
+        err["error"] = "PROCESS_TIMEOUT";
+        err["message"] = "atlasmirror-cli process timed out";
+        return QString::fromUtf8(QJsonDocument(err).toJson(QJsonDocument::Compact));
+    }
+
+    if (proc.exitCode() != 0) {
+        QString errStr = QString::fromUtf8(proc.readAllStandardError()).trimmed();
+        QJsonObject err;
+        err["success"] = false;
+        err["error"] = "IMPORT_FAILED";
+        err["message"] = errStr.isEmpty() ? QString("Process exited with code %1").arg(proc.exitCode()) : errStr;
+        return QString::fromUtf8(QJsonDocument(err).toJson(QJsonDocument::Compact));
+    }
+
+    QString outStr = QString::fromUtf8(proc.readAllStandardOutput()).trimmed();
+    int firstBrace = outStr.indexOf('{');
+    int lastBrace = outStr.lastIndexOf('}');
+    if (firstBrace != -1 && lastBrace > firstBrace) {
+        return outStr.mid(firstBrace, lastBrace - firstBrace + 1);
     }
 
     QJsonObject res;
@@ -529,7 +561,7 @@ QString AppBackend::importLocal(const QString &regionPath, const QString &localF
 QString AppBackend::updateCheck(const QString &regionPath)
 {
     QProcess proc;
-    proc.start("atlasmirror-cli", QStringList() << "updates" << "check" << regionPath << "--json");
+    proc.start("atlasmirror-cli", QStringList() << "updates" << regionPath << "--json");
     if (proc.waitForFinished(10000) && proc.exitCode() == 0) {
         return QString::fromUtf8(proc.readAllStandardOutput());
     }

@@ -64,30 +64,41 @@ cat = json.load(open('metadata/regions.json'))['regions']
 cat_map = {r['path']: r for r in cat}
 
 manifest = json.load(open('evidence/a1-coverage-manifest.json'))['entries']
+manifest_map = {e['region']: e for e in manifest if e.get('in_closed_set')}
 counting_25 = [e['region'] for e in manifest if e.get('in_closed_set')][:25]
 
 print(f'Total on-chain records in T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci: {len(records)}')
 print(f'Last updated timestamp: {last_updated}')
 
-print('\n--- AUDITING ALL 25 COUNTING ENTRIES ---')
+print('\n--- AUDITING ALL 25 COUNTING ENTRIES (HIERARCHY, CID & MD5) ---')
 mismatches = []
 for reg_name in counting_25:
     onchain = next((r for r in records if r['region'] == reg_name), None)
-    expected = cat_map.get(reg_name)
+    expected_cat = cat_map.get(reg_name)
+    expected_man = manifest_map.get(reg_name)
     if not onchain:
         print(f'MISSING ON CHAIN: {reg_name}')
+        mismatches.append((reg_name, "MISSING_ON_CHAIN"))
         continue
-    exp_lvl = expected['level'] if expected else 'country'
-    exp_parent = expected['parent'] if expected else None
+    exp_lvl = expected_cat['level'] if expected_cat else 'country'
+    exp_parent = expected_cat['parent'] if expected_cat else None
+    exp_cid = expected_man['cid'] if expected_man else ''
+    exp_md5 = expected_man['geofabrik_md5'] if expected_man else ''
     
-    match = (onchain['level'] == exp_lvl and onchain['parent'] == exp_parent)
-    if not match:
-        mismatches.append((reg_name, onchain['level'], onchain['parent'], exp_lvl, exp_parent, onchain['cid'], onchain['checksum'], onchain['source_url'], onchain['version'], onchain['timestamp']))
-        print(f'MISMATCH: {reg_name} -> On-Chain: (level={onchain["level"]}, parent={onchain["parent"]}) | Expected: (level={exp_lvl}, parent={exp_parent})')
+    match_hier = (onchain['level'] == exp_lvl and onchain['parent'] == exp_parent)
+    match_cid = (not exp_cid or onchain['cid'] == exp_cid)
+    match_md5 = (not exp_md5 or onchain['checksum'] == exp_md5)
+
+    if not (match_hier and match_cid and match_md5):
+        mismatches.append((reg_name, f"hier={match_hier}, cid={match_cid}, md5={match_md5}"))
+        print(f'MISMATCH: {reg_name} -> On-Chain CID: {onchain["cid"]} | Exp CID: {exp_cid} | MD5: {onchain["checksum"]} vs {exp_md5}')
     else:
-        print(f'OK: {reg_name} (level={exp_lvl}, parent={exp_parent})')
+        print(f'OK: {reg_name} (level={exp_lvl}, parent={exp_parent}, CID={onchain["cid"][:12]}..., MD5={onchain["checksum"]})')
 
 print(f'\nTotal Mismatches in 25 counting set: {len(mismatches)}')
-print('Mismatched regions list:')
-for m in mismatches:
-    print(f'  {m[0]}: onchain=({m[1]}, {m[2]}) -> should be=({m[3]}, {m[4]})')
+if mismatches:
+    print('Mismatched regions list:')
+    for m in mismatches:
+        print(f'  {m[0]}: {m[1]}')
+else:
+    print('ALL 25/25 COUNTING ENTRIES 100% MATCHED (HIERARCHY, CID, AND MD5)!')

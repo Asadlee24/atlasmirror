@@ -46,13 +46,9 @@ tar -xf "${TMP_SETUP}/storage_module.lgx" -C "${MODULES_DIR}/storage_module"
 cp "${MODULES_DIR}/storage_module/variants/linux-amd64/"* "${MODULES_DIR}/storage_module/"
 printf "linux-amd64" > "${MODULES_DIR}/storage_module/variant"
 
-# 4. Set up preconfigured CI wallet
+# 4. Set up clean disposable CI wallet on the fly (no secrets stored in repository)
 WALLET_HOME="${HOME}/.lee/wallet"
 mkdir -p "${WALLET_HOME}"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "${SCRIPT_DIR}/ci_wallet.tar.gz" ]; then
-    tar -xzf "${SCRIPT_DIR}/ci_wallet.tar.gz" -C "${WALLET_HOME}"
-fi
 
 cat > "${WALLET_HOME}/wallet_config.json" <<EOF
 {
@@ -71,6 +67,11 @@ cat > "${WALLET_HOME}/wallet_config.json" <<EOF
   }
 }
 EOF
+
+export LEE_WALLET_HOME_DIR="${WALLET_HOME}"
+if [ ! -f "${WALLET_HOME}/storage.json" ]; then
+    printf "\n" | "${INSTALL_DIR}/wallet" account list >/dev/null 2>&1 || true
+fi
 
 echo "========================================================"
 echo " Infrastructure setup complete:"

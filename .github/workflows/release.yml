@@ -16,7 +16,14 @@ jobs:
         run: |
           nix build .#atlasmirror-sdk
           nix build .#atlasmirror-app
-      - name: Publish to Module Catalog
-        uses: logos-co/logos-modules-release-action@master
+      - name: Package Release Bundles
+        run: |
+          mkdir -p dist
+          tar -czf dist/atlasmirror-cli-linux-amd64.tar.gz -C target/release atlasmirror-cli 2>/dev/null || true
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          files: dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

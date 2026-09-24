@@ -10,7 +10,7 @@ set -euo pipefail
 TARGET_REGION="${ATLASMIRROR_REGION:-china/henan}"
 MODULES_DIR="${LOGOS_MODULES_DIR:-./modules}"
 PROGRAM_ID="${OSM_REGISTRY_PROGRAM_ID:-bcdc104271bd670da3b1afddcb758286c619de87365d6488c9c2f563947f8b4f}"
-REGISTRY_ACCOUNT_ID="${OSM_REGISTRY_ACCOUNT_ID:-T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci}"
+REGISTRY_ACCOUNT_ID="${OSM_REGISTRY_E2E_ACCOUNT_ID:-}"
 export LEE_WALLET_HOME_DIR="${LEE_WALLET_HOME_DIR:-${HOME}/.lee/wallet}"
 
 mkdir -p evidence
@@ -58,6 +58,20 @@ if [ -z "${PROGRAM_ID}" ]; then
     echo "[BLOCKED] OSM_REGISTRY_PROGRAM_ID environment variable not set." | tee -a evidence/e2e-real.log
     echo "Deploy program first using: wallet deploy-program target/riscv32im-risc0-zkvm-elf/release/osm_registry" | tee -a evidence/e2e-real.log
     exit 2
+fi
+
+if [ -z "${REGISTRY_ACCOUNT_ID}" ] || [ "${REGISTRY_ACCOUNT_ID}" = "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci" ]; then
+    echo "Creating isolated test state account for E2E..." | tee -a evidence/e2e-real.log
+    NEW_ACCT=$(printf "\n" | wallet account new public 2>/dev/null | grep -o 'Public/[1-9A-HJ-NP-Za-km-z]*' | head -n 1 || true)
+    if [ -n "${NEW_ACCT}" ]; then
+        REGISTRY_ACCOUNT_ID="${NEW_ACCT#Public/}"
+        echo "Created ephemeral E2E state account: ${REGISTRY_ACCOUNT_ID}" | tee -a evidence/e2e-real.log
+        spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
+            initialize \
+            --state "${REGISTRY_ACCOUNT_ID}" >> evidence/e2e-real.log 2>&1 || true
+    else
+        REGISTRY_ACCOUNT_ID="E2ETestStateAccountIsolated1111111111111111"
+    fi
 fi
 
 TMP_DIR=$(mktemp -d /tmp/atlasmirror-e2e.XXXXXX)
@@ -175,7 +189,7 @@ fi
 
 REG_TIMESTAMP=$(python3 -c "import urllib.request, json, struct, time;
 try:
-    req = urllib.request.Request('https://testnet.lez.logos.co/', data=json.dumps({'jsonrpc':'2.0','id':1,'method':'getAccount','params':['${REGISTRY_ACCOUNT_ID:-T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci}']}).encode(), headers={'Content-Type':'application/json'})
+    req = urllib.request.Request('https://testnet.lez.logos.co/', data=json.dumps({'jsonrpc':'2.0','id':1,'method':'getAccount','params':['${REGISTRY_ACCOUNT_ID}']}).encode(), headers={'Content-Type':'application/json'})
     raw = bytes(json.loads(urllib.request.urlopen(req, timeout=10).read().decode())['result']['data'])
     last_updated = struct.unpack_from('<Q', raw, 8)[0]
     print(max(int(time.time()), last_updated + 100))
@@ -185,7 +199,7 @@ except Exception:
 
 TX_OUTPUT=$(spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
     register-region \
-    --state "${REGISTRY_ACCOUNT_ID:-T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci}" \
+    --state "${REGISTRY_ACCOUNT_ID}" \
     --region "${TARGET_REGION}" \
     ${EXTRA_PARENT_FLAG} \
     --level "${LEVEL}" \
@@ -197,7 +211,7 @@ TX_OUTPUT=$(spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- 
     --timestamp "${REG_TIMESTAMP}" | tee -a evidence/e2e-real.log)
 
 echo "=== [Step 7] Querying on-chain state via spel inspect ===" | tee -a evidence/e2e-real.log
-QUERY_OUTPUT=$(spel inspect "${REGISTRY_ACCOUNT_ID:-T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci}" \
+QUERY_OUTPUT=$(spel inspect "${REGISTRY_ACCOUNT_ID}" \
     --idl osm-registry/idl/osm_registry.json \
     --type GlobalRegistryState | tee -a evidence/e2e-real.log)
 
