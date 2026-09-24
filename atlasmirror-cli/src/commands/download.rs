@@ -33,7 +33,11 @@ pub async fn execute(
         .find(|r| r.get("path").and_then(|p| p.as_str()) == Some(region));
 
     if cat_item.is_none() {
-        return Err(format!("Region '{}' is not in the predefined LP-0018 catalog.", region).into());
+        return Err(format!(
+            "Region '{}' is not in the predefined LP-0018 catalog.",
+            region
+        )
+        .into());
     }
     let cat_item = cat_item.unwrap();
 
@@ -63,11 +67,7 @@ pub async fn execute(
                 download_success = true;
             }
             Err(e) => {
-                eprintln!(
-                    "  {} Direct local storage node error: {}",
-                    "⚠".yellow(),
-                    e
-                );
+                eprintln!("  {} Direct local storage node error: {}", "⚠".yellow(), e);
                 // Attempt peer retrieval from remote VPS peer
                 let vps_url = format!("http://199.231.187.97:8070/api/v1/storage/download/{}", cid);
                 if let Ok(true) = stream_http_download(&vps_url, &temp_dest).await {

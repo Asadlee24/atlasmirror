@@ -123,22 +123,37 @@ echo "=== [Step 5] Streaming upload to Logos Storage via uploadUrl ===" | tee -a
 WATCHER_UPLOAD_PID=$!
 sleep 1
 
-"${LOGOSCORE_BIN}" call storage_module uploadUrl "${PBF_FILE}" 1048576 --json >> evidence/e2e-real.log 2>&1
+ABS_PBF=$(realpath "${PBF_FILE}")
+echo "Streaming upload of ${ABS_PBF} (${FILE_BYTES} bytes) to Logos Storage..." | tee -a evidence/e2e-real.log
+UPLOAD_CALL_RESP=$("${LOGOSCORE_BIN}" call storage_module uploadUrl "${ABS_PBF}" 262144 --json 2>&1 || true)
+echo "uploadUrl Call Response: ${UPLOAD_CALL_RESP}" >> evidence/e2e-real.log
 
-# Wait for storageUploadDone event
-echo "Waiting for storageUploadDone event..." | tee -a evidence/e2e-real.log
-REAL_CID=""
-for i in {1..90}; do
-    if [ -s evidence/e2e-upload-event.json ]; then
-        REAL_CID=$(grep -o 'zDv[a-zA-Z0-9]*' evidence/e2e-upload-event.json | head -1 || echo "")
-        if [ -n "${REAL_CID}" ]; then break; fi
-    fi
-    sleep 1
-done
-
+# Check if call response directly has CID
+REAL_CID=$(echo "${UPLOAD_CALL_RESP}" | grep -o '"cid": *"[^"]*"' | head -1 | cut -d'"' -f4 || echo "")
 if [ -z "${REAL_CID}" ]; then
+    REAL_CID=$(echo "${UPLOAD_CALL_RESP}" | grep -o 'zDv[a-zA-Z0-9]*' | head -1 || echo "")
+fi
+
+# Wait for storageUploadDone event in watcher
+if [ -z "${REAL_CID}" ]; then
+    echo "Waiting for storageUploadDone event (up to 120s)..." | tee -a evidence/e2e-real.log
+    for i in {1..120}; do
+        if [ -s evidence/e2e-upload-event.json ]; then
+            REAL_CID=$(grep -o '"cid": *"[^"]*"' evidence/e2e-upload-event.json | head -1 | cut -d'"' -f4 || echo "")
+            if [ -z "${REAL_CID}" ]; then
+                REAL_CID=$(grep -o 'zDv[a-zA-Z0-9]*' evidence/e2e-upload-event.json | head -1 || echo "")
+            fi
+            if [ -n "${REAL_CID}" ]; then break; fi
+        fi
+        sleep 1
+    done
+fi
+
+# Fallback: query manifests
+if [ -z "${REAL_CID}" ]; then
+    echo "Querying manifests for uploaded CID..." | tee -a evidence/e2e-real.log
     MANIFESTS_JSON=$("${LOGOSCORE_BIN}" call storage_module manifests --json 2>&1 || echo "")
-    REAL_CID=$(echo "${MANIFESTS_JSON}" | grep -o 'zDv[a-zA-Z0-9]*' | head -1 || echo "")
+    REAL_CID=$(echo "${MANIFESTS_JSON}" | grep -o '"cid": *"[^"]*"' | head -1 | cut -d'"' -f4 || echo "")
 fi
 
 if [ -z "${REAL_CID}" ]; then

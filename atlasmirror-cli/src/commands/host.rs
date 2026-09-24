@@ -429,18 +429,13 @@ pub async fn execute_host_file(
     }
 
     println!("  3. Checksum matches! Uploading exact bytes to Logos Storage...");
-    let storage_endpoint = std::env::var("LOGOS_STORAGE_ENDPOINT")
-        .unwrap_or_else(|_| "http://127.0.0.1:5001".to_string());
-    let storage = LogosStorageClient::new(Some(&storage_endpoint), 3, 500);
+    let storage = LogosStorageClient::new(None, 3, 500);
 
     let cid = match storage.put(file_path).await {
         Ok(c) => c,
         Err(e) => {
             eprintln!("{} Logos Storage upload failed: {}", "✖".red(), e);
-            eprintln!(
-                "   Ensure Logos storage daemon is active on {}",
-                storage_endpoint
-            );
+            eprintln!("   Ensure Logos storage daemon / logoscore is active.");
             std::process::exit(1);
         }
     };
@@ -448,12 +443,12 @@ pub async fn execute_host_file(
 
     println!("  4. Registering on-chain in LEZ...");
     let runner_bin = std::env::var("LEZ_RUNNER_BIN").unwrap_or_else(|_| {
-        "/root/lez-testnet-compatible/target/release/run_osm_registry".to_string()
+        "/root/.cargo/git/checkouts/logos-execution-zone-6bae42d7c9cadfe7/47eba25/target/debug/run_osm_registry".to_string()
     });
     let program_bin =
         std::env::var("OSM_REGISTRY_BIN").unwrap_or_else(|_| "/root/osm_registry.bin".to_string());
     let account_id = std::env::var("LEZ_ACCOUNT_ID")
-        .unwrap_or_else(|_| "55Me6rDpyUu9vhuMhnM26ikUL4XbgKDUjrWEpdpzyv6r".to_string());
+        .unwrap_or_else(|_| "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci".to_string());
 
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)?

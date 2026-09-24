@@ -432,9 +432,9 @@ void AtlasmirrorSdkImpl::loadVerifiedManifest()
         {"asia/pakistan", "zDvZRwzm9WQQrvAZL4NavbFXjmbHTFNyho68zPMxKsCvfGEn2LbD", "d63c9409c20924d0813b81266eb2f5ad", "2026-09-20", 1789974237},
         {"europe/bulgaria", "zDvZRwzm72Y7GBdMzdT7ibQWieQSmUhvk54VHfhcsUDcqnPhma51", "25801cfabc5bfe8e1ae56ded0fa5ed13", "2026-09-20", 1789976858},
         {"africa/egypt", "zDvZRwzmDbJCqSLbyt1Fw4mSvrGFkJGBLaBAogpw8VF66wA469mm", "04a4d557c902a5f29ba0e7a1394e0232", "2026-09-20", 1789977848},
-        {"asia/iran", "zDvZRwzmBv3fXmNnBhy32eW6P817173jE48pWfNnE35g68b3n72g", "5d33dd5a92a5b28dae3e60fc8ccae1b4", "2026-09-20", 1789980029},
-        {"africa/morocco", "zDvZRwzm7Q24bF5jZzE25gH7jM88pW7m53gM42s37p271b33b762", "1e66ee69e6b26ee823ba4bb248ef2e34", "2026-09-20", 1789983272},
-        {"asia/malaysia-singapore-brunei", "zDvZRwzmA7m98533kFjE7jZ91mB22xW7m53gM42s37p271b33b762", "22b5133618a8b130e46eb532eb9b0499", "2026-09-20", 1789985535},
+        {"asia/iran", "zDvZRwzkybLEXZoEjDetaF4yKT73jszhgkMTboXedKCt4En1gUKV", "e503562d3826bec67e6f87b899da4098", "2026-09-20", 1790248996},
+        {"africa/morocco", "zDvZRwzmD3VCUxT9UqAh7mXpT4XmWarwKBFR6p2eRiY7PxjQg3kt", "ac60aed8b36bac264f2c17c89a584b94", "2026-09-20", 1790248996},
+        {"asia/malaysia-singapore-brunei", "zDvZRwzkxgamWxqXcSCp2m8Z5WicCRd79MVy8B3duQ8gCZJSc11Y", "203cebee0dbaa4e8464b777cd10698e6", "2026-09-20", 1790248996},
         {"china/shandong", "zDvZRwzm7Yn6itgdZ4DLa6ExvHpy84ZwDwLTLNfaxZpqBzDx6d2S", "694e3251c5bd24cc2d5a4a8051386808", "2026-09-20", 1789986500},
         {"china/jiangsu", "zDvZRwzky6qXkYQESyUvuWJ11ALPBtqVfQKdK95oK9fpzr8aBzBW", "8570de9c1c339879171f9ade8fc0df8c", "2026-09-20", 1789987200},
         {"china/zhejiang", "zDvZRwzm6VRRAPN1VQfLYrpWdZc3bXTXXddX5QeujuGq44hTYpfL", "be6f111217e76d8315735642914fef66", "2026-09-20", 1789988100},
@@ -622,6 +622,9 @@ std::string AtlasmirrorSdkImpl::discoverRegions()
         loadPredefinedCatalog();
         loadVerifiedManifest();
     }
+    if (!m_registryFetched) {
+        refreshOnChainRegistry();
+    }
 
     std::ostringstream ss;
     ss << "[";
@@ -641,6 +644,9 @@ std::string AtlasmirrorSdkImpl::getRegion(const std::string &path)
         loadPredefinedCatalog();
         loadVerifiedManifest();
     }
+    if (!m_registryFetched) {
+        refreshOnChainRegistry();
+    }
     auto it = m_catalog.find(path);
     if (it != m_catalog.end()) {
         return serializeRecord(it->second);
@@ -653,6 +659,9 @@ std::string AtlasmirrorSdkImpl::getByCid(const std::string &cid)
     if (m_catalog.empty()) {
         loadPredefinedCatalog();
         loadVerifiedManifest();
+    }
+    if (!m_registryFetched) {
+        refreshOnChainRegistry();
     }
     if (cid.empty()) {
         return "{\"error\":\"INVALID_CID\"}";
@@ -851,6 +860,18 @@ std::string AtlasmirrorSdkImpl::importLocal(const std::string &path, const std::
     }
 
     bool md5Match = (!publishedMd5.empty() && publishedMd5 == computedMd5);
+    if (!md5Match) {
+        std::ostringstream ss;
+        ss << "{"
+           << "\"success\":false,"
+           << "\"path\":\"" << escapeJson(path) << "\","
+           << "\"error\":\"CHECKSUM_MISMATCH\","
+           << "\"computed_md5\":\"" << computedMd5 << "\","
+           << "\"published_md5\":\"" << publishedMd5 << "\","
+           << "\"checksum_verified\":false"
+           << "}";
+        return ss.str();
+    }
 
     // Call CLI to upload file and register on chain safely
     std::vector<std::string> hostArgs = {"host", path, "--file", localFilePath, "--json"};
@@ -858,11 +879,11 @@ std::string AtlasmirrorSdkImpl::importLocal(const std::string &path, const std::
 
     std::ostringstream ss;
     ss << "{"
-       << "\"success\":" << ((hCode == 0) ? "true" : (md5Match ? "true" : "false")) << ","
+       << "\"success\":" << (hCode == 0 ? "true" : "false") << ","
        << "\"path\":\"" << escapeJson(path) << "\","
        << "\"computed_md5\":\"" << computedMd5 << "\","
        << "\"published_md5\":\"" << publishedMd5 << "\","
-       << "\"checksum_verified\":" << (md5Match ? "true" : "false") << ","
+       << "\"checksum_verified\":true,"
        << "\"cli_response\":\"" << escapeJson(hOut) << "\""
        << "}";
     return ss.str();

@@ -108,7 +108,11 @@ pub fn execute_show(path: &str, json_output: bool) -> Result<(), Box<dyn std::er
     let cat_item = catalog.iter().find(|r| r.path == path);
 
     if cat_item.is_none() {
-        return Err(format!("Region '{}' is not in the predefined LP-0018 closed catalog.", path).into());
+        return Err(format!(
+            "Region '{}' is not in the predefined LP-0018 closed catalog.",
+            path
+        )
+        .into());
     }
     let cat_item = cat_item.unwrap();
 
@@ -139,7 +143,10 @@ pub fn execute_show(path: &str, json_output: bool) -> Result<(), Box<dyn std::er
         println!("Region:        {}", cat_item.path.bold());
         println!("Name:          {}", cat_item.name);
         println!("Level:         {}", cat_item.level);
-        println!("Parent:        {}", cat_item.parent.as_deref().unwrap_or("None"));
+        println!(
+            "Parent:        {}",
+            cat_item.parent.as_deref().unwrap_or("None")
+        );
         println!(
             "Status:        {}",
             if hosted {
@@ -148,7 +155,10 @@ pub fn execute_show(path: &str, json_output: bool) -> Result<(), Box<dyn std::er
                 "Not hosted".yellow()
             }
         );
-        println!("Storage CID:   {}", if hosted { cid.cyan() } else { cid.normal() });
+        println!(
+            "Storage CID:   {}",
+            if hosted { cid.cyan() } else { cid.normal() }
+        );
         println!("Checksum:      {}", checksum);
         println!("Version:       {}", version);
         println!("Source URL:    {}", cat_item.geofabrik_url);

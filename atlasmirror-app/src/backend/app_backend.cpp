@@ -225,7 +225,7 @@ void AppBackend::refreshIndex()
 {
     // Real on-chain refresh via atlasmirror-cli lookup or direct RPC
     QProcess proc;
-    proc.start("atlasmirror-cli", QStringList() << "regions" << "--json");
+    proc.start("atlasmirror-cli", QStringList() << "regions" << "list" << "--json");
     if (proc.waitForFinished(10000) && proc.exitCode() == 0) {
         QJsonDocument doc = QJsonDocument::fromJson(proc.readAllStandardOutput());
         if (doc.isArray()) {
@@ -306,9 +306,47 @@ void AppBackend::hostRegion(const QString &regionPath)
 
 void AppBackend::startBulkHost(const QJsonArray &regionPaths)
 {
+    if (regionPaths.isEmpty()) return;
+
+    QStringList args;
+    args << "host" << "--batch";
     for (const QJsonValue &val : regionPaths) {
-        hostRegion(val.toString());
+        QString reg = val.toString();
+        args << reg;
+
+        QJsonObject queueItem{
+            {"region", reg},
+            {"state", "QUEUED"},
+            {"progress", 0},
+            {"message", "Queued for batch registration"}
+        };
+        m_queue.append(queueItem);
     }
+    args << "--json";
+    emit queueUpdated();
+
+    QProcess *proc = new QProcess(this);
+    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, [this, proc, regionPaths](int exitCode, QProcess::ExitStatus) {
+        bool success = (exitCode == 0);
+        for (const QJsonValue &val : regionPaths) {
+            QString reg = val.toString();
+            for (int i = 0; i < m_queue.size(); ++i) {
+                QJsonObject obj = m_queue[i].toObject();
+                if (obj["region"].toString() == reg) {
+                    obj["state"] = success ? "COMPLETED" : "FAILED";
+                    obj["progress"] = success ? 100 : 0;
+                    obj["message"] = success ? "Batch registration complete" : "Batch registration failed";
+                    m_queue[i] = obj;
+                    break;
+                }
+            }
+        }
+        emit queueUpdated();
+        proc->deleteLater();
+    });
+
+    proc->start("atlasmirror-cli", args);
 }
 
 void AppBackend::cancelHost(const QString &regionPath)

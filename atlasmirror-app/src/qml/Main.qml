@@ -18,6 +18,65 @@ ApplicationWindow {
     readonly property color textSecondary: "#888888"
     readonly property color accentBlue: "#0066CC"
 
+    // Backend controller interface for all child QML views
+    QtObject {
+        id: backend
+
+        readonly property var cBackend: (typeof appBackend !== "undefined" && appBackend) ? appBackend : null
+
+        function refreshIndex() {
+            if (cBackend) cBackend.refreshIndex();
+        }
+
+        function hostRegion(path) {
+            if (cBackend) cBackend.hostRegion(path);
+        }
+
+        function startBulkHost(paths) {
+            if (cBackend) cBackend.startBulkHost(paths);
+        }
+
+        function cancelHost(path) {
+            if (cBackend) cBackend.cancelHost(path);
+        }
+
+        function retryHost(path) {
+            if (cBackend) cBackend.retryHost(path);
+        }
+
+        function clearCompletedQueue() {
+            if (cBackend) cBackend.clearCompletedQueue();
+        }
+
+        function retryAllFailed() {
+            if (cBackend) cBackend.retryAllFailed();
+        }
+
+        function startDownload(path) {
+            if (cBackend) cBackend.startDownload(path);
+        }
+
+        function openDownloadDir() {
+            if (cBackend && cBackend.openDownloadDir) cBackend.openDownloadDir();
+        }
+
+        function copyToClipboard(text) {
+            if (cBackend) cBackend.copyToClipboard(text);
+        }
+
+        function queryRegistry(type, val) {
+            return cBackend ? cBackend.queryRegistry(type, val) : "";
+        }
+
+        function importLocal(path, file) {
+            return cBackend ? cBackend.importLocal(path, file) : "";
+        }
+
+        function updateCheck(path) {
+            return cBackend ? cBackend.updateCheck(path) : "";
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0

@@ -57,7 +57,7 @@ pub async fn execute(json_output: bool) -> Result<(), Box<dyn std::error::Error>
     // 4. LEZ Sequencer Connectivity (Active Test)
     let lez_url = std::env::var("LEZ_RPC_URL")
         .unwrap_or_else(|_| "https://testnet.lez.logos.co/".to_string());
-    
+
     let lez_payload = json!({
         "jsonrpc": "2.0",
         "id": 1,
@@ -184,9 +184,17 @@ pub async fn execute(json_output: bool) -> Result<(), Box<dyn std::error::Error>
         }
         println!("{}", "-".repeat(80));
         if all_passed {
-            println!("{}", "All environment checks passed successfully!".green().bold());
+            println!(
+                "{}",
+                "All environment checks passed successfully!".green().bold()
+            );
         } else {
-            println!("{}", "Warning: Some environment checks did not pass.".yellow().bold());
+            println!(
+                "{}",
+                "Warning: Some environment checks did not pass."
+                    .yellow()
+                    .bold()
+            );
         }
     }
 
