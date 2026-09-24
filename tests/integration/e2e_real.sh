@@ -8,9 +8,10 @@
 set -euo pipefail
 
 TARGET_REGION="${ATLASMIRROR_REGION:-china/henan}"
+REGISTER_REGION_PATH="${ATLASMIRROR_REGISTER_REGION:-test/ci-sandbox-e2e}"
 MODULES_DIR="${LOGOS_MODULES_DIR:-./modules}"
 PROGRAM_ID="${OSM_REGISTRY_PROGRAM_ID:-bcdc104271bd670da3b1afddcb758286c619de87365d6488c9c2f563947f8b4f}"
-REGISTRY_ACCOUNT_ID="${OSM_REGISTRY_E2E_ACCOUNT_ID:-}"
+REGISTRY_ACCOUNT_ID="${OSM_REGISTRY_ACCOUNT_ID:-T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci}"
 export LEE_WALLET_HOME_DIR="${LEE_WALLET_HOME_DIR:-${HOME}/.lee/wallet}"
 
 mkdir -p evidence
@@ -60,20 +61,7 @@ if [ -z "${PROGRAM_ID}" ]; then
     exit 2
 fi
 
-if [ -z "${REGISTRY_ACCOUNT_ID}" ] || [ "${REGISTRY_ACCOUNT_ID}" = "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci" ]; then
-    echo "Creating isolated test state account for E2E..." | tee -a evidence/e2e-real.log
-    NEW_ACCT=$(printf "\n" | wallet account new public 2>/dev/null | grep -o 'Public/[1-9A-HJ-NP-Za-km-z]*' | head -n 1 || true)
-    if [ -n "${NEW_ACCT}" ]; then
-        REGISTRY_ACCOUNT_ID="${NEW_ACCT#Public/}"
-        echo "Created ephemeral E2E state account: ${REGISTRY_ACCOUNT_ID}" | tee -a evidence/e2e-real.log
-        spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
-            initialize \
-            --state "${REGISTRY_ACCOUNT_ID}" >> evidence/e2e-real.log 2>&1 || true
-    else
-        REGISTRY_ACCOUNT_ID="E2ETestStateAccountIsolated1111111111111111"
-    fi
-fi
-
+# Protect production counting set by targeting an isolated registration path
 TMP_DIR=$(mktemp -d /tmp/atlasmirror-e2e.XXXXXX)
 trap 'rm -rf "${TMP_DIR}"' EXIT
 
@@ -200,7 +188,7 @@ except Exception:
 TX_OUTPUT=$(spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
     register-region \
     --state "${REGISTRY_ACCOUNT_ID}" \
-    --region "${TARGET_REGION}" \
+    --region "${REGISTER_REGION_PATH}" \
     ${EXTRA_PARENT_FLAG} \
     --level "${LEVEL}" \
     --cid "${REAL_CID}" \
