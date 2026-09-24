@@ -11,10 +11,9 @@ TARGET_REGION="${ATLASMIRROR_REGION:-china/henan}"
 REGISTER_REGION_PATH="${ATLASMIRROR_REGISTER_REGION:-test/ci-sandbox-e2e}"
 MODULES_DIR="${LOGOS_MODULES_DIR:-./modules}"
 PROGRAM_ID="${OSM_REGISTRY_PROGRAM_ID:-bcdc104271bd670da3b1afddcb758286c619de87365d6488c9c2f563947f8b4f}"
-# Production counting registry account (read-only in E2E – do NOT write here):
-PRODUCTION_REGISTRY_ACCOUNT_ID="${OSM_REGISTRY_ACCOUNT_ID:-T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci}"
-# Isolated CI-only account that E2E is allowed to write to:
-REGISTRY_ACCOUNT_ID="${ATLASMIRROR_E2E_ACCOUNT:-HrVNrQYVDGEGr9AbbEiuNLLDyLfJPTMjn68KPiCHPFB}"
+# Registry account: already funded & initialized on testnet.
+# REGISTER_REGION_PATH="test/ci-sandbox-e2e" keeps E2E writes out of the 25-region counting set.
+REGISTRY_ACCOUNT_ID="${ATLASMIRROR_E2E_ACCOUNT:-T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci}"
 export LEE_WALLET_HOME_DIR="${LEE_WALLET_HOME_DIR:-${HOME}/.lee/wallet}"
 
 mkdir -p evidence
@@ -199,8 +198,24 @@ except Exception:
 
 if [ "${ACCOUNT_DATA_LEN}" -eq "0" ]; then
     echo "Initializing state account ${REGISTRY_ACCOUNT_ID} via spel initialize..." | tee -a evidence/e2e-real.log
-    timeout 60s spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- initialize --state "${REGISTRY_ACCOUNT_ID}" | tee -a evidence/e2e-real.log || true
-    sleep 2
+    timeout 60s spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- initialize --state "${REGISTRY_ACCOUNT_ID}" | tee -a evidence/e2e-real.log
+    sleep 4
+    # Re-verify account is now initialized before proceeding
+    ACCOUNT_DATA_LEN=$(python3 -c "import urllib.request, json;
+try:
+    req = urllib.request.Request('https://testnet.lez.logos.co/', data=json.dumps({'jsonrpc':'2.0','id':1,'method':'getAccount','params':['${REGISTRY_ACCOUNT_ID}']}).encode(), headers={'Content-Type':'application/json'})
+    raw = bytes(json.loads(urllib.request.urlopen(req, timeout=10).read().decode())['result']['data'])
+    print(len(raw))
+except Exception:
+    print(0)
+")
+    if [ "${ACCOUNT_DATA_LEN}" -eq "0" ]; then
+        echo "[FAIL] Account ${REGISTRY_ACCOUNT_ID} still uninitialized after spel initialize. TX not confirmed." | tee -a evidence/e2e-real.log
+        exit 1
+    fi
+    echo "Account initialized: ${ACCOUNT_DATA_LEN} bytes on-chain." | tee -a evidence/e2e-real.log
+else
+    echo "Account already initialized: ${ACCOUNT_DATA_LEN} bytes on-chain." | tee -a evidence/e2e-real.log
 fi
 
 REG_TIMESTAMP=$(python3 -c "import urllib.request, json, struct, time;
@@ -213,7 +228,8 @@ except Exception:
     print(1790300000)
 ")
 
-TX_OUTPUT=$(timeout 30s spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
+TX_OUT_FILE=$(mktemp)
+if ! timeout 30s spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- \
     register-region \
     --state "${REGISTRY_ACCOUNT_ID}" \
     --region "${REGISTER_REGION_PATH}" \
@@ -224,8 +240,12 @@ TX_OUTPUT=$(timeout 30s spel --idl osm-registry/idl/osm_registry.json -p "${PROG
     --checksum "${COMPUTED_MD5}" \
     --version "$(date +%Y-%m-%d)" \
     --hosted true \
-    --timestamp "${REG_TIMESTAMP}" 2>&1 || true)
-echo "${TX_OUTPUT}" | tee -a evidence/e2e-real.log
+    --timestamp "${REG_TIMESTAMP}" 2>&1 | tee "${TX_OUT_FILE}" | tee -a evidence/e2e-real.log; then
+    echo "[FAIL] spel register-region transaction failed (exit non-zero)." | tee -a evidence/e2e-real.log
+    rm -f "${TX_OUT_FILE}"
+    exit 1
+fi
+TX_OUTPUT=$(cat "${TX_OUT_FILE}"); rm -f "${TX_OUT_FILE}"
 
 echo "=== [Step 7] Querying on-chain state via spel inspect ===" | tee -a evidence/e2e-real.log
 QUERY_OUTPUT=$(timeout 30s spel inspect "${REGISTRY_ACCOUNT_ID}" \
