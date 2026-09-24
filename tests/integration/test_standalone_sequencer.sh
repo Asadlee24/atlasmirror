@@ -90,9 +90,9 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
             "expected_block_signing_pubkeys": [],
             "min_committee_size": 0,
             "minimum_sequencer_stake": 1000000,
-            "posting_timeframe": "10s",
-            "challenge_timeframe": "10s",
-            "finalization_timeframe": "10s",
+            "posting_timeframe": 10,
+            "challenge_timeframe": 10,
+            "finalization_timeframe": 10,
             "max_blob_size": "1 MiB",
             "max_blobs_per_block": 10
         }
