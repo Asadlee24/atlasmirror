@@ -65,95 +65,116 @@ impl LogosStorageClient {
             file_path.to_path_buf()
         };
 
-        // Spawn watcher for storageUploadDone event
-        let watcher_file =
-            std::env::temp_dir().join(format!("upload-event-{}.json", std::process::id()));
-        let watcher = Command::new(&self.logoscore_bin)
-            .arg("watch")
-            .arg("storage_module")
-            .arg("--event")
-            .arg("storageUploadDone")
-            .arg("--json")
-            .stdout(std::fs::File::create(&watcher_file)?)
-            .spawn()
-            .ok();
+        let attempts = self.max_retries.max(1);
+        let mut last_err = String::new();
 
-        tokio::time::sleep(Duration::from_millis(500)).await;
-
-        // Call official uploadUrl(filePath, chunkSize)
-        let call_res = Command::new(&self.logoscore_bin)
-            .arg("call")
-            .arg("storage_module")
-            .arg("uploadUrl")
-            .arg(abs_path.to_str().unwrap_or_default())
-            .arg(self.chunk_size.to_string())
-            .arg("--json")
-            .output()
-            .map_err(|e| {
-                StorageError::BinaryUnavailable(format!("{}: {}", self.logoscore_bin.display(), e))
-            })?;
-
-        if !call_res.status.success() {
-            if let Some(mut w) = watcher {
-                let _ = w.kill();
+        for attempt in 0..attempts {
+            if attempt > 0 {
+                let delay = self.base_backoff_ms * (1 << (attempt - 1));
+                tokio::time::sleep(Duration::from_millis(delay)).await;
             }
-            let _ = std::fs::remove_file(&watcher_file);
-            return Err(StorageError::UploadFailed(
-                String::from_utf8_lossy(&call_res.stderr).to_string(),
-            ));
-        }
 
-        // Wait for storageUploadDone event in watcher file
-        let mut real_cid = String::new();
-        for _ in 0..60 {
-            if watcher_file.exists() {
-                if let Ok(content) = std::fs::read_to_string(&watcher_file) {
-                    if let Some(pos) = content.find("\"cid\":") {
-                        let rest = &content[pos + 6..];
-                        if let Some(start_q) = rest.find('"') {
-                            if let Some(end_q) = rest[start_q + 1..].find('"') {
-                                real_cid = rest[start_q + 1..start_q + 1 + end_q].to_string();
-                                if !real_cid.is_empty() {
-                                    break;
+            // Spawn watcher for storageUploadDone event
+            let watcher_file = std::env::temp_dir().join(format!(
+                "upload-event-{}-{}.json",
+                std::process::id(),
+                attempt
+            ));
+            let watcher = Command::new(&self.logoscore_bin)
+                .arg("watch")
+                .arg("storage_module")
+                .arg("--event")
+                .arg("storageUploadDone")
+                .arg("--json")
+                .stdout(std::fs::File::create(&watcher_file)?)
+                .spawn()
+                .ok();
+
+            tokio::time::sleep(Duration::from_millis(500)).await;
+
+            // Call official uploadUrl(filePath, chunkSize)
+            let call_res = Command::new(&self.logoscore_bin)
+                .arg("call")
+                .arg("storage_module")
+                .arg("uploadUrl")
+                .arg(abs_path.to_str().unwrap_or_default())
+                .arg(self.chunk_size.to_string())
+                .arg("--json")
+                .output();
+
+            let call_res = match call_res {
+                Ok(res) => res,
+                Err(e) => {
+                    if let Some(mut w) = watcher {
+                        let _ = w.kill();
+                    }
+                    let _ = std::fs::remove_file(&watcher_file);
+                    last_err = format!("{}: {}", self.logoscore_bin.display(), e);
+                    continue;
+                }
+            };
+
+            if !call_res.status.success() {
+                if let Some(mut w) = watcher {
+                    let _ = w.kill();
+                }
+                let _ = std::fs::remove_file(&watcher_file);
+                last_err = String::from_utf8_lossy(&call_res.stderr).to_string();
+                continue;
+            }
+
+            // Wait for storageUploadDone event in watcher file
+            let mut real_cid = String::new();
+            for _ in 0..60 {
+                if watcher_file.exists() {
+                    if let Ok(content) = std::fs::read_to_string(&watcher_file) {
+                        if let Some(pos) = content.find("\"cid\":") {
+                            let rest = &content[pos + 6..];
+                            if let Some(start_q) = rest.find('"') {
+                                if let Some(end_q) = rest[start_q + 1..].find('"') {
+                                    real_cid = rest[start_q + 1..start_q + 1 + end_q].to_string();
+                                    if !real_cid.is_empty() {
+                                        break;
+                                    }
                                 }
                             }
                         }
                     }
                 }
+                tokio::time::sleep(Duration::from_millis(500)).await;
             }
-            tokio::time::sleep(Duration::from_millis(500)).await;
-        }
 
-        if let Some(mut w) = watcher {
-            let _ = w.kill();
-        }
-        let _ = std::fs::remove_file(&watcher_file);
+            if let Some(mut w) = watcher {
+                let _ = w.kill();
+            }
+            let _ = std::fs::remove_file(&watcher_file);
 
-        // Fallback: query manifests() if watcher didn't capture CID
-        if real_cid.is_empty() {
-            if let Ok(m) = self.manifests().await {
-                if let Some(arr) = m
-                    .get("result")
-                    .and_then(|r| r.get("value"))
-                    .and_then(|v| v.as_array())
-                {
-                    if let Some(last_entry) = arr.last() {
-                        if let Some(cid) = last_entry.get("cid").and_then(|c| c.as_str()) {
-                            real_cid = cid.to_string();
+            // Fallback: query manifests() if watcher didn't capture CID
+            if real_cid.is_empty() {
+                if let Ok(m) = self.manifests().await {
+                    if let Some(arr) = m
+                        .get("result")
+                        .and_then(|r| r.get("value"))
+                        .and_then(|v| v.as_array())
+                    {
+                        if let Some(last_entry) = arr.last() {
+                            if let Some(cid) = last_entry.get("cid").and_then(|c| c.as_str()) {
+                                real_cid = cid.to_string();
+                            }
                         }
                     }
                 }
             }
+
+            if !real_cid.is_empty() {
+                return Ok(real_cid);
+            }
+
+            last_err = "Could not obtain genuine CID from storageUploadDone event or manifests"
+                .to_string();
         }
 
-        if real_cid.is_empty() {
-            return Err(StorageError::UploadFailed(
-                "Could not obtain genuine CID from storageUploadDone event or manifests"
-                    .to_string(),
-            ));
-        }
-
-        Ok(real_cid)
+        Err(StorageError::UploadFailed(last_err))
     }
 
     /// Downloads a file by CID from Logos Storage to the destination path using downloadToUrl.

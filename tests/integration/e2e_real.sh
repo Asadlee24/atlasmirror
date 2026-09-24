@@ -11,7 +11,8 @@ TARGET_REGION="${ATLASMIRROR_REGION:-china/henan}"
 REGISTER_REGION_PATH="${ATLASMIRROR_REGISTER_REGION:-test/ci-sandbox-e2e}"
 MODULES_DIR="${LOGOS_MODULES_DIR:-./modules}"
 PROGRAM_ID="${OSM_REGISTRY_PROGRAM_ID:-bcdc104271bd670da3b1afddcb758286c619de87365d6488c9c2f563947f8b4f}"
-REGISTRY_ACCOUNT_ID="${OSM_REGISTRY_ACCOUNT_ID:-T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci}"
+# E2E State Account Isolation: Use dedicated isolated testnet account so production registry (T8T4...) remains clean
+REGISTRY_ACCOUNT_ID="${OSM_E2E_STATE_ACCOUNT:-EmLTMVLxgzi4eSZeMHaJne1wPKrBWYQturK6YsrTc1uX}"
 export LEE_WALLET_HOME_DIR="${LEE_WALLET_HOME_DIR:-${HOME}/.lee/wallet}"
 
 mkdir -p evidence
@@ -173,6 +174,21 @@ echo "=== [Step 6] Submitting on-chain registration to LEZ via spel CLI ===" | t
 EXTRA_PARENT_FLAG=""
 if [ -n "${PARENT_REGION}" ]; then
     EXTRA_PARENT_FLAG="--parent ${PARENT_REGION}"
+fi
+
+ACCOUNT_DATA_LEN=$(python3 -c "import urllib.request, json;
+try:
+    req = urllib.request.Request('https://testnet.lez.logos.co/', data=json.dumps({'jsonrpc':'2.0','id':1,'method':'getAccount','params':['${REGISTRY_ACCOUNT_ID}']}).encode(), headers={'Content-Type':'application/json'})
+    raw = bytes(json.loads(urllib.request.urlopen(req, timeout=10).read().decode())['result']['data'])
+    print(len(raw))
+except Exception:
+    print(0)
+")
+
+if [ "${ACCOUNT_DATA_LEN}" -eq "0" ]; then
+    echo "Initializing isolated state account ${REGISTRY_ACCOUNT_ID} via spel initialize..." | tee -a evidence/e2e-real.log
+    spel --idl osm-registry/idl/osm_registry.json -p "${PROGRAM_ID}" -- initialize --state "${REGISTRY_ACCOUNT_ID}" | tee -a evidence/e2e-real.log || true
+    sleep 2
 fi
 
 REG_TIMESTAMP=$(python3 -c "import urllib.request, json, struct, time;
