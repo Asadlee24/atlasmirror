@@ -253,13 +253,11 @@ static bool fileExistsAndNonEmpty(const std::string &filepath) {
 
 } // anonymous namespace
 
-AtlasmirrorSdkImpl::AtlasmirrorSdkImpl()
-{
-    loadPredefinedCatalog();
-}
-
 void AtlasmirrorSdkImpl::onContextReady()
 {
+    if (m_catalog.empty()) {
+        loadPredefinedCatalog();
+    }
 }
 
 void AtlasmirrorSdkImpl::loadPredefinedCatalog()
@@ -388,6 +386,7 @@ static std::string serializeRecord(const AtlasmirrorSdkImpl::RegionRecord &r) {
 
 std::string AtlasmirrorSdkImpl::discoverRegions()
 {
+    if (m_catalog.empty()) loadPredefinedCatalog();
     std::ostringstream ss;
     ss << "[";
     bool first = true;
@@ -402,6 +401,7 @@ std::string AtlasmirrorSdkImpl::discoverRegions()
 
 std::string AtlasmirrorSdkImpl::getRegion(const std::string &path)
 {
+    if (m_catalog.empty()) loadPredefinedCatalog();
     auto it = m_catalog.find(path);
     if (it != m_catalog.end()) {
         return serializeRecord(it->second);
@@ -411,6 +411,7 @@ std::string AtlasmirrorSdkImpl::getRegion(const std::string &path)
 
 std::string AtlasmirrorSdkImpl::getByCid(const std::string &cid)
 {
+    if (m_catalog.empty()) loadPredefinedCatalog();
     if (cid.empty()) {
         return "{\"error\":\"INVALID_CID\"}";
     }
@@ -423,6 +424,7 @@ std::string AtlasmirrorSdkImpl::getByCid(const std::string &cid)
 
 std::string AtlasmirrorSdkImpl::getChildren(const std::string &parent)
 {
+    if (m_catalog.empty()) loadPredefinedCatalog();
     std::ostringstream ss;
     ss << "[";
     bool first = true;
@@ -439,6 +441,7 @@ std::string AtlasmirrorSdkImpl::getChildren(const std::string &parent)
 
 std::string AtlasmirrorSdkImpl::resolveRegion(const std::string &path)
 {
+    if (m_catalog.empty()) loadPredefinedCatalog();
     auto it = m_catalog.find(path);
     if (it == m_catalog.end()) {
         return "{\"status\":\"UNSUPPORTED_REGION\"}";
@@ -466,6 +469,7 @@ std::string AtlasmirrorSdkImpl::resolveRegion(const std::string &path)
 
 std::string AtlasmirrorSdkImpl::checkUpdate(const std::string &path)
 {
+    if (m_catalog.empty()) loadPredefinedCatalog();
     auto it = m_catalog.find(path);
     if (it == m_catalog.end()) {
         return "{\"status\":\"SOURCE_REGION_UNKNOWN\"}";
@@ -485,6 +489,7 @@ std::string AtlasmirrorSdkImpl::checkUpdate(const std::string &path)
 
 std::string AtlasmirrorSdkImpl::hostRegion(const std::string &path)
 {
+    if (m_catalog.empty()) loadPredefinedCatalog();
     auto it = m_catalog.find(path);
     if (it == m_catalog.end()) {
         return "{\"success\":false,\"error\":\"UNSUPPORTED_REGION\"}";
@@ -507,6 +512,7 @@ std::string AtlasmirrorSdkImpl::hostRegion(const std::string &path)
 
 bool AtlasmirrorSdkImpl::downloadRegion(const std::string &path, const std::string &destination)
 {
+    if (m_catalog.empty()) loadPredefinedCatalog();
     auto it = m_catalog.find(path);
     if (it == m_catalog.end()) {
         return false;
@@ -525,6 +531,7 @@ bool AtlasmirrorSdkImpl::downloadRegion(const std::string &path, const std::stri
 
 std::string AtlasmirrorSdkImpl::importLocal(const std::string &path, const std::string &localFilePath)
 {
+    if (m_catalog.empty()) loadPredefinedCatalog();
     auto it = m_catalog.find(path);
     if (it == m_catalog.end()) {
         return "{\"success\":false,\"error\":\"UNSUPPORTED_REGION\"}";
