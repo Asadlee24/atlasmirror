@@ -56,19 +56,46 @@ pub enum RegistryInstruction {
     BatchRegister(BatchRegisterArgs),
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Account {
-    pub program_or_owner: [u32; 8],
-    pub nonce: u128,
-    pub data: Vec<u8>,
-    pub balance: u128,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CallKind {
+    Execute,
+    Unknown(u8),
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct AccountWithMetadata {
-    pub account: Account,
+impl BorshSerialize for CallKind {
+    fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+        let d: u8 = match *self {
+            Self::Execute => 0,
+            Self::Unknown(b) => b,
+        };
+        BorshSerialize::serialize(&d, writer)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+pub struct AccountId(pub [u8; 32]);
+
+#[derive(Debug, Clone, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+pub struct AccountInput {
+    pub account_id: AccountId,
     pub is_authorized: bool,
-    pub account_id: String,
+    pub balance: u128,
+    pub shard: Option<(AccountId, Vec<u8>)>,
+}
+
+#[derive(Debug, Clone, BorshSerialize, BorshDeserialize)]
+pub struct ProgramInput {
+    pub self_account_id: AccountId,
+    pub caller_account_id: Option<AccountId>,
+    pub pre_states: Vec<AccountInput>,
+    pub instruction: Vec<u8>,
+}
+
+fn to_frame(payload: &[u8]) -> Vec<u8> {
+    let mut frame = Vec::with_capacity(4 + payload.len());
+    frame.extend_from_slice(&(payload.len() as u32).to_le_bytes());
+    frame.extend_from_slice(payload);
+    frame
 }
 
 fn sample_region(name: &str, idx: usize) -> RegisterRegionArgs {
@@ -91,27 +118,31 @@ fn execute_guest(
     instruction: &RegistryInstruction,
 ) -> Result<(u64, Vec<u8>)> {
     let state_bytes = borsh::to_vec(state)?;
-    let pre_account = AccountWithMetadata {
-        account: Account {
-            program_or_owner: [1; 8],
-            nonce: 0,
-            data: state_bytes,
-            balance: 1_000_000,
-        },
+    let program_id = AccountId([0xbc; 32]);
+    let state_account_id = AccountId([0x55; 32]);
+
+    let pre_account = AccountInput {
+        account_id: state_account_id,
         is_authorized: true,
-        account_id: "55Me6rDpyUu9vhuMhnM26ikUL4XbgKDUjrWEpdpzyv6r".to_string(),
+        balance: 10_000_000,
+        shard: Some((program_id, state_bytes)),
     };
 
-    let self_program_id: [u32; 8] = [1; 8];
-    let caller_program_id: Option<[u32; 8]> = None;
-    let pre_states = vec![pre_account];
-    let instruction_words: Vec<u32> = risc0_zkvm::serde::to_vec(instruction)?;
+    let instruction_bytes = borsh::to_vec(instruction)?;
+
+    let input = ProgramInput {
+        self_account_id: program_id,
+        caller_account_id: None,
+        pre_states: vec![pre_account],
+        instruction: instruction_bytes,
+    };
+
+    let call_kind_frame = to_frame(&borsh::to_vec(&CallKind::Execute)?);
+    let input_frame = to_frame(&borsh::to_vec(&input)?);
 
     let mut env_builder = ExecutorEnv::builder();
-    env_builder.write(&self_program_id)?;
-    env_builder.write(&caller_program_id)?;
-    env_builder.write(&pre_states)?;
-    env_builder.write(&instruction_words)?;
+    env_builder.write_slice(&call_kind_frame);
+    env_builder.write_slice(&input_frame);
     let env = env_builder.build()?;
 
     let info = default_executor().execute(env, program_bytes)?;
@@ -207,44 +238,7 @@ fn load_state(account_id: &str) -> RegistryState {
             }
         }
     }
-
-    // If state doesn't exist, load the catalog records (frozen A1 baseline)
-    let mut state = RegistryState::default();
-    let cat_path = Path::new("metadata/regions.json");
-    if cat_path.exists() {
-        if let Ok(content) = std::fs::read_to_string(cat_path) {
-            if let Ok(v) = serde_json::from_str::<serde_json::Value>(&content) {
-                if let Some(arr) = v.get("regions").and_then(|r| r.as_array()) {
-                    for item in arr {
-                        let region = item.get("path").and_then(|p| p.as_str()).unwrap_or("").to_string();
-                        let parent = item.get("parent").and_then(|p| p.as_str()).map(|s| s.to_string());
-                        let level_str = item.get("level").and_then(|l| l.as_str()).unwrap_or("country");
-                        let level = if level_str == "subregion" { RegionLevel::Subregion } else { RegionLevel::Country };
-                        let cid = item.get("cid").and_then(|c| c.as_str()).unwrap_or("").to_string();
-                        let source_url = item.get("geofabrik_url").and_then(|u| u.as_str()).unwrap_or("").to_string();
-                        let checksum = item.get("md5").and_then(|m| m.as_str()).unwrap_or("").to_string();
-                        let version = item.get("version").and_then(|v| v.as_str()).unwrap_or("2026-09-23").to_string();
-                        let timestamp = item.get("timestamp").and_then(|t| t.as_u64()).unwrap_or(1726747200);
-
-                        state.records.push(RegionRecord {
-                            region,
-                            parent,
-                            level,
-                            cid,
-                            source_url,
-                            checksum,
-                            version,
-                            hosted: true,
-                            timestamp,
-                        });
-                    }
-                    state.total_regions = state.records.len() as u64;
-                    state.last_updated = state.records.iter().map(|r| r.timestamp).max().unwrap_or(1726747200);
-                }
-            }
-        }
-    }
-    state
+    RegistryState::default()
 }
 
 fn save_state(account_id: &str, state: &RegistryState) -> Result<()> {

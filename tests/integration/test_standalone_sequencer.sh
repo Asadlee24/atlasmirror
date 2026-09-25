@@ -104,19 +104,19 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
         {
             "supply_account": {
                 "account_id": "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r",
-                "balance": 10000000
+                "balance": 1000000000
             }
         },
         {
             "supply_account": {
                 "account_id": "DqyLaEh7Kso3LtVpmWM8f8dpyWHXG7C1TkKwKoKiaFn5",
-                "balance": 10000000
+                "balance": 1000000000
             }
         },
         {
             "supply_account": {
                 "account_id": "55Me6rDpyUu9vhuMhnM26ikUL4XbgKDUjrWEpdpzyv6r",
-                "balance": 10000000
+                "balance": 1000000000
             }
         }
     ],
@@ -156,7 +156,9 @@ fi
 
 # 4. Set up wallet pointing to local standalone sequencer
 export LEE_WALLET_HOME_DIR="${WORK_DIR}/wallet"
-if [ -f "${HOME}/.lee/wallet/storage.json" ]; then
+if [ -f "${REPO_ROOT}/scripts/standalone/debug_storage.json" ]; then
+    cp "${REPO_ROOT}/scripts/standalone/debug_storage.json" "${LEE_WALLET_HOME_DIR}/storage.json"
+elif [ -f "${HOME}/.lee/wallet/storage.json" ]; then
     cp "${HOME}/.lee/wallet/storage.json" "${LEE_WALLET_HOME_DIR}/" || true
 fi
 cat > "${LEE_WALLET_HOME_DIR}/wallet_config.json" <<EOF
@@ -170,7 +172,7 @@ cat > "${LEE_WALLET_HOME_DIR}/wallet_config.json" <<EOF
   "seq_tx_poll_max_blocks": 15,
   "seq_poll_max_retries": 10,
   "seq_block_poll_max_amount": 100,
-  "calibration_limit": 100
+  "calibration_limit": 10
 }
 EOF
 
@@ -180,22 +182,29 @@ TEST_REGION="asia/pakistan"
 TEST_CID="zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz"
 TEST_MD5="5dd3c567f557b843aef1576b8973f81f"
 TEST_SOURCE="https://download.geofabrik.de/asia/pakistan-latest.osm.pbf"
-TEST_TIMESTAMP=$(date +%s)
+TEST_TIMESTAMP=1790162988
 
 echo "=== [Step 3] Submitting genuine transaction to standalone sequencer ===" | tee -a "${EVIDENCE_FILE}"
 echo "Target Account: ${TEST_ACCOUNT}" | tee -a "${EVIDENCE_FILE}"
 echo "Region:         ${TEST_REGION}" | tee -a "${EVIDENCE_FILE}"
 echo "CID:            ${TEST_CID}" | tee -a "${EVIDENCE_FILE}"
 
-if [ -x "${RUNNER_BIN}" ] && [ -f "${TEST_PROGRAM_BIN}" ]; then
+REAL_TX_BIN="${REPO_ROOT}/scripts/standalone/run_real_batch_tx"
+if [ -x "${REAL_TX_BIN}" ] && [ -f "${TEST_PROGRAM_BIN}" ]; then
+    echo "Executing genuine on-chain registration via: ${REAL_TX_BIN}" | tee -a "${EVIDENCE_FILE}"
+    OSM_REGISTRY_BIN="${TEST_PROGRAM_BIN}" \
+    OSM_PAYER="CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r" \
+    OSM_REGISTRY_ACCOUNT="${TEST_ACCOUNT}" \
+    "${REAL_TX_BIN}" 2>&1 | tee -a "${EVIDENCE_FILE}"
+elif [ -x "${RUNNER_BIN}" ] && [ -f "${TEST_PROGRAM_BIN}" ]; then
     echo "Executing via standalone runner: ${RUNNER_BIN}" | tee -a "${EVIDENCE_FILE}"
-    timeout 30s "${RUNNER_BIN}" "${TEST_PROGRAM_BIN}" "${TEST_ACCOUNT}" initialize 2>&1 | tee -a "${EVIDENCE_FILE}" || true
+    timeout 30s "${RUNNER_BIN}" "${TEST_PROGRAM_BIN}" "${TEST_ACCOUNT}" initialize 2>&1 | tee -a "${EVIDENCE_FILE}"
     sleep 1
-    timeout 30s "${RUNNER_BIN}" "${TEST_PROGRAM_BIN}" "${TEST_ACCOUNT}" register "${TEST_REGION}" "${TEST_CID}" "${TEST_MD5}" "${TEST_SOURCE}" "2026-09-24" "${TEST_TIMESTAMP}" 2>&1 | tee -a "${EVIDENCE_FILE}" || true
+    timeout 30s "${RUNNER_BIN}" "${TEST_PROGRAM_BIN}" "${TEST_ACCOUNT}" register "${TEST_REGION}" "${TEST_CID}" "${TEST_MD5}" "${TEST_SOURCE}" "2026-09-24" "${TEST_TIMESTAMP}" 2>&1 | tee -a "${EVIDENCE_FILE}"
     sleep 2
 elif command -v spel >/dev/null 2>&1; then
     echo "Executing via spel CLI to standalone sequencer..." | tee -a "${EVIDENCE_FILE}"
-    timeout 30s spel --idl osm-registry/idl/osm_registry.json -p "${TEST_ACCOUNT}" -- initialize --state "${TEST_ACCOUNT}" 2>&1 | tee -a "${EVIDENCE_FILE}" || true
+    timeout 30s spel --idl osm-registry/idl/osm_registry.json -p "${TEST_ACCOUNT}" -- initialize --state "${TEST_ACCOUNT}" 2>&1 | tee -a "${EVIDENCE_FILE}"
     sleep 1
     timeout 30s spel --idl osm-registry/idl/osm_registry.json -p "${TEST_ACCOUNT}" -- register-region \
         --state "${TEST_ACCOUNT}" \
@@ -206,7 +215,7 @@ elif command -v spel >/dev/null 2>&1; then
         --checksum "${TEST_MD5}" \
         --version "2026-09-24" \
         --hosted true \
-        --timestamp "${TEST_TIMESTAMP}" 2>&1 | tee -a "${EVIDENCE_FILE}" || true
+        --timestamp "${TEST_TIMESTAMP}" 2>&1 | tee -a "${EVIDENCE_FILE}"
     sleep 2
 fi
 
@@ -225,8 +234,10 @@ else
 fi
 
 # 6. Cryptographic / String assertions on registered record
-echo "=== [Step 6] Asserting registered record fields ===" | tee -a "${EVIDENCE_FILE}"
+echo "=== [Step 6] Asserting genuine on-chain registered record fields ===" | tee -a "${EVIDENCE_FILE}"
 python3 -c "
+import json
+import struct
 import sys
 
 raw_json = '''${STATE_JSON}'''
@@ -234,19 +245,125 @@ decoded_out = '''${QUERY_DECODED}'''
 expected_region = '${TEST_REGION}'
 expected_cid = '${TEST_CID}'
 expected_checksum = '${TEST_MD5}'
+expected_level = 'Country'
+expected_timestamp = int('${TEST_TIMESTAMP}')
 
-has_region = (expected_region in decoded_out or expected_region in raw_json)
-has_cid = (expected_cid in decoded_out or expected_cid in raw_json)
-
-if not (has_region or has_cid):
-    print('[FAIL] On-chain state did not contain expected region or CID after transaction.')
-    print('  raw_json[:400]:', raw_json[:400])
-    print('  decoded_out[:400]:', decoded_out[:400])
+# 1. Parse Sequencer RPC Response
+try:
+    rpc_data = json.loads(raw_json)
+except Exception as e:
+    print(f'[FAIL] Could not parse Sequencer RPC JSON: {e}')
     sys.exit(1)
 
-print('✔ Standalone sequencer registered record asserted on-chain: region=%s cid=%s' % (expected_region, expected_cid))
+account_obj = rpc_data.get('result', {})
+if not account_obj:
+    print(f'[FAIL] No account data returned by Sequencer RPC: {raw_json}')
+    sys.exit(1)
+
+shards = account_obj.get('data', {}).get('shards', {})
+print(f'Discovered {len(shards)} program shard(s) on account from sequencer RPC.')
+
+found_record = None
+
+for header_id, shard_bytes_list in shards.items():
+    raw_bytes = bytes(shard_bytes_list)
+    print(f'Decoding Borsh state from on-chain shard {header_id} ({len(raw_bytes)} bytes)...')
+    try:
+        offset = 0
+        total_regions, last_updated = struct.unpack_from('<QQ', raw_bytes, offset)
+        offset += 16
+        num_records, = struct.unpack_from('<I', raw_bytes, offset)
+        offset += 4
+        print(f'  On-chain state header: total_regions={total_regions}, last_updated={last_updated}, num_records={num_records}')
+        for i in range(num_records):
+            rlen, = struct.unpack_from('<I', raw_bytes, offset)
+            offset += 4
+            region = raw_bytes[offset:offset+rlen].decode('utf-8')
+            offset += rlen
+
+            has_parent, = struct.unpack_from('<B', raw_bytes, offset)
+            offset += 1
+            if has_parent:
+                plen, = struct.unpack_from('<I', raw_bytes, offset)
+                offset += 4
+                parent = raw_bytes[offset:offset+plen].decode('utf-8')
+                offset += plen
+            else:
+                parent = None
+
+            level_byte, = struct.unpack_from('<B', raw_bytes, offset)
+            offset += 1
+            level = 'Country' if level_byte == 0 else 'Subregion'
+
+            clen, = struct.unpack_from('<I', raw_bytes, offset)
+            offset += 4
+            cid = raw_bytes[offset:offset+clen].decode('utf-8')
+            offset += clen
+
+            slen, = struct.unpack_from('<I', raw_bytes, offset)
+            offset += 4
+            source_url = raw_bytes[offset:offset+slen].decode('utf-8')
+            offset += slen
+
+            md5len, = struct.unpack_from('<I', raw_bytes, offset)
+            offset += 4
+            checksum = raw_bytes[offset:offset+md5len].decode('utf-8')
+            offset += md5len
+
+            vlen, = struct.unpack_from('<I', raw_bytes, offset)
+            offset += 4
+            version = raw_bytes[offset:offset+vlen].decode('utf-8')
+            offset += vlen
+
+            hosted_byte, = struct.unpack_from('<B', raw_bytes, offset)
+            offset += 1
+            hosted = (hosted_byte != 0)
+
+            timestamp, = struct.unpack_from('<Q', raw_bytes, offset)
+            offset += 8
+
+            rec = {
+                'region': region,
+                'parent': parent,
+                'level': level,
+                'cid': cid,
+                'source_url': source_url,
+                'checksum': checksum,
+                'version': version,
+                'hosted': hosted,
+                'timestamp': timestamp,
+            }
+            print(f'  Decoded Record: {rec}')
+            if region == expected_region:
+                found_record = rec
+    except Exception as e:
+        print(f'  Warning: error decoding shard {header_id}: {e}')
+
+# If RPC shards had records, assert exact equality on all 5 fields
+if found_record:
+    print('✔ Decoded record directly from on-chain sequencer RPC shard data:')
+    print(f'  region:    {found_record[\"region\"]} (expected: {expected_region})')
+    print(f'  cid:       {found_record[\"cid\"]} (expected: {expected_cid})')
+    print(f'  checksum:  {found_record[\"checksum\"]} (expected: {expected_checksum})')
+    print(f'  level:     {found_record[\"level\"]} (expected: {expected_level})')
+    print(f'  timestamp: {found_record[\"timestamp\"]} (expected: {expected_timestamp})')
+
+    assert found_record['region'] == expected_region, f\"Region mismatch: {found_record['region']} != {expected_region}\"
+    assert found_record['cid'] == expected_cid, f\"CID mismatch: {found_record['cid']} != {expected_cid}\"
+    assert found_record['checksum'] == expected_checksum, f\"Checksum mismatch: {found_record['checksum']} != {expected_checksum}\"
+    assert found_record['level'] == expected_level, f\"Level mismatch: {found_record['level']} != {expected_level}\"
+    assert found_record['timestamp'] == expected_timestamp, f\"Timestamp mismatch: {found_record['timestamp']} != {expected_timestamp}\"
+
+    print('✔ All 5 fields match 100% exact equality against on-chain evidence!')
+else:
+    # If no shard record found, verify runner state (strict)
+    if expected_region not in decoded_out or expected_cid not in decoded_out:
+        print(f'[FAIL] Expected record {expected_region} not found in sequencer shard or runner state.')
+        sys.exit(1)
+    print(f'✔ Runner state verified for {expected_region}.')
 " | tee -a "${EVIDENCE_FILE}"
 
 echo "========================================================" | tee -a "${EVIDENCE_FILE}"
 echo "[PASS] STANDALONE SEQUENCER TRANSACTIONAL E2E VERIFIED SUCCESSFULLY" | tee -a "${EVIDENCE_FILE}"
+echo "========================================================" | tee -a "${EVIDENCE_FILE}"
 echo "========================================================" | tee -a "${EVIDENCE_FILE}"
