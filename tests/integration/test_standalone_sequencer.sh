@@ -24,6 +24,7 @@ echo "========================================================" | tee -a "${EVID
 SEQ_BIN=$(command -v sequencer_service || echo "/usr/local/bin/sequencer_service")
 SPEL_BIN=$(command -v spel || echo "/usr/local/bin/spel")
 RUNNER_BIN="${REPO_ROOT}/scripts/standalone/run_osm_registry"
+chmod +x "${RUNNER_BIN}" 2>/dev/null || true
 
 if [ ! -x "${SEQ_BIN}" ] || ! command -v r0vm >/dev/null 2>&1; then
     echo "Running setup_ci_environment.sh to ensure sequencer_service and r0vm are present..." | tee -a "${EVIDENCE_FILE}"

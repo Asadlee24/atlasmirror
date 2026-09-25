@@ -45,6 +45,6 @@ jobs:
           sudo apt-get install -y -qq libpcsclite1
       - name: Run Real Standalone E2E Test
         run: |
-          chmod +x scripts/*.sh tests/integration/*.sh
+          chmod +x scripts/*.sh scripts/standalone/* tests/integration/*.sh
           bash scripts/run_e2e_real.sh
           bash tests/integration/test_standalone_sequencer.sh
