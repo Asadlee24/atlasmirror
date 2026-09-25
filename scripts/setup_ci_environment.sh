@@ -27,6 +27,14 @@ cp "${TMP_SETUP}/ci_bin/wallet" "${INSTALL_DIR}/"
 cp "${TMP_SETUP}/ci_bin/spel" "${INSTALL_DIR}/"
 chmod +x "${INSTALL_DIR}/sequencer_service" "${INSTALL_DIR}/wallet" "${INSTALL_DIR}/spel"
 
+# 1b. Install r0vm (RISC Zero VM executor required by sequencer_service)
+if ! command -v r0vm >/dev/null 2>&1; then
+    echo "==> Downloading official r0vm (RISC Zero v3.0.5)..."
+    curl -sSfL -o "${TMP_SETUP}/cargo-risczero.tgz" "https://github.com/risc0/risc0/releases/download/v3.0.5/cargo-risczero-x86_64-unknown-linux-gnu.tgz"
+    tar -xzf "${TMP_SETUP}/cargo-risczero.tgz" -C "${INSTALL_DIR}/" r0vm
+    chmod +x "${INSTALL_DIR}/r0vm"
+fi
+
 # 2. Download official logoscore
 echo "==> Downloading official logoscore AppImage..."
 curl -sSfL -o "${TMP_SETUP}/logoscore.tar.gz" "https://github.com/logos-co/logos-logoscore-cli/releases/download/0.2.0/logoscore-x86_64-linux.tar.gz"

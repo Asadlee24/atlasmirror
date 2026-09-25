@@ -25,9 +25,8 @@ SEQ_BIN=$(command -v sequencer_service || echo "/usr/local/bin/sequencer_service
 SPEL_BIN=$(command -v spel || echo "/usr/local/bin/spel")
 RUNNER_BIN="${REPO_ROOT}/scripts/standalone/run_osm_registry"
 
-if [ ! -x "${SEQ_BIN}" ]; then
-    echo "[FAIL] 'sequencer_service' binary not found at ${SEQ_BIN}." | tee -a "${EVIDENCE_FILE}"
-    echo "Running setup_ci_environment.sh..." | tee -a "${EVIDENCE_FILE}"
+if [ ! -x "${SEQ_BIN}" ] || ! command -v r0vm >/dev/null 2>&1; then
+    echo "Running setup_ci_environment.sh to ensure sequencer_service and r0vm are present..." | tee -a "${EVIDENCE_FILE}"
     bash "${REPO_ROOT}/scripts/setup_ci_environment.sh" /usr/local/bin "${REPO_ROOT}/modules" || true
 fi
 
