@@ -53,7 +53,6 @@ public:
     Q_INVOKABLE void retryAllFailed();
 
     Q_INVOKABLE void startDownload(const QString &regionPath);
-    Q_INVOKABLE void openDownloadDir();
     Q_INVOKABLE void copyToClipboard(const QString &text);
     Q_INVOKABLE QString queryRegistry(const QString &queryType, const QString &queryValue);
     Q_INVOKABLE QString importLocal(const QString &regionPath, const QString &localFilePath);

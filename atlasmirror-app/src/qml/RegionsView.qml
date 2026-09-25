@@ -8,7 +8,7 @@ Item {
 
     // Full 72 closed-set catalog data
     readonly property var allCatalogRegions: [
-        { path: "asia/pakistan", name: "Pakistan", level: "country", version: "2026-09-20", hosted: true, cid: "zDvZRwzm9WQQrvAZL4NavbFXjmbHTFNyho68zPMxKsCvfGEn2LbD", checksum: "d63c9409c20924d0813b81266eb2f5ad", updateStatus: "UP_TO_DATE" },
+        { path: "asia/pakistan", name: "Pakistan", level: "country", version: "2026-09-24", hosted: true, cid: "zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz", checksum: "5dd3c567f557b843aef1576b8973f81f", updateStatus: "UP_TO_DATE" },
         { path: "china/henan", name: "Henan", level: "subregion", version: "2026-09-20", hosted: true, cid: "zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny", checksum: "0055ebfc7f14585c56d53a88062d5814", updateStatus: "UP_TO_DATE" },
         { path: "africa/ethiopia", name: "Ethiopia", level: "country", version: "2026-09-20", hosted: true, cid: "zDvZRwzm7o1JcgDFrsC8zYrEYnhPkY52qThJLjojMvswjj8pVjPX", checksum: "c2e00ecddf7ae4ed89bf05bf104d3f10", updateStatus: "UP_TO_DATE" },
         { path: "europe/bulgaria", name: "Bulgaria", level: "country", version: "2026-09-20", hosted: true, cid: "zDvZRwzm72Y7GBdMzdT7ibQWieQSmUhvk54VHfhcsUDcqnPhma51", checksum: "25801cfabc5bfe8e1ae56ded0fa5ed13", updateStatus: "UP_TO_DATE" },

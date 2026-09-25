@@ -78,7 +78,7 @@ Item {
                 var onChainRecords = {
                     "china/henan": { "region": "china/henan", "parent": "china", "level": "Subregion", "cid": "zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny", "checksum": "0055ebfc7f14585c56d53a88062d5814", "version": "2026-09-20", "hosted": true, "timestamp": 1789905600 },
                     "africa/ethiopia": { "region": "africa/ethiopia", "parent": null, "level": "Country", "cid": "zDvZRwzm7o1JcgDFrsC8zYrEYnhPkY52qThJLjojMvswjj8pVjPX", "checksum": "c2e00ecddf7ae4ed89bf05bf104d3f10", "version": "2026-09-20", "hosted": true, "timestamp": 1789971761 },
-                    "asia/pakistan": { "region": "asia/pakistan", "parent": null, "level": "Country", "cid": "zDvZRwzm9WQQrvAZL4NavbFXjmbHTFNyho68zPMxKsCvfGEn2LbD", "checksum": "d63c9409c20924d0813b81266eb2f5ad", "version": "2026-09-20", "hosted": true, "timestamp": 1789974237 },
+                    "asia/pakistan": { "region": "asia/pakistan", "parent": null, "level": "Country", "cid": "zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz", "checksum": "5dd3c567f557b843aef1576b8973f81f", "version": "2026-09-24", "hosted": true, "timestamp": 1727136000 },
                     "europe/bulgaria": { "region": "europe/bulgaria", "parent": null, "level": "Country", "cid": "zDvZRwzm72Y7GBdMzdT7ibQWieQSmUhvk54VHfhcsUDcqnPhma51", "checksum": "25801cfabc5bfe8e1ae56ded0fa5ed13", "version": "2026-09-20", "hosted": true, "timestamp": 1789976858 },
                     "africa/egypt": { "region": "africa/egypt", "parent": null, "level": "Country", "cid": "zDvZRwzmDbJCqSLbyt1Fw4mSvrGFkJGBLaBAogpw8VF66wA469mm", "checksum": "04a4d557c902a5f29ba0e7a1394e0232", "version": "2026-09-20", "hosted": true, "timestamp": 1789977848 }
                 }

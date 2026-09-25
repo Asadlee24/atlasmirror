@@ -12,15 +12,26 @@
   "uses": [],
   "nix": {
     "packages": {
-      "build": [],
-      "runtime": ["qt6.qtdeclarative"]
+      "build": ["pkg-config", "cmake"],
+      "runtime": ["qt6.qtdeclarative", "qt6.qtbase"]
     },
     "external_libraries": [],
     "cmake": {
-      "find_packages": [],
-      "extra_sources": [],
-      "extra_include_dirs": [],
-      "extra_link_libraries": []
+      "find_packages": ["Qt6 COMPONENTS Core Quick Qml RemoteObjects Gui"],
+      "extra_sources": [
+        "src/backend/app_backend.cpp",
+        "src/backend/app_backend.h"
+      ],
+      "extra_include_dirs": [
+        "src/backend"
+      ],
+      "extra_link_libraries": [
+        "Qt6::Core",
+        "Qt6::Quick",
+        "Qt6::Qml",
+        "Qt6::RemoteObjects",
+        "Qt6::Gui"
+      ]
     }
   }
 }
