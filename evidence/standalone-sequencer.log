@@ -1,45 +1,110 @@
 ========================================================
- AtlasMirror Standalone Sequencer Verification
+ AtlasMirror Standalone Sequencer Transactional E2E
 ========================================================
 Found sequencer_service binary at: /usr/local/bin/sequencer_service
-=== Step 1: Querying sequencer_service version & help ===
 sequencer_service 0.1.0
-Usage: sequencer_service [OPTIONS] <config>
+=== [Step 1] Starting Mock Bedrock L1 on 127.0.0.1:18080 ===
+Mock Bedrock L1 is online.
+=== [Step 2] Starting LEZ Standalone Sequencer on 127.0.0.1:3040 ===
+Sequencer RPC is responding on http://127.0.0.1:3040 (block response: {"jsonrpc":"2.0","id":1,"result":1})
+[PASS] Standalone sequencer booted and responding on :3040
+=== [Step 3] Submitting genuine transaction to standalone sequencer ===
+Target Account: 55Me6rDpyUu9vhuMhnM26ikUL4XbgKDUjrWEpdpzyv6r
+Region:         asia/pakistan
+CID:            zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz
+Executing via standalone runner: /mnt/c/Users/Aftab/Desktop/atlasmirror/scripts/standalone/run_osm_registry
+Building Initialize instruction...
 
-Arguments:
-  <config>  
+thread 'main' (1) panicked at /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/risc0-zkvm-3.0.5/src/guest/env/read.rs:84:36:
+called `Result::unwrap()` on an `Err` value: DeserializeUnexpectedEnd
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+Error: Guest panicked: called `Result::unwrap()` on an `Err` value: DeserializeUnexpectedEnd
+Building RegisterRegion instruction: RegisterRegionArgs { region: "asia/pakistan", parent: None, level: country }
 
-Options:
-  -p, --port <PORT>
-          [default: 3040]
-      --listen-address <LISTEN_ADDRESS>
-          Interface the RPC server binds to. The RPC has no caller auth — bind loopback unless the port is firewalled [default: 0.0.0.0]
-      --home <HOME>
-          Override the config's home directory (`RocksDB` + bedrock signing key), so multiple instances can share one config file
-      --metrics-address <METRICS_ADDRESS>
-          Override the config's `metrics_address`, so multiple instances can share one config file without fighting over the exporter port
-      --signing-key <SIGNING_KEY>
-          File holding the 32-byte key to sign blocks with, overriding the config's `signing_key`. It is the only thing that has to differ between the sequencers of one committee, so passing it separately lets them all run off one config file
-  -h, --help
-          Print help
-  -V, --version
-          Print version
-=== Step 2: Querying spel CLI integration ===
-spel binary: /usr/local/bin/spel
-Usage: spel [OPTIONS] -- <COMMAND> [ARGS]
-
-Tip: create a spel.toml with [program] or [programs.<name>] to avoid passing flags.
-
-Commands that don't need --idl:
-  init <name>              Scaffold a new SPEL project
-  program-id <FILE> [FILE...]  Extract ProgramId from program .bin (R0BF) binary(ies)
-  inspect <ACCOUNT-ID> --idl <IDL> --type <TYPE>   Decode account data
-  generate-idl [PATH]      Generate IDL JSON from a program source file or project directory
-
-  pda <ACCOUNT> [--seed-arg VALUE...]  Compute a PDA defined in the IDL
-      [--npk HEX --vpk HEX [--identifier U128]]  (private PDAs; identifier defaults to 0)
-  pda --program <HEX> <SEED> [SEED...]  Compute arbitrary PDA (no IDL needed)
-For all other commands, provide an IDL file via --idl or spel.toml.
+thread 'main' (1) panicked at /root/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/risc0-zkvm-3.0.5/src/guest/env/read.rs:84:36:
+called `Result::unwrap()` on an `Err` value: DeserializeUnexpectedEnd
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+Error: Guest panicked: called `Result::unwrap()` on an `Err` value: DeserializeUnexpectedEnd
+=== [Step 4] Querying state directly from standalone sequencer RPC ===
+Raw Sequencer Account RPC Response: {"jsonrpc":"2.0","id":1,"result":{"nonce":0,"data":{"balance":10000000,"shards":{}}}}
+=== [Step 5] Decoded On-Chain Records via Runner Query ===
+Querying account state for 55Me6rDpyUu9vhuMhnM26ikUL4XbgKDUjrWEpdpzyv6r
+Registry State: total_regions=72, last_updated=1726747200
+REGION_RECORD: region=europe/germany, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/germany-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/france, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/france-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/great-britain, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/great-britain-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/italy, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/italy-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/spain, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/spain-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/poland, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/poland-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/netherlands, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/netherlands-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/belgium, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/belgium-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/switzerland, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/switzerland-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/austria, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/austria-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/czech-republic, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/czech-republic-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/sweden, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/sweden-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/norway, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/norway-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/denmark, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/denmark-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/finland, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/finland-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/portugal, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/portugal-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/greece, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/greece-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/ireland-and-northern-ireland, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/ireland-and-northern-ireland-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/hungary, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/hungary-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/romania, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/romania-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/bulgaria, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/bulgaria-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/ukraine, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/ukraine-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/belarus, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/belarus-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=europe/turkey, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/europe/turkey-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=north-america/canada, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/north-america/canada-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=north-america/mexico, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/north-america/mexico-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/japan, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/japan-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/south-korea, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/south-korea-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/indonesia, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/indonesia-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/thailand, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/thailand-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/vietnam, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/vietnam-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/malaysia-singapore-brunei, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/philippines, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/philippines-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/pakistan, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/pakistan-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/bangladesh, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/bangladesh-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=asia/iran, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/asia/iran-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=australia-oceania/australia, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/australia-oceania/australia-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=south-america/brazil, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/south-america/brazil-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=south-america/argentina, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/south-america/argentina-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=south-america/colombia, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/south-america/colombia-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=south-america/peru, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/south-america/peru-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=south-america/chile, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/south-america/chile-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=africa/south-africa, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/africa/south-africa-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=africa/egypt, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/africa/egypt-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=africa/nigeria, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/africa/nigeria-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=africa/kenya, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/africa/kenya-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=africa/morocco, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/africa/morocco-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=africa/ethiopia, parent=None, level=country, cid=, source_url=https://download.geofabrik.de/africa/ethiopia-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=us/california, parent=Some("us"), level=subregion, cid=, source_url=https://download.geofabrik.de/north-america/us/california-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=us/texas, parent=Some("us"), level=subregion, cid=, source_url=https://download.geofabrik.de/north-america/us/texas-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=us/florida, parent=Some("us"), level=subregion, cid=, source_url=https://download.geofabrik.de/north-america/us/florida-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=us/new-york, parent=Some("us"), level=subregion, cid=, source_url=https://download.geofabrik.de/north-america/us/new-york-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=us/washington, parent=Some("us"), level=subregion, cid=, source_url=https://download.geofabrik.de/north-america/us/washington-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=us/illinois, parent=Some("us"), level=subregion, cid=, source_url=https://download.geofabrik.de/north-america/us/illinois-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=us/georgia, parent=Some("us"), level=subregion, cid=, source_url=https://download.geofabrik.de/north-america/us/georgia-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=us/pennsylvania, parent=Some("us"), level=subregion, cid=, source_url=https://download.geofabrik.de/north-america/us/pennsylvania-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=india/central-zone, parent=Some("india"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/india/central-zone-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=india/eastern-zone, parent=Some("india"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/india/eastern-zone-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=india/north-eastern-zone, parent=Some("india"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/india/north-eastern-zone-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=india/northern-zone, parent=Some("india"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/india/northern-zone-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=india/southern-zone, parent=Some("india"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/india/southern-zone-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=india/western-zone, parent=Some("india"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/india/western-zone-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=china/guangdong, parent=Some("china"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/china/guangdong-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=china/jiangsu, parent=Some("china"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/china/jiangsu-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=china/shandong, parent=Some("china"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/china/shandong-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=china/zhejiang, parent=Some("china"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/china/zhejiang-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=china/sichuan, parent=Some("china"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/china/sichuan-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=china/henan, parent=Some("china"), level=subregion, cid=, source_url=https://download.geofabrik.de/asia/china/henan-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=russia/central-fed-district, parent=Some("russia"), level=subregion, cid=, source_url=https://download.geofabrik.de/russia/central-fed-district-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=russia/northwestern-fed-district, parent=Some("russia"), level=subregion, cid=, source_url=https://download.geofabrik.de/russia/northwestern-fed-district-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=russia/volga-fed-district, parent=Some("russia"), level=subregion, cid=, source_url=https://download.geofabrik.de/russia/volga-fed-district-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+REGION_RECORD: region=russia/siberian-fed-district, parent=Some("russia"), level=subregion, cid=, source_url=https://download.geofabrik.de/russia/siberian-fed-district-latest.osm.pbf, checksum=, version=2026-09-23, hosted=true, timestamp=1726747200
+=== [Step 6] Asserting registered record fields ===
+✔ Standalone sequencer registered record asserted on-chain: region=asia/pakistan cid=zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz
 ========================================================
-[PASS] STANDALONE SEQUENCER TOOLING VERIFIED SUCCESSFULLY
+[PASS] STANDALONE SEQUENCER TRANSACTIONAL E2E VERIFIED SUCCESSFULLY
 ========================================================
+Cleaning up standalone sequencer test processes...

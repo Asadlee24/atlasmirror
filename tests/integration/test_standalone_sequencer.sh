@@ -90,33 +90,32 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
             "expected_block_signing_pubkeys": [],
             "min_committee_size": 0,
             "minimum_sequencer_stake": 1000000,
-            "posting_timeframe": 10,
-            "posting_timeout": 30,
-            "challenge_timeframe": 10,
-            "challenge_timeout": 30,
-            "finalization_timeframe": 10,
-            "finalization_timeout": 30,
+            "posting_timeframe": 30,
+            "posting_timeout": 10,
+            "challenge_timeframe": 30,
+            "challenge_timeout": 10,
+            "finalization_timeframe": 30,
+            "finalization_timeout": 10,
             "max_blob_size": "1 MiB",
             "max_blobs_per_block": 10
-        },
-        "sequencer_key": "2525252525252525252525252525252525252525252525252525252525252525"
+        }
     },
     "genesis": [
         {
-            "supply_bridge_lock_holding": {
-                "holder": "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r",
-                "amount": 10000000
+            "supply_account": {
+                "account_id": "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r",
+                "balance": 10000000
             }
         },
         {
             "supply_account": {
-                "account_id": "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r",
-                "balance": 1000000
+                "account_id": "DqyLaEh7Kso3LtVpmWM8f8dpyWHXG7C1TkKwKoKiaFn5",
+                "balance": 10000000
             }
         },
         {
-            "stake_sequencer": {
-                "account_id": "DqyLaEh7Kso3LtVpmWM8f8dpyWHXG7C1TkKwKoKiaFn5",
+            "supply_account": {
+                "account_id": "55Me6rDpyUu9vhuMhnM26ikUL4XbgKDUjrWEpdpzyv6r",
                 "balance": 10000000
             }
         }
@@ -133,69 +132,6 @@ EOF
 # 3. Start LEZ Standalone Sequencer on port 3040
 echo "=== [Step 2] Starting LEZ Standalone Sequencer on 127.0.0.1:3040 ===" | tee -a "${EVIDENCE_FILE}"
 export RUST_LOG=info
-# Dump binary help and try key generation subcommands
-echo "=== [Diagnostics] sequencer_service binary usage ===" | tee -a "${EVIDENCE_FILE}"
-"${SEQ_BIN}" --help 2>&1 | tee -a "${EVIDENCE_FILE}" || true
-"${SEQ_BIN}" --version 2>&1 | tee -a "${EVIDENCE_FILE}" || true
-echo "--- Trying 'init' subcommand ---" | tee -a "${EVIDENCE_FILE}"
-timeout 5s "${SEQ_BIN}" init --home "${WORK_DIR}/data" 2>&1 | tee -a "${EVIDENCE_FILE}" || true
-echo "--- Trying 'generate-keys' subcommand ---" | tee -a "${EVIDENCE_FILE}"
-timeout 5s "${SEQ_BIN}" generate-keys --home "${WORK_DIR}/data" 2>&1 | tee -a "${EVIDENCE_FILE}" || true
-echo "--- Files in home dir after init attempts ---" | tee -a "${EVIDENCE_FILE}"
-find "${WORK_DIR}/data" -type f 2>/dev/null | tee -a "${EVIDENCE_FILE}" || true
-echo "--- Current config ---" | tee -a "${EVIDENCE_FILE}"
-cat "${WORK_DIR}/sequencer_config.json" | tee -a "${EVIDENCE_FILE}"
-
-# Self-healing config: probe for serde errors and auto-patch before real start
-echo "=== [Pre-flight] Auto-patching sequencer config ===" | tee -a "${EVIDENCE_FILE}"
-for probe in $(seq 1 20); do
-    PROBE_ERR=$(timeout 3s "${SEQ_BIN}" --port 3041 --home "${WORK_DIR}/data_probe" "${WORK_DIR}/sequencer_config.json" 2>&1 || true)
-    echo "[probe ${probe}] Raw output: ${PROBE_ERR}" | tee -a "${EVIDENCE_FILE}"
-    MISSING=$(echo "${PROBE_ERR}" | grep -oP "missing field \`\K[^\`]+" || true)
-    BAD_TYPE=$(echo "${PROBE_ERR}" | grep -oP "invalid type: \K[^,]+" || true)
-    if [ -z "${MISSING}" ] && [ -z "${BAD_TYPE}" ]; then
-        echo "[probe ${probe}] Config looks valid (no serde errors)." | tee -a "${EVIDENCE_FILE}"
-        break
-    fi
-    if [ -n "${MISSING}" ]; then
-        echo "[probe ${probe}] Missing field: ${MISSING} — auto-patching..." | tee -a "${EVIDENCE_FILE}"
-        python3 - <<PYEOF
-import json
-with open("${WORK_DIR}/sequencer_config.json") as f:
-    cfg = json.load(f)
-field = "${MISSING}"
-def default_val(key):
-    if key.endswith('_key') or key == 'key':
-        return "2525252525252525252525252525252525252525252525252525252525252525"
-    if key in ('posting_timeframe','posting_timeout','challenge_timeframe','challenge_timeout',
-               'finalization_timeframe','finalization_timeout','min_committee_size',
-               'minimum_sequencer_stake','max_blobs_per_block'):
-        return 10
-    if key == 'max_blob_size':
-        return "1 MiB"
-    if key in ('holder','account_id'):
-        return "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r"
-    if key in ('balance','amount'):
-        return 1000000
-    if key in ('node_url',):
-        return "http://127.0.0.1:18080"
-    return 0
-# Try to add at root, then bedrock_config, then channel_params (targeted, not recursive)
-placed = False
-for target in [cfg, cfg.get('bedrock_config', {}), cfg.get('bedrock_config', {}).get('channel_params', {})]:
-    if isinstance(target, dict) and field not in target:
-        target[field] = default_val(field)
-        placed = True
-        break
-if not placed:
-    cfg[field] = default_val(field)
-with open("${WORK_DIR}/sequencer_config.json", 'w') as f:
-    json.dump(cfg, f, indent=4)
-print(f"Patched: added {field} = {default_val(field)!r}")
-PYEOF
-    fi
-done
-
 "${SEQ_BIN}" --port 3040 --home "${WORK_DIR}/data" "${WORK_DIR}/sequencer_config.json" > "${WORK_DIR}/sequencer.log" 2>&1 &
 SEQ_PID=$!
 
