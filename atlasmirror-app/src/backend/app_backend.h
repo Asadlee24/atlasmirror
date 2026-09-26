@@ -5,6 +5,9 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
 #include <QtCore/QVariantList>
+#include <QtCore/QSet>
+#include <QtCore/QMutex>
+#include <QtCore/QThreadPool>
 #include "atlasmirror_sdk_impl.h"
 
 class AppBackend : public QObject
@@ -35,16 +38,16 @@ public:
     bool telemetryEnabled() const { return m_telemetryEnabled; }
     void setTelemetryEnabled(bool val);
 
-    QJsonArray regions() const { return m_regions; }
-    QJsonArray queue() const { return m_queue; }
-    QJsonArray downloads() const { return m_downloads; }
-    QJsonObject lastOperationResult() const { return m_lastResult; }
+    QJsonArray regions() const;
+    QJsonArray queue() const;
+    QJsonArray downloads() const;
+    QJsonObject lastOperationResult() const;
 
     Q_INVOKABLE QJsonArray getFilteredRegions();
     Q_INVOKABLE QJsonArray getQueueItems();
     Q_INVOKABLE QJsonArray getDownloadItems();
 
-    // Direct Operations backed by AtlasmirrorSdkImpl (zero CLI subprocess dependencies)
+    // Direct Asynchronous Operations backed by AtlasmirrorSdkImpl (zero CLI subprocess dependencies)
     Q_INVOKABLE void refreshIndex();
     Q_INVOKABLE void hostRegion(const QString &regionPath);
     Q_INVOKABLE void startBulkHost(const QJsonArray &regionPaths);
@@ -71,16 +74,20 @@ signals:
 
 private:
     void loadPredefinedCatalog();
+    bool isCancelled(const QString &regionPath);
 
     QString m_searchFilter;
     QString m_statusFilter{"ALL"};
     int m_maxConcurrency{2};
     bool m_telemetryEnabled{false};
 
+    mutable QMutex m_mutex;
     QJsonArray m_regions;
     QJsonArray m_queue;
     QJsonArray m_downloads;
     QJsonObject m_lastResult;
+
+    QSet<QString> m_cancelledRegions;
 
     AtlasmirrorSdkImpl m_sdk;
 };

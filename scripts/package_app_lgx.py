@@ -45,12 +45,12 @@ def package_app():
     bin_dir.mkdir(parents=True, exist_ok=True)
     
     backend_lib = lib_dir / "libatlasmirror_app_backend.so"
-    # If a real build artifact exists in build dirs, copy it; otherwise generate the library wrapper
+    # If a real build artifact exists in build dirs, copy it
     native_found = False
     for build_cand in [root / "build", app_dir / "build", root / "target" / "release"]:
         if not build_cand.exists():
             continue
-        for so_cand in build_cand.glob("**/libatlasmirror_app_backend.*"):
+        for so_cand in build_cand.glob("**/libatlasmirror_app_*.*"):
             if so_cand.is_file() and not so_cand.name.endswith((".o", ".obj", ".a")):
                 shutil.copy2(so_cand, lib_dir / so_cand.name)
                 native_found = True
@@ -60,13 +60,10 @@ def package_app():
                 native_found = True
                 
     if not native_found:
-        # Create authoritative ELF dynamic library container for Basecamp loader
-        with open(backend_lib, "wb") as f:
-            # ELF Header magic + descriptor
-            f.write(b"\x7fELF\x02\x01\x01\x00" + b"\x00" * 8)
-            f.write(b"AtlasMirror Native App Backend [Logos Basecamp universal module]\n")
-            f.write(f"Module: {pkg_name} Version: {version}\n".encode("utf-8"))
-            f.write(b"Entry: atlasmirror_app_backend\n")
+        raise RuntimeError(
+            "Native backend binaries (libatlasmirror_app_backend, libatlasmirror_app_plugin, atlasmirror-app) "
+            "must be compiled before packaging .lgx bundle!"
+        )
             
     # 4. Create uncompressed/gzipped tar archive as .lgx
     with tarfile.open(lgx_path, "w:gz") as tar:
@@ -86,7 +83,7 @@ def package_app():
             print(f"  {m.name:<45} ({m.size:>8} bytes)")
             if m.name == "metadata.json":
                 has_metadata = True
-            if "libatlasmirror_app_backend" in m.name or "atlasmirror-app" in m.name:
+            if "libatlasmirror_app_" in m.name or "atlasmirror-app" in m.name:
                 has_native = True
             if m.name.endswith(".qml"):
                 has_qml = True

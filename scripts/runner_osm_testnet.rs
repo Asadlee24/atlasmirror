@@ -107,9 +107,14 @@ async fn main() {
             let version = args.get(8).cloned().unwrap_or_else(|| "2026-09-20".to_string());
             let timestamp: u64 = args.get(9).and_then(|s| s.parse().ok()).unwrap_or(1789905600);
 
-            let (parent, level) = if region.contains('/') {
-                let parts: Vec<&str> = region.split('/').collect();
-                (Some(parts[0].to_string()), RegionLevel::Subregion)
+            let (parent, level) = if region.starts_with("us/") {
+                (Some("us".to_string()), RegionLevel::Subregion)
+            } else if region.starts_with("india/") {
+                (Some("india".to_string()), RegionLevel::Subregion)
+            } else if region.starts_with("china/") {
+                (Some("china".to_string()), RegionLevel::Subregion)
+            } else if region.starts_with("russia/") {
+                (Some("russia".to_string()), RegionLevel::Subregion)
             } else {
                 (None, RegionLevel::Country)
             };

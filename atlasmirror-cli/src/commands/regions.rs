@@ -39,7 +39,9 @@ pub async fn execute_list(
         let onchain = onchain_records.iter().find(|r| r.region == cat_item.path);
         let hosted = onchain.is_some() && onchain.map(|o| o.hosted).unwrap_or(false);
         let cid = onchain.map(|o| o.cid.as_str()).unwrap_or("—");
-        let version = onchain.map(|o| o.version.as_str()).unwrap_or("—");
+        let version = onchain
+            .map(|o| o.version.as_str())
+            .unwrap_or("upstream-available");
 
         // Apply filter if specified
         if let Some(f) = filter {
@@ -126,7 +128,11 @@ pub async fn execute_show(path: &str, json_output: bool) -> Result<(), Box<dyn s
     let hosted = onchain.is_some() && onchain.map(|o| o.hosted).unwrap_or(false);
     let cid = onchain.map(|o| o.cid.as_str()).unwrap_or("—");
     let checksum = onchain.map(|o| o.checksum.as_str()).unwrap_or("—");
-    let version = onchain.map(|o| o.version.as_str()).unwrap_or("—");
+    let version = if let Some(o) = onchain {
+        o.version.clone()
+    } else {
+        crate::geofabrik::fetch_snapshot_version(path).await
+    };
 
     let details = json!({
         "path": cat_item.path,

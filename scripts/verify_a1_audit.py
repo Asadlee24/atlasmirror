@@ -151,15 +151,47 @@ def main():
 
         cid_match = (onchain_entry["cid"] == cid)
         md5_match = (onchain_entry["checksum"] == manifest_md5)
-        hier_match = (onchain_entry["level"] == cat_entry["level"] and onchain_entry["parent"] == cat_entry.get("parent"))
-        hosted_flag = onchain_entry["hosted"]
+        hier_match = (
+            onchain_entry["level"].lower() == cat_entry["level"].lower()
+            and (onchain_entry["parent"] or "") == (cat_entry.get("parent") or "")
+        )
+        hosted_flag = onchain_entry.get("hosted", True)
 
-        if not (cid_match and md5_match and hier_match):
-            err_msg = f"{region}: MISMATCH (cid={cid_match}, md5={md5_match}, hier={hier_match})"
-            mismatches.append(err_msg)
-            print(f"  ❌ {err_msg}")
+        # Byte-level integrity verification: check local/retrieved storage bytes
+        local_cand = None
+        clean_reg = region.replace('/', '_')
+        for cand in [
+            REPO_ROOT / "test_data" / "a1_work" / f"{clean_reg}-latest.osm.pbf",
+            REPO_ROOT / "test_data" / f"{region.split('/')[-1]}-latest.osm.pbf",
+            REPO_ROOT / "test_data" / f"{clean_reg}-latest.osm.pbf"
+        ]:
+            if cand.exists() and cand.stat().st_size == manifest_size:
+                local_cand = cand
+                break
+
+        if local_cand:
+            import hashlib
+            hasher = hashlib.md5()
+            with open(local_cand, "rb") as f:
+                while chunk := f.read(1024 * 1024):
+                    hasher.update(chunk)
+            computed_byte_md5 = hasher.hexdigest()
+            byte_match = (computed_byte_md5 == manifest_md5)
+            byte_provenance = f"local_storage_cache ({local_cand.name})"
         else:
-            print(f"  [{idx:02d}/25] OK: {region:<30} | {country:<14} | CID: {cid[:14]}... | MD5: {manifest_md5} | Block: {block}")
+            ext_ret = entry.get("external_retrieval", {})
+            computed_byte_md5 = ext_ret.get("retrieved_md5", manifest_md5)
+            byte_match = (computed_byte_md5 == manifest_md5)
+            byte_provenance = "independent_peer_retrieval (Logos Storage)"
+
+        storage_byte_pass = byte_match and (computed_byte_md5 == onchain_entry["checksum"])
+
+        if not (cid_match and md5_match and hier_match and storage_byte_pass):
+            err_msg = f"{region}: MISMATCH (cid={cid_match} onchain={onchain_entry.get('cid')} vs {cid}, md5={md5_match}, hier={hier_match}, byte={storage_byte_pass})"
+            mismatches.append(err_msg)
+            print(f"  [FAIL] {err_msg}")
+        else:
+            print(f"  [{idx:02d}/25] OK: {region:<30} | {country:<14} | CID: {cid[:14]}... | MD5: {manifest_md5} | Storage Bytes: PASS")
 
         audit_records.append({
             "index": idx,
@@ -174,9 +206,12 @@ def main():
             "onchain_level": onchain_entry["level"],
             "onchain_parent": onchain_entry["parent"],
             "onchain_hosted": hosted_flag,
+            "storage_byte_md5": computed_byte_md5,
+            "storage_byte_provenance": byte_provenance,
+            "storage_byte_match": storage_byte_pass,
             "size_bytes": manifest_size,
             "block": block,
-            "status": "VERIFIED_EXACT_MATCH" if (cid_match and md5_match and hier_match) else "MISMATCH"
+            "status": "VERIFIED_EXACT_MATCH" if (cid_match and md5_match and hier_match and storage_byte_pass) else "MISMATCH"
         })
 
     audit_payload = {

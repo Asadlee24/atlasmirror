@@ -133,6 +133,6 @@ Captured from genuine execution of `tests/integration/storage_real.sh` against r
 - **Byte Count & SHA256 Equality**:
   - Original Bytes: `1048576`, SHA256: `1c96f8f888479012efc0ebc0b585fab98a187c6f1d12a81bc49f6e8de31c93f2`
   - Retrieved Bytes: `1048576`, SHA256: `1c96f8f888479012efc0ebc0b585fab98a187c6f1d12a81bc49f6e8de31c93f2`
-- **Raw Execution Log**: Saved in [`evidence/storage-real.log`](file:///c:/Users/Aftab/Desktop/atlasmirror/evidence/storage-real.log).
+- **Raw Execution Log**: Saved in [`evidence/storage-real.log`](../evidence/storage-real.log).
 - **Result**: `[PASS] REAL LOGOS STORAGE ROUNDTRIP VERIFIED!`
 

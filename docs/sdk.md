@@ -97,11 +97,11 @@ To consume AtlasMirror in another Logos Basecamp module:
        Button {
            text: "Fetch Pakistan Map"
            onClicked: {
-               let info = osmSdk.resolveRegion("asia/pakistan");
+               let info = JSON.parse(osmSdk.resolveRegion("asia/pakistan"));
                console.log("Resolved CID:", info.cid);
                osmSdk.downloadRegion("asia/pakistan", "/tmp/pakistan.osm.pbf");
            }
        }
    }
    ```
-See [examples/consumer-module/](file:///c:/Users/Aftab/Desktop/atlasmirror/examples/consumer-module/) for a complete working implementation.
+See [examples/consumer-module/](../examples/consumer-module/) for a complete working implementation.

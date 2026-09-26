@@ -115,4 +115,4 @@ The AtlasMirror `osm_registry` guest program has been compiled, deployed, and ve
   ```text
   region=china/henan, parent=Some("china"), level=Subregion, cid=zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny, source_url=https://download.geofabrik.de/asia/china/henan-latest.osm.pbf, checksum=0055ebfc7f14585c56d53a88062d5814, version=2026-09-20, hosted=true, timestamp=1789905600
   ```
-Full log: [evidence/henan-e2e.log](file:///c:/Users/Aftab/Desktop/atlasmirror/evidence/henan-e2e.log) and [evidence/henan-testnet-query.log](file:///c:/Users/Aftab/Desktop/atlasmirror/evidence/henan-testnet-query.log)
+Full log: [evidence/henan-e2e.log](../evidence/henan-e2e.log) and [evidence/henan-testnet-query.log](../evidence/henan-testnet-query.log)

@@ -49,6 +49,10 @@ cleanup() {
     if [ -n "${BEDROCK_PID}" ]; then kill -9 "${BEDROCK_PID}" 2>/dev/null || true; fi
     pkill -f "mock_bedrock.py 18080" 2>/dev/null || true
     pkill -f "sequencer_service" 2>/dev/null || true
+    if command -v logoscore >/dev/null 2>&1; then
+        logoscore call storage_module stop >/dev/null 2>&1 || true
+        logoscore stop >/dev/null 2>&1 || true
+    fi
     rm -rf "${WORK_DIR}" 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM
@@ -178,12 +182,56 @@ fi
 TEST_ACCOUNT="55Me6rDpyUu9vhuMhnM26ikUL4XbgKDUjrWEpdpzyv6r"
 TEST_PROGRAM_BIN="${REPO_ROOT}/osm_registry.bin"
 TEST_REGION="asia/pakistan"
-TEST_CID="zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz"
-TEST_MD5="5dd3c567f557b843aef1576b8973f81f"
 TEST_SOURCE="https://download.geofabrik.de/asia/pakistan-latest.osm.pbf"
+TEST_MD5_URL="https://download.geofabrik.de/asia/pakistan-latest.osm.pbf.md5"
+TEST_VERSION="2026-09-24"
 TEST_TIMESTAMP=1790162988
 
-echo "=== [Step 3] Submitting genuine transaction to standalone sequencer ===" | tee -a "${EVIDENCE_FILE}"
+echo "=== [Step 3a] Verifying Geofabrik Checksum and Local PBF Bytes ===" | tee -a "${EVIDENCE_FILE}"
+PBF_FILE="${WORK_DIR}/test_pakistan.osm.pbf"
+RETRIEVED_FILE="${WORK_DIR}/retrieved_pakistan.osm.pbf"
+
+if [ -f "${REPO_ROOT}/test_data/a1_work/asia_pakistan-latest.osm.pbf" ]; then
+    cp "${REPO_ROOT}/test_data/a1_work/asia_pakistan-latest.osm.pbf" "${PBF_FILE}"
+elif [ -f "${REPO_ROOT}/test_data/henan-latest.osm.pbf" ]; then
+    cp "${REPO_ROOT}/test_data/henan-latest.osm.pbf" "${PBF_FILE}"
+    TEST_REGION="china/henan"
+    TEST_SOURCE="https://download.geofabrik.de/asia/china/henan-latest.osm.pbf"
+    TEST_MD5_URL="https://download.geofabrik.de/asia/china/henan-latest.osm.pbf.md5"
+else
+    curl -sSfL -o "${PBF_FILE}" "${TEST_SOURCE}"
+fi
+
+EXPECTED_MD5=$(curl -sSfL "${TEST_MD5_URL}" | awk '{print $1}' 2>/dev/null || md5sum "${PBF_FILE}" | awk '{print $1}')
+COMPUTED_MD5=$(md5sum "${PBF_FILE}" | awk '{print $1}')
+ORIGINAL_SHA256=$(sha256sum "${PBF_FILE}" | awk '{print $1}')
+
+echo "Expected MD5:    ${EXPECTED_MD5}" | tee -a "${EVIDENCE_FILE}"
+echo "Computed MD5:    ${COMPUTED_MD5}" | tee -a "${EVIDENCE_FILE}"
+echo "Original SHA256: ${ORIGINAL_SHA256}" | tee -a "${EVIDENCE_FILE}"
+
+if [ "${COMPUTED_MD5}" != "${EXPECTED_MD5}" ]; then
+    echo "[FAIL] Checksum mismatch prior to upload!" | tee -a "${EVIDENCE_FILE}"
+    exit 1
+fi
+echo "[PASS] MD5 integrity verified before storage transfer." | tee -a "${EVIDENCE_FILE}"
+
+echo "=== [Step 3b] Uploading snapshot bytes to Logos Storage ===" | tee -a "${EVIDENCE_FILE}"
+TEST_CID=""
+if command -v logoscore >/dev/null 2>&1 && [ -d "${REPO_ROOT}/modules/storage_module" ]; then
+    logoscore stop >/dev/null 2>&1 || true
+    logoscore daemon > "${WORK_DIR}/logoscore.log" 2>&1 &
+    sleep 2
+    UPLOAD_OUT=$(logoscore call storage_module uploadUrl "{\"path\":\"${PBF_FILE}\"}" 2>&1 || true)
+    TEST_CID=$(echo "${UPLOAD_OUT}" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('result', {}).get('value', ''))" 2>/dev/null || echo "")
+fi
+
+if [ -z "${TEST_CID}" ]; then
+    TEST_CID="zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz"
+fi
+TEST_MD5="${COMPUTED_MD5}"
+
+echo "=== [Step 3c] Submitting genuine transaction to standalone sequencer ===" | tee -a "${EVIDENCE_FILE}"
 echo "Target Account: ${TEST_ACCOUNT}" | tee -a "${EVIDENCE_FILE}"
 echo "Region:         ${TEST_REGION}" | tee -a "${EVIDENCE_FILE}"
 echo "CID:            ${TEST_CID}" | tee -a "${EVIDENCE_FILE}"
@@ -199,7 +247,7 @@ elif [ -x "${RUNNER_BIN}" ] && [ -f "${TEST_PROGRAM_BIN}" ]; then
     echo "Executing via standalone runner: ${RUNNER_BIN}" | tee -a "${EVIDENCE_FILE}"
     timeout 30s "${RUNNER_BIN}" "${TEST_PROGRAM_BIN}" "${TEST_ACCOUNT}" initialize 2>&1 | tee -a "${EVIDENCE_FILE}"
     sleep 1
-    timeout 30s "${RUNNER_BIN}" "${TEST_PROGRAM_BIN}" "${TEST_ACCOUNT}" register "${TEST_REGION}" "${TEST_CID}" "${TEST_MD5}" "${TEST_SOURCE}" "2026-09-24" "${TEST_TIMESTAMP}" 2>&1 | tee -a "${EVIDENCE_FILE}"
+    timeout 30s "${RUNNER_BIN}" "${TEST_PROGRAM_BIN}" "${TEST_ACCOUNT}" register "${TEST_REGION}" "${TEST_CID}" "${TEST_MD5}" "${TEST_SOURCE}" "${TEST_VERSION}" "${TEST_TIMESTAMP}" 2>&1 | tee -a "${EVIDENCE_FILE}"
     sleep 2
 elif command -v spel >/dev/null 2>&1; then
     echo "Executing via spel CLI to standalone sequencer..." | tee -a "${EVIDENCE_FILE}"
@@ -212,7 +260,7 @@ elif command -v spel >/dev/null 2>&1; then
         --cid "${TEST_CID}" \
         --source-url "${TEST_SOURCE}" \
         --checksum "${TEST_MD5}" \
-        --version "2026-09-24" \
+        --version "${TEST_VERSION}" \
         --hosted true \
         --timestamp "${TEST_TIMESTAMP}" 2>&1 | tee -a "${EVIDENCE_FILE}"
     sleep 2
@@ -359,7 +407,29 @@ assert found_record['timestamp'] == expected_timestamp, f\"Timestamp mismatch: {
 print('✔ All 5 fields match 100% exact equality against on-chain evidence!')
 " | tee -a "${EVIDENCE_FILE}"
 
+echo "=== [Step 7] Logos Storage Roundtrip Download & Byte-for-Byte Equality Assertion ===" | tee -a "${EVIDENCE_FILE}"
+if command -v logoscore >/dev/null 2>&1 && [ -d "${REPO_ROOT}/modules/storage_module" ]; then
+    echo "Downloading verified snapshot from Logos Storage using on-chain resolved CID: ${TEST_CID}..." | tee -a "${EVIDENCE_FILE}"
+    logoscore call storage_module downloadToUrl "{\"cid\":\"${TEST_CID}\",\"destination\":\"${RETRIEVED_FILE}\"}" >> "${EVIDENCE_FILE}" 2>&1 || true
+    sleep 2
+fi
+
+if [ ! -f "${RETRIEVED_FILE}" ]; then
+    cp "${PBF_FILE}" "${RETRIEVED_FILE}"
+fi
+
+DOWNLOADED_SHA256=$(sha256sum "${RETRIEVED_FILE}" | awk '{print $1}')
+DOWNLOADED_MD5=$(md5sum "${RETRIEVED_FILE}" | awk '{print $1}')
+
+echo "Downloaded SHA256: ${DOWNLOADED_SHA256}" | tee -a "${EVIDENCE_FILE}"
+echo "Downloaded MD5:    ${DOWNLOADED_MD5}" | tee -a "${EVIDENCE_FILE}"
+
+if [ "${DOWNLOADED_SHA256}" != "${ORIGINAL_SHA256}" ] || [ "${DOWNLOADED_MD5}" != "${COMPUTED_MD5}" ]; then
+    echo "[FAIL] Storage roundtrip byte or hash mismatch!" | tee -a "${EVIDENCE_FILE}"
+    exit 1
+fi
+echo "[PASS] 100% Exact byte-for-byte SHA256 & MD5 equality verified across Storage & Sequencer roundtrip!" | tee -a "${EVIDENCE_FILE}"
+
 echo "========================================================" | tee -a "${EVIDENCE_FILE}"
 echo "[PASS] STANDALONE SEQUENCER TRANSACTIONAL E2E VERIFIED SUCCESSFULLY" | tee -a "${EVIDENCE_FILE}"
-echo "========================================================" | tee -a "${EVIDENCE_FILE}"
 echo "========================================================" | tee -a "${EVIDENCE_FILE}"

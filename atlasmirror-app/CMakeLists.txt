@@ -17,6 +17,7 @@ else()
     set(SDK_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../atlasmirror-sdk/src")
 endif()
 
+# Main backend shared library
 add_library(atlasmirror_app_backend SHARED
     src/backend/app_backend.cpp
     src/backend/app_backend.h
@@ -37,6 +38,28 @@ target_link_libraries(atlasmirror_app_backend PRIVATE
     Qt6::Gui
 )
 
+# Canonical Basecamp module plugin shared library
+add_library(atlasmirror_app_plugin SHARED
+    src/backend/app_backend.cpp
+    src/backend/app_backend.h
+    ${SDK_SRC_DIR}/atlasmirror_sdk_impl.cpp
+    ${SDK_SRC_DIR}/atlasmirror_sdk_impl.h
+    qml.qrc
+)
+
+target_include_directories(atlasmirror_app_plugin PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/backend
+    ${SDK_SRC_DIR}
+)
+
+target_link_libraries(atlasmirror_app_plugin PRIVATE
+    Qt6::Core
+    Qt6::Quick
+    Qt6::Qml
+    Qt6::Gui
+)
+
+# Standalone executable
 add_executable(atlasmirror-app
     src/main.cpp
     src/backend/app_backend.cpp

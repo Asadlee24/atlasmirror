@@ -33,7 +33,9 @@ Rectangle {
     color: "#000000"
 
     // Resolves AtlasMirror SDK service without tight UI coupling
-    property var osmSdk: (typeof logos !== "undefined") ? logos.module("atlasmirror_sdk") : null
+    property var osmSdk: (typeof logos !== "undefined" && logos.module) 
+        ? logos.module("atlasmirror_sdk") 
+        : null
 
     ColumnLayout {
         anchors.centerIn: parent
@@ -43,14 +45,17 @@ Rectangle {
             text: "Fetch Offline Map: asia/pakistan"
             onClicked: {
                 if (osmSdk) {
-                    let record = osmSdk.resolveRegion("asia/pakistan");
+                    // resolveRegion returns JSON string with on-chain metadata & CID
+                    let resStr = osmSdk.resolveRegion("asia/pakistan");
+                    let record = JSON.parse(resStr);
                     console.log("Resolved Storage CID:", record.cid);
                     console.log("Verified Checksum:", record.checksum);
                     
-                    // Trigger download to application cache
-                    osmSdk.downloadSnapshot(record.cid, "/tmp/pakistan.osm.pbf");
+                    // Trigger verified download to application cache
+                    let ok = osmSdk.downloadRegion("asia/pakistan", "/tmp/pakistan.osm.pbf");
+                    console.log("Download success:", ok);
                 } else {
-                    console.log("AtlasMirror SDK not loaded; falling back to direct cache");
+                    console.warn("AtlasMirror SDK service not available in current Basecamp runtime");
                 }
             }
         }
@@ -81,18 +86,18 @@ target_link_libraries(my_consumer_module PRIVATE
 #include <iostream>
 
 void load_region_snapshot() {
-    AtlasMirrorSDK sdk;
+    AtlasmirrorSdkImpl sdk;
     
-    // Resolve on-chain metadata
-    RegionMetadata meta = sdk.resolve_region("europe/monaco");
-    std::cout << "Region: " << meta.region << std::endl;
-    std::cout << "Logos Storage CID: " << meta.cid << std::endl;
-    std::cout << "Published MD5: " << meta.checksum << std::endl;
+    // 1. Resolve on-chain metadata from live registry
+    std::string metaJson = sdk.resolveRegion("asia/pakistan");
+    std::cout << "Resolved on-chain metadata: " << metaJson << std::endl;
     
-    // Download with byte-level integrity verification
-    bool ok = sdk.download_verified(meta.cid, "/tmp/monaco.osm.pbf", meta.checksum);
+    // 2. Download with automatic checksum verification against published MD5
+    bool ok = sdk.downloadRegion("asia/pakistan", "/tmp/pakistan.osm.pbf");
     if (ok) {
-        std::cout << "Snapshot downloaded and integrity verified!" << std::endl;
+        std::cout << "Snapshot downloaded and MD5 integrity verified!" << std::endl;
+    } else {
+        std::cerr << "Download failed or checksum mismatch!" << std::endl;
     }
 }
 ```
@@ -131,8 +136,8 @@ atlasmirror-cli lookup region asia/pakistan --json
 # Query available updates
 atlasmirror-cli updates --json
 
-# Import and verify local PBF
-atlasmirror-cli host --file europe/monaco /path/to/monaco.osm.pbf
+# Import and verify local PBF for official closed-set region
+atlasmirror-cli host --file asia/pakistan /path/to/pakistan.osm.pbf
 ```
 
 Sample JSON response:
@@ -140,7 +145,7 @@ Sample JSON response:
 {
   "region": "asia/pakistan",
   "level": "country",
-  "parent": "asia",
+  "parent": null,
   "cid": "zDvZRwzm9WQQrvAZL4NavbFXjmbHTFNyho68zPMxKsCvfGEn2LbD",
   "checksum": "d63c9409c20924d0813b81266eb2f5ad",
   "version": "2026-09-19",
@@ -155,9 +160,9 @@ Sample JSON response:
 
 We invite community developers, Basecamp module creators, and geospatial applications to integrate with AtlasMirror.
 
-To have your module listed in the official [LP-0018 Adoption Matrix](docs/adoption.md):
+To have your module listed in the official [LP-0018 Adoption Matrix](adoption.md):
 
 1. Integrate `atlasmirror-sdk`, `osm-registry-core`, or QML module into your public repository.
 2. Ensure your build passes in CI.
-3. Open an issue using the [Ecosystem Integration Issue Template](.github/ISSUE_TEMPLATE/ecosystem_integration.md).
+3. Open an issue using the [Ecosystem Integration Issue Template](../.github/ISSUE_TEMPLATE/ecosystem_integration.md).
 4. Our team will verify the integration, test against canonical testnet 0.3, and add your project to the verified ecosystem tracking table.

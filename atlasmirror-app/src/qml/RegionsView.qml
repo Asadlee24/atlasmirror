@@ -86,10 +86,62 @@ Item {
         id: regionsModel
     }
 
+    property var selectedPaths: ({})
+    property int selectedCount: 0
+
+    function isSelected(p) {
+        return !!selectedPaths[p]
+    }
+
+    function toggleSelection(p) {
+        var copy = Object.assign({}, selectedPaths)
+        if (copy[p]) {
+            delete copy[p]
+        } else {
+            copy[p] = true
+        }
+        selectedPaths = copy
+        selectedCount = Object.keys(copy).length
+    }
+
+    function toggleSelectAll() {
+        if (selectedCount > 0) {
+            selectedPaths = ({})
+            selectedCount = 0
+        } else {
+            var copy = ({})
+            for (var i = 0; i < regionsModel.count; ++i) {
+                copy[regionsModel.get(i).path] = true
+            }
+            selectedPaths = copy
+            selectedCount = Object.keys(copy).length
+        }
+    }
+
     Connections {
         target: (typeof backend !== "undefined") ? backend : null
         function onRegionsUpdated() {
             populateModel()
+        }
+        function onOperationResultChanged() {
+            if (typeof backend !== "undefined" && backend.lastOperationResult) {
+                var res = backend.lastOperationResult
+                if (res.operation === "BATCH_REGISTER") {
+                    if (res.success) {
+                        statusNotification = "Batch transaction confirmed! TX Hash: " + (res.tx_hash || "confirmed") + " (" + (res.batch_size || 0) + " regions registered)"
+                        selectedPaths = ({})
+                        selectedCount = 0
+                    } else {
+                        statusNotification = "Batch transaction failed: " + (res.error || "Unknown error")
+                    }
+                } else if (res.operation === "HOST_REGION") {
+                    if (res.success) {
+                        statusNotification = "Successfully hosted " + res.region + "! CID: " + res.cid
+                    } else {
+                        statusNotification = "Hosting failed for " + res.region + ": " + (res.error || "Unknown error")
+                    }
+                }
+            }
         }
     }
 
@@ -237,19 +289,25 @@ Item {
                 }
 
                 Button {
-                    text: "Batch Host (25)"
+                    text: selectedCount > 0 ? "Batch Host (" + selectedCount + " Selected)" : "Batch Host (25)"
                     onClicked: {
                         var batchList = []
-                        for (var i = 0; i < allCatalogRegions.length; ++i) {
-                            if (!allCatalogRegions[i].hosted) {
-                                batchList.push(allCatalogRegions[i].path)
-                                if (batchList.length >= 25) break
+                        if (selectedCount > 0) {
+                            batchList = Object.keys(selectedPaths)
+                        } else {
+                            for (var i = 0; i < allCatalogRegions.length; ++i) {
+                                if (!allCatalogRegions[i].hosted) {
+                                    batchList.push(allCatalogRegions[i].path)
+                                    if (batchList.length >= 25) break
+                                }
                             }
                         }
-                        if (typeof backend !== "undefined" && backend.startBulkHost) {
-                            backend.startBulkHost(batchList)
+                        if (batchList.length > 0) {
+                            if (typeof backend !== "undefined" && backend.startBulkHost) {
+                                backend.startBulkHost(batchList)
+                            }
+                            statusNotification = "Initiated batch transaction for " + batchList.length + " regions. Processing in background..."
                         }
-                        statusNotification = "Queued " + batchList.length + " regions for batch hosting."
                     }
                 }
             }
@@ -266,12 +324,17 @@ Item {
                     anchors.leftMargin: 12
                     anchors.rightMargin: 12
 
-                    Text { text: "Region"; color: "#AAAAAA"; font.bold: true; Layout.preferredWidth: 220 }
-                    Text { text: "Level"; color: "#AAAAAA"; font.bold: true; Layout.preferredWidth: 90 }
+                    CheckBox {
+                        Layout.preferredWidth: 32
+                        checked: selectedCount > 0 && selectedCount === regionsModel.count
+                        onClicked: toggleSelectAll()
+                    }
+                    Text { text: "Region"; color: "#AAAAAA"; font.bold: true; Layout.preferredWidth: 200 }
+                    Text { text: "Level"; color: "#AAAAAA"; font.bold: true; Layout.preferredWidth: 80 }
                     Text { text: "Version"; color: "#AAAAAA"; font.bold: true; Layout.preferredWidth: 95 }
-                    Text { text: "Storage Status"; color: "#AAAAAA"; font.bold: true; Layout.preferredWidth: 110 }
+                    Text { text: "Storage Status"; color: "#AAAAAA"; font.bold: true; Layout.preferredWidth: 100 }
                     Text { text: "CID / Source"; color: "#AAAAAA"; font.bold: true; Layout.fillWidth: true }
-                    Text { text: "Action"; color: "#AAAAAA"; font.bold: true; Layout.preferredWidth: 100 }
+                    Text { text: "Action"; color: "#AAAAAA"; font.bold: true; Layout.preferredWidth: 90 }
                 }
             }
 
@@ -286,8 +349,8 @@ Item {
                 delegate: Rectangle {
                     width: regionsList.width
                     height: 42
-                    color: mouseArea.containsMouse ? "#1A1A1A" : (index % 2 === 0 ? "#0A0A0A" : "#000000")
-                    border.color: selectedItem === model ? "#0066CC" : "transparent"
+                    color: isSelected(model.path) ? "#1A2E3B" : (mouseArea.containsMouse ? "#1A1A1A" : (index % 2 === 0 ? "#0A0A0A" : "#000000"))
+                    border.color: selectedItem === model ? "#0066CC" : (isSelected(model.path) ? "#0288D1" : "transparent")
 
                     MouseArea {
                         id: mouseArea
@@ -301,14 +364,19 @@ Item {
                         anchors.leftMargin: 12
                         anchors.rightMargin: 12
 
-                        Text { text: model.path; color: "#FFFFFF"; font.family: "monospace"; Layout.preferredWidth: 220; elide: Text.ElideRight }
-                        Text { text: model.level; color: "#888888"; Layout.preferredWidth: 90 }
+                        CheckBox {
+                            Layout.preferredWidth: 32
+                            checked: isSelected(model.path)
+                            onClicked: toggleSelection(model.path)
+                        }
+                        Text { text: model.path; color: "#FFFFFF"; font.family: "monospace"; Layout.preferredWidth: 200; elide: Text.ElideRight }
+                        Text { text: model.level; color: "#888888"; Layout.preferredWidth: 80 }
                         Text { text: model.version; color: "#888888"; Layout.preferredWidth: 95 }
                         Text {
                             text: model.hosted ? "Hosted" : "Not hosted"
                             color: model.hosted ? "#4CAF50" : "#888888"
                             font.bold: true
-                            Layout.preferredWidth: 110
+                            Layout.preferredWidth: 100
                         }
                         Text {
                             text: model.hosted ? model.cid : "Geofabrik Fallback"

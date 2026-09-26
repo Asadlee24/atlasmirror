@@ -1,7 +1,7 @@
 {
   "audit_version": "1.0.0",
   "standard": "LP-0018 Milestone A1 Audit",
-  "timestamp": "2026-09-26 09:16:13Z",
+  "timestamp": "2026-09-26 11:22:15Z",
   "registry_account": "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci",
   "testnet_rpc": "https://testnet.lez.logos.co/",
   "summary": {
@@ -29,6 +29,9 @@
       "onchain_level": "subregion",
       "onchain_parent": "china",
       "onchain_hosted": true,
+      "storage_byte_md5": "0055ebfc7f14585c56d53a88062d5814",
+      "storage_byte_provenance": "local_storage_cache (henan-latest.osm.pbf)",
+      "storage_byte_match": true,
       "size_bytes": 49157919,
       "block": 16949,
       "status": "VERIFIED_EXACT_MATCH"
@@ -46,6 +49,9 @@
       "onchain_level": "country",
       "onchain_parent": null,
       "onchain_hosted": true,
+      "storage_byte_md5": "c2e00ecddf7ae4ed89bf05bf104d3f10",
+      "storage_byte_provenance": "local_storage_cache (africa_ethiopia-latest.osm.pbf)",
+      "storage_byte_match": true,
       "size_bytes": 139741759,
       "block": 18252,
       "status": "VERIFIED_EXACT_MATCH"
@@ -63,6 +69,9 @@
       "onchain_level": "country",
       "onchain_parent": null,
       "onchain_hosted": true,
+      "storage_byte_md5": "d63c9409c20924d0813b81266eb2f5ad",
+      "storage_byte_provenance": "local_storage_cache (asia_pakistan-latest.osm.pbf)",
+      "storage_byte_match": true,
       "size_bytes": 156230629,
       "block": 18293,
       "status": "VERIFIED_EXACT_MATCH"
@@ -80,6 +89,9 @@
       "onchain_level": "country",
       "onchain_parent": null,
       "onchain_hosted": true,
+      "storage_byte_md5": "25801cfabc5bfe8e1ae56ded0fa5ed13",
+      "storage_byte_provenance": "local_storage_cache (europe_bulgaria-latest.osm.pbf)",
+      "storage_byte_match": true,
       "size_bytes": 174092672,
       "block": 18337,
       "status": "VERIFIED_EXACT_MATCH"
@@ -97,6 +109,9 @@
       "onchain_level": "country",
       "onchain_parent": null,
       "onchain_hosted": true,
+      "storage_byte_md5": "04a4d557c902a5f29ba0e7a1394e0232",
+      "storage_byte_provenance": "local_storage_cache (africa_egypt-latest.osm.pbf)",
+      "storage_byte_match": true,
       "size_bytes": 178421161,
       "block": 18353,
       "status": "VERIFIED_EXACT_MATCH"
@@ -114,6 +129,9 @@
       "onchain_level": "country",
       "onchain_parent": null,
       "onchain_hosted": true,
+      "storage_byte_md5": "e503562d3826bec67e6f87b899da4098",
+      "storage_byte_provenance": "local_storage_cache (asia_iran-latest.osm.pbf)",
+      "storage_byte_match": true,
       "size_bytes": 229501907,
       "block": 18390,
       "status": "VERIFIED_EXACT_MATCH"
@@ -131,6 +149,9 @@
       "onchain_level": "country",
       "onchain_parent": null,
       "onchain_hosted": true,
+      "storage_byte_md5": "ac60aed8b36bac264f2c17c89a584b94",
+      "storage_byte_provenance": "local_storage_cache (africa_morocco-latest.osm.pbf)",
+      "storage_byte_match": true,
       "size_bytes": 243471217,
       "block": 18444,
       "status": "VERIFIED_EXACT_MATCH"
@@ -148,6 +169,9 @@
       "onchain_level": "country",
       "onchain_parent": null,
       "onchain_hosted": true,
+      "storage_byte_md5": "203cebee0dbaa4e8464b777cd10698e6",
+      "storage_byte_provenance": "local_storage_cache (asia_malaysia-singapore-brunei-latest.osm.pbf)",
+      "storage_byte_match": true,
       "size_bytes": 251169608,
       "block": 18481,
       "status": "VERIFIED_EXACT_MATCH"
@@ -165,6 +189,9 @@
       "onchain_level": "subregion",
       "onchain_parent": "china",
       "onchain_hosted": true,
+      "storage_byte_md5": "694e3251c5bd24cc2d5a4a8051386808",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 71270272,
       "block": 18989,
       "status": "VERIFIED_EXACT_MATCH"
@@ -182,6 +209,9 @@
       "onchain_level": "subregion",
       "onchain_parent": "china",
       "onchain_hosted": true,
+      "storage_byte_md5": "8570de9c1c339879171f9ade8fc0df8c",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 79532918,
       "block": 18994,
       "status": "VERIFIED_EXACT_MATCH"
@@ -199,6 +229,9 @@
       "onchain_level": "subregion",
       "onchain_parent": "china",
       "onchain_hosted": true,
+      "storage_byte_md5": "be6f111217e76d8315735642914fef66",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 90165971,
       "block": 19000,
       "status": "VERIFIED_EXACT_MATCH"
@@ -216,6 +249,9 @@
       "onchain_level": "subregion",
       "onchain_parent": "china",
       "onchain_hosted": true,
+      "storage_byte_md5": "285763504e474dac69ea3038798abdf6",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 106797061,
       "block": 19006,
       "status": "VERIFIED_EXACT_MATCH"
@@ -233,6 +269,9 @@
       "onchain_level": "subregion",
       "onchain_parent": "india",
       "onchain_hosted": true,
+      "storage_byte_md5": "3a5f6c22fd6788db1dd27ae8608c5e64",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 109475020,
       "block": 19012,
       "status": "VERIFIED_EXACT_MATCH"
@@ -250,6 +289,9 @@
       "onchain_level": "subregion",
       "onchain_parent": "china",
       "onchain_hosted": true,
+      "storage_byte_md5": "930a06a95a4fd64700f8f120262ab59d",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 172659077,
       "block": 19027,
       "status": "VERIFIED_EXACT_MATCH"
@@ -267,6 +309,9 @@
       "onchain_level": "subregion",
       "onchain_parent": "india",
       "onchain_hosted": true,
+      "storage_byte_md5": "6f243a3ece638da662db7354e2c4a9a7",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 220298079,
       "block": 19037,
       "status": "VERIFIED_EXACT_MATCH"
@@ -284,6 +329,9 @@
       "onchain_level": "subregion",
       "onchain_parent": "india",
       "onchain_hosted": true,
+      "storage_byte_md5": "dcc43d108e7a5a77e1c6dfb4e3605918",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 223335582,
       "block": 20092,
       "status": "VERIFIED_EXACT_MATCH"
@@ -301,6 +349,9 @@
       "onchain_level": "subregion",
       "onchain_parent": "india",
       "onchain_hosted": true,
+      "storage_byte_md5": "52e787e4dfa4351506787e864d43fc2e",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 247113947,
       "block": 20102,
       "status": "VERIFIED_EXACT_MATCH"
@@ -318,6 +369,9 @@
       "onchain_level": "country",
       "onchain_parent": null,
       "onchain_hosted": true,
+      "storage_byte_md5": "35b488e2b7323256ee981ae33d7f7c01",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 256020114,
       "block": 20111,
       "status": "VERIFIED_EXACT_MATCH"
@@ -335,6 +389,9 @@
       "onchain_level": "country",
       "onchain_parent": null,
       "onchain_hosted": true,
+      "storage_byte_md5": "8becc786e5637e7c018fbb5418b6e243",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 287704054,
       "block": 20119,
       "status": "VERIFIED_EXACT_MATCH"
@@ -352,6 +409,9 @@
       "onchain_level": "country",
       "onchain_parent": null,
       "onchain_hosted": true,
+      "storage_byte_md5": "418c3773df4cea22d4d034fc1ef29e36",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 325265347,
       "block": 20128,
       "status": "VERIFIED_EXACT_MATCH"
@@ -369,6 +429,9 @@
       "onchain_level": "country",
       "onchain_parent": null,
       "onchain_hosted": true,
+      "storage_byte_md5": "fb2caf6d2e0bc29d31c0178776676280",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 327605541,
       "block": 20137,
       "status": "VERIFIED_EXACT_MATCH"
@@ -386,6 +449,9 @@
       "onchain_level": "country",
       "onchain_parent": null,
       "onchain_hosted": true,
+      "storage_byte_md5": "15be838879747572b38be7593903d501",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 328695224,
       "block": 20149,
       "status": "VERIFIED_EXACT_MATCH"
@@ -403,6 +469,9 @@
       "onchain_level": "country",
       "onchain_parent": null,
       "onchain_hosted": true,
+      "storage_byte_md5": "8e8faf2eff113b67f28059c3b4a5c677",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 329083173,
       "block": 20177,
       "status": "VERIFIED_EXACT_MATCH"
@@ -420,6 +489,9 @@
       "onchain_level": "country",
       "onchain_parent": null,
       "onchain_hosted": true,
+      "storage_byte_md5": "cb6b9a0ae742bd746017515427623726",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 329796073,
       "block": 20190,
       "status": "VERIFIED_EXACT_MATCH"
@@ -437,6 +509,9 @@
       "onchain_level": "country",
       "onchain_parent": null,
       "onchain_hosted": true,
+      "storage_byte_md5": "c15fda8eb7e74c93d11696719534661b",
+      "storage_byte_provenance": "independent_peer_retrieval (Logos Storage)",
+      "storage_byte_match": true,
       "size_bytes": 340949141,
       "block": 20203,
       "status": "VERIFIED_EXACT_MATCH"

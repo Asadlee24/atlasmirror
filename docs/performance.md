@@ -18,12 +18,12 @@ In compliance with LP-0018 performance criteria (P1), this document records the 
 
 ```bash
 # Build the official cycle_bench binary
-cd /root/logos-execution-zone
+cd logos-execution-zone
 cargo build --release -p cycle_bench --bin bench_osm
 
 # Run benchmark against osm_registry.bin
 RISC0_SKIP_BUILD=1 cargo run --release -p cycle_bench --bin bench_osm -- \
-  --program /mnt/c/Users/Aftab/Desktop/atlasmirror/osm_registry.bin
+  --program ./osm_registry.bin
 ```
 
 ---

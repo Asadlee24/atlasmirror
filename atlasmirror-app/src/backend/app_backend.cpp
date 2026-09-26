@@ -5,6 +5,8 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QFileInfo>
 #include <QtCore/QCryptographicHash>
+#include <QtCore/QCoreApplication>
+#include <QtCore/QMutexLocker>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QClipboard>
 
@@ -13,6 +15,36 @@ AppBackend::AppBackend(QObject *parent)
 {
     loadPredefinedCatalog();
     refreshIndex();
+}
+
+bool AppBackend::isCancelled(const QString &regionPath)
+{
+    QMutexLocker locker(&m_mutex);
+    return m_cancelledRegions.contains(regionPath);
+}
+
+QJsonArray AppBackend::regions() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_regions;
+}
+
+QJsonArray AppBackend::queue() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_queue;
+}
+
+QJsonArray AppBackend::downloads() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_downloads;
+}
+
+QJsonObject AppBackend::lastOperationResult() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_lastResult;
 }
 
 void AppBackend::setSearchFilter(const QString &filter)
@@ -49,12 +81,13 @@ void AppBackend::setTelemetryEnabled(bool val)
 
 void AppBackend::loadPredefinedCatalog()
 {
-    // Try to load metadata/regions.json from working directory or relative path
+    // Authoritative portable candidates without machine-specific paths
     QStringList candidatePaths = {
         "metadata/regions.json",
         "../metadata/regions.json",
         "../../metadata/regions.json",
-        "/mnt/c/Users/Aftab/Desktop/atlasmirror/metadata/regions.json"
+        QCoreApplication::applicationDirPath() + "/metadata/regions.json",
+        QCoreApplication::applicationDirPath() + "/../metadata/regions.json"
     };
 
     QByteArray catalogBytes;
@@ -66,6 +99,7 @@ void AppBackend::loadPredefinedCatalog()
         }
     }
 
+    QMutexLocker locker(&m_mutex);
     m_regions = QJsonArray();
 
     if (!catalogBytes.isEmpty()) {
@@ -138,6 +172,7 @@ void AppBackend::loadPredefinedCatalog()
 
 QJsonArray AppBackend::getFilteredRegions()
 {
+    QMutexLocker locker(&m_mutex);
     QJsonArray res;
     QString search = m_searchFilter.trimmed().toLower();
     QString status = m_statusFilter.toUpper();
@@ -164,149 +199,370 @@ QJsonArray AppBackend::getFilteredRegions()
 
 QJsonArray AppBackend::getQueueItems()
 {
+    QMutexLocker locker(&m_mutex);
     return m_queue;
 }
 
 QJsonArray AppBackend::getDownloadItems()
 {
+    QMutexLocker locker(&m_mutex);
     return m_downloads;
 }
 
 void AppBackend::refreshIndex()
 {
-    // Truthful direct query to SDK without any CLI subprocess
-    m_sdk.refreshOnChainRegistry();
-    std::string jsonStr = m_sdk.discoverRegions();
-    QJsonDocument doc = QJsonDocument::fromJson(QByteArray::fromStdString(jsonStr));
+    QThreadPool::globalInstance()->start([this]() {
+        // Direct query to SDK without any CLI subprocess
+        m_sdk.refreshOnChainRegistry();
+        std::string jsonStr = m_sdk.discoverRegions();
+        QJsonDocument doc = QJsonDocument::fromJson(QByteArray::fromStdString(jsonStr));
 
-    if (doc.isArray()) {
-        QJsonArray liveList = doc.array();
-        for (const QJsonValue &lv : liveList) {
-            QJsonObject lObj = lv.toObject();
-            QString lPath = lObj["path"].toString();
-            for (int i = 0; i < m_regions.size(); ++i) {
-                QJsonObject r = m_regions[i].toObject();
-                if (r["path"].toString() == lPath) {
-                    bool isHosted = lObj["hosted"].toBool();
-                    r["hosted"] = isHosted;
-                    if (isHosted) {
-                        r["cid"] = lObj["cid"].toString();
-                        r["checksum"] = lObj["checksum"].toString();
-                        r["version"] = lObj["version"].toString();
-                        r["updateStatus"] = "UP_TO_DATE";
-                    } else {
-                        r["hosted"] = false;
-                        r["cid"] = "—";
-                        r["checksum"] = "—";
-                        r["version"] = "—";
-                        r["updateStatus"] = "NOT_HOSTED";
+        QMetaObject::invokeMethod(this, [this, doc]() {
+            QMutexLocker locker(&m_mutex);
+            if (doc.isArray()) {
+                QJsonArray liveList = doc.array();
+                for (const QJsonValue &lv : liveList) {
+                    QJsonObject lObj = lv.toObject();
+                    QString lPath = lObj["path"].toString();
+                    for (int i = 0; i < m_regions.size(); ++i) {
+                        QJsonObject r = m_regions[i].toObject();
+                        if (r["path"].toString() == lPath) {
+                            bool isHosted = lObj["hosted"].toBool();
+                            r["hosted"] = isHosted;
+                            if (isHosted) {
+                                r["cid"] = lObj["cid"].toString();
+                                r["checksum"] = lObj["checksum"].toString();
+                                r["version"] = lObj["version"].toString();
+                                r["updateStatus"] = "UP_TO_DATE";
+                            } else {
+                                r["hosted"] = false;
+                                r["cid"] = "—";
+                                r["checksum"] = "—";
+                                r["version"] = "—";
+                                r["updateStatus"] = "NOT_HOSTED";
+                            }
+                            m_regions[i] = r;
+                            break;
+                        }
                     }
-                    m_regions[i] = r;
-                    break;
                 }
             }
-        }
-    }
 
-    emit regionsUpdated();
-
-    m_lastResult = QJsonObject{
-        {"success", true},
-        {"operation", "REFRESH_INDEX"},
-        {"message", QString("Index refreshed via Core SDK. Loaded %1 regions.").arg(m_regions.size())}
-    };
-    emit operationResultChanged();
+            m_lastResult = QJsonObject{
+                {"success", true},
+                {"operation", "REFRESH_INDEX"},
+                {"message", QString("Index refreshed via Core SDK. Loaded %1 regions.").arg(m_regions.size())}
+            };
+            emit regionsUpdated();
+            emit operationResultChanged();
+        }, Qt::QueuedConnection);
+    });
 }
 
 void AppBackend::hostRegion(const QString &regionPath)
 {
-    QJsonObject item;
-    item["region"] = regionPath;
-    item["state"] = "PROCESSING";
-    item["progress"] = 0.5;
-    item["error"] = "";
-    m_queue.append(item);
+    {
+        QMutexLocker locker(&m_mutex);
+        m_cancelledRegions.remove(regionPath);
+
+        // Remove old finished or failed entries for same region
+        for (int i = 0; i < m_queue.size(); ++i) {
+            QJsonObject obj = m_queue[i].toObject();
+            if (obj["region"].toString() == regionPath) {
+                QString st = obj["state"].toString();
+                if (st == "PROCESSING" || st == "QUEUED") {
+                    return;
+                }
+                m_queue.removeAt(i);
+                break;
+            }
+        }
+
+        QJsonObject item;
+        item["region"] = regionPath;
+        item["state"] = "QUEUED";
+        item["progress"] = 0.0;
+        item["error"] = "";
+        m_queue.append(item);
+    }
     emit queueUpdated();
 
-    // Call SDK directly
-    std::string resStr = m_sdk.hostRegion(regionPath.toStdString());
-    QJsonDocument resDoc = QJsonDocument::fromJson(QByteArray::fromStdString(resStr));
-    bool success = false;
-    QString errMsg = "";
-    QString cid = "";
-
-    if (resDoc.isObject()) {
-        QJsonObject resObj = resDoc.object();
-        if (resObj.contains("cid") && !resObj["cid"].toString().isEmpty()) {
-            success = true;
-            cid = resObj["cid"].toString();
-        } else if (resObj["success"].toBool()) {
-            success = true;
-        } else {
-            errMsg = resObj["message"].toString();
-            if (errMsg.isEmpty()) errMsg = resObj["error"].toString();
-        }
-    }
-
-    for (int i = 0; i < m_queue.size(); ++i) {
-        QJsonObject obj = m_queue[i].toObject();
-        if (obj["region"].toString() == regionPath) {
-            if (success) {
-                obj["state"] = "COMPLETE";
-                obj["progress"] = 1.0;
-                obj["error"] = "";
-                for (int j = 0; j < m_regions.size(); ++j) {
-                    QJsonObject r = m_regions[j].toObject();
-                    if (r["path"].toString() == regionPath) {
-                        r["hosted"] = true;
-                        if (!cid.isEmpty()) r["cid"] = cid;
-                        r["updateStatus"] = "UP_TO_DATE";
-                        m_regions[j] = r;
+    // Launch asynchronously on worker thread pool (prevents UI freeze)
+    QThreadPool::globalInstance()->start([this, regionPath]() {
+        if (isCancelled(regionPath)) {
+            QMetaObject::invokeMethod(this, [this, regionPath]() {
+                QMutexLocker locker(&m_mutex);
+                for (int i = 0; i < m_queue.size(); ++i) {
+                    QJsonObject obj = m_queue[i].toObject();
+                    if (obj["region"].toString() == regionPath) {
+                        obj["state"] = "CANCELLED";
+                        m_queue[i] = obj;
                         break;
                     }
                 }
-                emit regionsUpdated();
-            } else {
-                obj["state"] = "FAILED";
-                obj["error"] = errMsg.isEmpty() ? "Hosting failed" : errMsg;
-            }
-            m_queue[i] = obj;
-            emit queueUpdated();
-            break;
+                emit queueUpdated();
+            }, Qt::QueuedConnection);
+            return;
         }
-    }
+
+        // Set to PROCESSING with preparation stage
+        QMetaObject::invokeMethod(this, [this, regionPath]() {
+            QMutexLocker locker(&m_mutex);
+            for (int i = 0; i < m_queue.size(); ++i) {
+                QJsonObject obj = m_queue[i].toObject();
+                if (obj["region"].toString() == regionPath) {
+                    obj["state"] = "PROCESSING";
+                    obj["progress"] = 0.25;
+                    m_queue[i] = obj;
+                    break;
+                }
+            }
+            emit queueUpdated();
+        }, Qt::QueuedConnection);
+
+        // Call direct SDK C++ implementation
+        std::string resStr = m_sdk.hostRegion(regionPath.toStdString());
+        QJsonDocument resDoc = QJsonDocument::fromJson(QByteArray::fromStdString(resStr));
+        bool success = false;
+        QString errMsg = "";
+        QString cid = "";
+        QString txHash = "";
+
+        if (resDoc.isObject()) {
+            QJsonObject resObj = resDoc.object();
+            if (resObj.contains("cid") && !resObj["cid"].toString().isEmpty()) {
+                cid = resObj["cid"].toString();
+            }
+            if (resObj.contains("tx_hash")) {
+                txHash = resObj["tx_hash"].toString();
+            }
+            if (resObj.value("success").toBool() || (!cid.isEmpty() && !resObj.value("error").isString())) {
+                success = true;
+            } else {
+                errMsg = resObj["message"].toString();
+                if (errMsg.isEmpty()) errMsg = resObj["error"].toString();
+            }
+        }
+
+        QMetaObject::invokeMethod(this, [this, regionPath, success, errMsg, cid, txHash]() {
+            QMutexLocker locker(&m_mutex);
+            if (m_cancelledRegions.contains(regionPath)) {
+                for (int i = 0; i < m_queue.size(); ++i) {
+                    QJsonObject obj = m_queue[i].toObject();
+                    if (obj["region"].toString() == regionPath) {
+                        obj["state"] = "CANCELLED";
+                        m_queue[i] = obj;
+                        break;
+                    }
+                }
+                emit queueUpdated();
+                return;
+            }
+
+            for (int i = 0; i < m_queue.size(); ++i) {
+                QJsonObject obj = m_queue[i].toObject();
+                if (obj["region"].toString() == regionPath) {
+                    if (success) {
+                        obj["state"] = "COMPLETE";
+                        obj["progress"] = 1.0;
+                        obj["error"] = "";
+                        if (!txHash.isEmpty()) {
+                            obj["tx_hash"] = txHash;
+                        }
+                        for (int j = 0; j < m_regions.size(); ++j) {
+                            QJsonObject r = m_regions[j].toObject();
+                            if (r["path"].toString() == regionPath) {
+                                r["hosted"] = true;
+                                if (!cid.isEmpty()) r["cid"] = cid;
+                                r["updateStatus"] = "UP_TO_DATE";
+                                m_regions[j] = r;
+                                break;
+                            }
+                        }
+                        emit regionsUpdated();
+                    } else {
+                        obj["state"] = "FAILED";
+                        obj["progress"] = 0.0;
+                        obj["error"] = errMsg.isEmpty() ? "Hosting failed" : errMsg;
+                    }
+                    m_queue[i] = obj;
+                    emit queueUpdated();
+                    break;
+                }
+            }
+
+            m_lastResult = QJsonObject{
+                {"success", success},
+                {"operation", "HOST_REGION"},
+                {"region", regionPath},
+                {"cid", cid},
+                {"tx_hash", txHash},
+                {"error", errMsg}
+            };
+            emit operationResultChanged();
+        }, Qt::QueuedConnection);
+    });
 }
 
 void AppBackend::startBulkHost(const QJsonArray &regionPaths)
 {
     if (regionPaths.isEmpty()) return;
 
-    for (const QJsonValue &val : regionPaths) {
-        QString reg = val.toString();
-        hostRegion(reg);
+    QStringList toHost;
+    {
+        QMutexLocker locker(&m_mutex);
+        for (const QJsonValue &val : regionPaths) {
+            QString reg = val.toString().trimmed();
+            if (reg.isEmpty()) continue;
+            toHost.append(reg);
+            m_cancelledRegions.remove(reg);
+
+            // Add or reset queue item
+            bool exists = false;
+            for (int i = 0; i < m_queue.size(); ++i) {
+                QJsonObject obj = m_queue[i].toObject();
+                if (obj["region"].toString() == reg) {
+                    obj["state"] = "QUEUED";
+                    obj["progress"] = 0.0;
+                    obj["error"] = "";
+                    m_queue[i] = obj;
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) {
+                QJsonObject item;
+                item["region"] = reg;
+                item["state"] = "QUEUED";
+                item["progress"] = 0.0;
+                item["error"] = "";
+                m_queue.append(item);
+            }
+        }
     }
+    emit queueUpdated();
+
+    // Asynchronously process bulk batch on worker thread
+    QThreadPool::globalInstance()->start([this, toHost]() {
+        // Construct batch records JSON payload
+        QJsonArray recordsArr;
+        for (const QString &r : toHost) {
+            recordsArr.append(r);
+        }
+        QJsonDocument recordsDoc(recordsArr);
+        std::string recordsStr = recordsDoc.toJson(QJsonDocument::Compact).toStdString();
+
+        // Update items to PROCESSING
+        QMetaObject::invokeMethod(this, [this, toHost]() {
+            QMutexLocker locker(&m_mutex);
+            for (const QString &r : toHost) {
+                for (int i = 0; i < m_queue.size(); ++i) {
+                    QJsonObject obj = m_queue[i].toObject();
+                    if (obj["region"].toString() == r && obj["state"].toString() == "QUEUED") {
+                        obj["state"] = "PROCESSING";
+                        obj["progress"] = 0.3;
+                        m_queue[i] = obj;
+                        break;
+                    }
+                }
+            }
+            emit queueUpdated();
+        }, Qt::QueuedConnection);
+
+        // Execute batchRegister in C++ SDK
+        std::string batchResStr = m_sdk.batchRegister(recordsStr);
+        QJsonDocument bDoc = QJsonDocument::fromJson(QByteArray::fromStdString(batchResStr));
+        bool success = false;
+        QString txHash = "";
+        QString errMsg = "";
+
+        if (bDoc.isObject()) {
+            QJsonObject bObj = bDoc.object();
+            success = bObj.value("success").toBool();
+            txHash = bObj.value("tx_hash").toString();
+            if (!success) {
+                errMsg = bObj.value("message").toString();
+                if (errMsg.isEmpty()) errMsg = bObj.value("error").toString();
+            }
+        }
+
+        // Refresh on-chain index
+        m_sdk.refreshOnChainRegistry();
+
+        QMetaObject::invokeMethod(this, [this, toHost, success, txHash, errMsg]() {
+            QMutexLocker locker(&m_mutex);
+            for (const QString &r : toHost) {
+                for (int i = 0; i < m_queue.size(); ++i) {
+                    QJsonObject obj = m_queue[i].toObject();
+                    if (obj["region"].toString() == r) {
+                        if (success) {
+                            obj["state"] = "COMPLETE";
+                            obj["progress"] = 1.0;
+                            obj["error"] = "";
+                            if (!txHash.isEmpty()) obj["tx_hash"] = txHash;
+                            for (int j = 0; j < m_regions.size(); ++j) {
+                                QJsonObject regObj = m_regions[j].toObject();
+                                if (regObj["path"].toString() == r) {
+                                    regObj["hosted"] = true;
+                                    regObj["updateStatus"] = "UP_TO_DATE";
+                                    m_regions[j] = regObj;
+                                    break;
+                                }
+                            }
+                        } else {
+                            obj["state"] = "FAILED";
+                            obj["progress"] = 0.0;
+                            obj["error"] = errMsg.isEmpty() ? "Batch hosting failed" : errMsg;
+                        }
+                        m_queue[i] = obj;
+                        break;
+                    }
+                }
+            }
+            emit queueUpdated();
+            emit regionsUpdated();
+
+            m_lastResult = QJsonObject{
+                {"success", success},
+                {"operation", "BATCH_REGISTER"},
+                {"batch_size", static_cast<int>(toHost.size())},
+                {"tx_hash", txHash},
+                {"error", errMsg}
+            };
+            emit operationResultChanged();
+        }, Qt::QueuedConnection);
+    });
 }
 
 void AppBackend::cancelHost(const QString &regionPath)
 {
-    for (int i = 0; i < m_queue.size(); ++i) {
-        QJsonObject obj = m_queue[i].toObject();
-        if (obj["region"].toString() == regionPath) {
-            obj["state"] = "CANCELLED";
-            m_queue[i] = obj;
-            emit queueUpdated();
-            break;
+    {
+        QMutexLocker locker(&m_mutex);
+        m_cancelledRegions.insert(regionPath);
+        for (int i = 0; i < m_queue.size(); ++i) {
+            QJsonObject obj = m_queue[i].toObject();
+            if (obj["region"].toString() == regionPath) {
+                obj["state"] = "CANCELLED";
+                obj["progress"] = 0.0;
+                obj["error"] = "Cancelled by user";
+                m_queue[i] = obj;
+                break;
+            }
         }
     }
+    emit queueUpdated();
 }
 
 void AppBackend::retryHost(const QString &regionPath)
 {
-    for (int i = 0; i < m_queue.size(); ++i) {
-        QJsonObject obj = m_queue[i].toObject();
-        if (obj["region"].toString() == regionPath) {
-            m_queue.removeAt(i);
-            break;
+    {
+        QMutexLocker locker(&m_mutex);
+        for (int i = 0; i < m_queue.size(); ++i) {
+            QJsonObject obj = m_queue[i].toObject();
+            if (obj["region"].toString() == regionPath) {
+                m_queue.removeAt(i);
+                break;
+            }
         }
     }
     hostRegion(regionPath);
@@ -314,6 +570,7 @@ void AppBackend::retryHost(const QString &regionPath)
 
 void AppBackend::clearCompletedQueue()
 {
+    QMutexLocker locker(&m_mutex);
     QJsonArray newQueue;
     for (const QJsonValue &v : m_queue) {
         QString st = v.toObject()["state"].toString();
@@ -328,9 +585,12 @@ void AppBackend::clearCompletedQueue()
 void AppBackend::retryAllFailed()
 {
     QStringList failed;
-    for (const QJsonValue &v : m_queue) {
-        if (v.toObject()["state"].toString() == "FAILED") {
-            failed.append(v.toObject()["region"].toString());
+    {
+        QMutexLocker locker(&m_mutex);
+        for (const QJsonValue &v : m_queue) {
+            if (v.toObject()["state"].toString() == "FAILED") {
+                failed.append(v.toObject()["region"].toString());
+            }
         }
     }
     clearCompletedQueue();
@@ -346,35 +606,43 @@ void AppBackend::startDownload(const QString &regionPath)
     QString cleanName = QString(regionPath).replace('/', '_');
     QString destFile = QString("%1/%2-latest.osm.pbf").arg(destDir, cleanName);
 
-    QJsonObject dl;
-    dl["region"] = regionPath;
-    dl["source"] = "Logos Storage / Canonical Geofabrik";
-    dl["size"] = "Downloading...";
-    dl["progress"] = 0.5;
-    dl["status"] = "DOWNLOADING";
-    m_downloads.append(dl);
+    {
+        QMutexLocker locker(&m_mutex);
+        QJsonObject dl;
+        dl["region"] = regionPath;
+        dl["source"] = "Logos Storage / Canonical Geofabrik";
+        dl["size"] = "Connecting...";
+        dl["progress"] = 0.1;
+        dl["status"] = "DOWNLOADING";
+        m_downloads.append(dl);
+    }
     emit downloadsUpdated();
 
-    // Direct SDK download with checksum verification and atomic rename
-    bool ok = m_sdk.downloadRegion(regionPath.toStdString(), destFile.toStdString());
+    QThreadPool::globalInstance()->start([this, regionPath, destFile]() {
+        // Direct SDK download with checksum verification and atomic rename on worker thread
+        bool ok = m_sdk.downloadRegion(regionPath.toStdString(), destFile.toStdString());
 
-    for (int i = 0; i < m_downloads.size(); ++i) {
-        QJsonObject obj = m_downloads[i].toObject();
-        if (obj["region"].toString() == regionPath) {
-            if (ok && QFile::exists(destFile)) {
-                qint64 sz = QFileInfo(destFile).size();
-                obj["size"] = QString("%1 MB").arg(sz / (1024 * 1024));
-                obj["progress"] = 1.0;
-                obj["status"] = "VERIFIED";
-            } else {
-                obj["status"] = "FAILED";
-                obj["progress"] = 0.0;
+        QMetaObject::invokeMethod(this, [this, regionPath, destFile, ok]() {
+            QMutexLocker locker(&m_mutex);
+            for (int i = 0; i < m_downloads.size(); ++i) {
+                QJsonObject obj = m_downloads[i].toObject();
+                if (obj["region"].toString() == regionPath) {
+                    if (ok && QFile::exists(destFile)) {
+                        qint64 sz = QFileInfo(destFile).size();
+                        obj["size"] = QString("%1 MB").arg(sz / (1024 * 1024));
+                        obj["progress"] = 1.0;
+                        obj["status"] = "VERIFIED";
+                    } else {
+                        obj["status"] = "FAILED";
+                        obj["progress"] = 0.0;
+                    }
+                    m_downloads[i] = obj;
+                    break;
+                }
             }
-            m_downloads[i] = obj;
             emit downloadsUpdated();
-            break;
-        }
-    }
+        }, Qt::QueuedConnection);
+    });
 }
 
 void AppBackend::copyToClipboard(const QString &text)
@@ -383,6 +651,7 @@ void AppBackend::copyToClipboard(const QString &text)
     if (cb) {
         cb->setText(text);
     }
+    QMutexLocker locker(&m_mutex);
     m_lastResult = QJsonObject{
         {"success", true},
         {"operation", "COPY_CID"},

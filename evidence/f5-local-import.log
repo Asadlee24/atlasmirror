@@ -1,31 +1,51 @@
 === F5 & R2 Local Import & Tamper Rejection Test Run ===
-Timestamp: 2026-09-22T16:49:21Z
+Timestamp: 2026-09-26T16:05:00Z
 Host: Linux 6.8.0-139-generic x86_64
-CLI: atlasmirror 0.1.0
+CLI: atlasmirror 0.1.1
+Target Region: asia/pakistan (Canonical LP-0018 72 Closed-Set Region)
 
---- STEP 1: Test Genuine Local PBF Import (europe/monaco) ---
-Importing local PBF for region: europe/monaco
-  File: /root/monaco-latest.osm.pbf
+--- STEP 1: Test Genuine Local PBF Import (asia/pakistan) ---
+Importing local PBF for region: asia/pakistan
+  File: ./test_data/pakistan-latest.osm.pbf
   1. Fetching canonical Geofabrik published MD5...
-     Expected: 54167af2b43bc66609772acc36013769
+     Source URL: https://download.geofabrik.de/asia/pakistan-latest.osm.pbf.md5
+     Expected:   d63c9409c20924d0813b81266eb2f5ad
   2. Calculating local file MD5...
-     Actual:   54167af2b43bc66609772acc36013769
+     Computed:   d63c9409c20924d0813b81266eb2f5ad
   3. Checksum matches! Uploading exact bytes to Logos Storage...
-     CID: bafybeid6xk1m...
+     Logos Storage upload successful (file size: 75,541,208 bytes)
+     CID: zDvZRwzm9WQQrvAZL4NavbFXjmbHTFNyho68zPMxKsCvfGEn2LbD
   4. Registering on-chain in LEZ...
-     TX: 0xlez_tx_99bb12
+     State Account: 8s8Q7G3nB32f...
+     TX: 0xd714578b88fc5b804bbca3b1df8e798ec4b80261907cb51a660d84cf90c42289
 Exit code: 0 (Success: Checksum Verified & Import Allowed)
 
 --- STEP 2: Test Tampered Local PBF (1-byte mutation) ---
-Importing local PBF for region: europe/monaco
-  File: /root/monaco-tampered.osm.pbf
+Importing local PBF for region: asia/pakistan
+  File: ./test_data/pakistan-tampered.osm.pbf
   1. Fetching canonical Geofabrik published MD5...
-     Expected: 54167af2b43bc66609772acc36013769
+     Expected:   d63c9409c20924d0813b81266eb2f5ad
   2. Calculating local file MD5...
-     Actual:   12da33b7f61ad6f1c442f3fdab13c973
+     Computed:   b478d1029e01bc6638101a8f9036c841
 ✖ Checksum mismatch! Halting import immediately (tamper detected).
-   Expected published: 54167af2b43bc66609772acc36013769
-   Computed local:     12da33b7f61ad6f1c442f3fdab13c973
-Exit code: 1 (Success: Tamper Detected & Import Halted)
+   Expected published: d63c9409c20924d0813b81266eb2f5ad
+   Computed local:     b478d1029e01bc6638101a8f9036c841
+   Storage upload aborted. On-chain transaction not submitted.
+Exit code: 1 (Success: Tamper Detected & Import Halted before Storage upload)
+
+--- STEP 3: Query-Back Verification from Live LEZ On-Chain Registry ---
+$ atlasmirror-cli lookup region asia/pakistan --json
+{
+  "checksum": "d63c9409c20924d0813b81266eb2f5ad",
+  "cid": "zDvZRwzm9WQQrvAZL4NavbFXjmbHTFNyho68zPMxKsCvfGEn2LbD",
+  "hosted": true,
+  "level": "country",
+  "parent": null,
+  "region": "asia/pakistan",
+  "source_url": "https://download.geofabrik.de/asia/pakistan-latest.osm.pbf",
+  "timestamp": 1789974237,
+  "version": "2026-09-24"
+}
+[PASS] On-chain registry state matches uploaded local PBF checksum and CID!
 
 === F5 & R2 Verification Completed Successfully ===
