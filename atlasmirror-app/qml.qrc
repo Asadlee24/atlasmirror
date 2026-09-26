@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>src/qml/Main.qml</file>
+        <file>src/qml/AboutView.qml</file>
+        <file>src/qml/DownloadsView.qml</file>
+        <file>src/qml/HostingQueueView.qml</file>
+        <file>src/qml/RegionsView.qml</file>
+        <file>src/qml/RegistryView.qml</file>
+        <file>src/qml/SettingsView.qml</file>
+    </qresource>
+</RCC>

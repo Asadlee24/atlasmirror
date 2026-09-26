@@ -48,11 +48,14 @@ def package_app():
     # If a real build artifact exists in build dirs, copy it; otherwise generate the library wrapper
     native_found = False
     for build_cand in [root / "build", app_dir / "build", root / "target" / "release"]:
+        if not build_cand.exists():
+            continue
         for so_cand in build_cand.glob("**/libatlasmirror_app_backend.*"):
-            shutil.copy2(so_cand, lib_dir / so_cand.name)
-            native_found = True
+            if so_cand.is_file() and not so_cand.name.endswith((".o", ".obj", ".a")):
+                shutil.copy2(so_cand, lib_dir / so_cand.name)
+                native_found = True
         for bin_cand in build_cand.glob("**/atlasmirror-app*"):
-            if not bin_cand.name.endswith((".cpp", ".h", ".o", ".obj")):
+            if bin_cand.is_file() and not bin_cand.name.endswith((".cpp", ".h", ".o", ".obj", ".dir", ".make", ".cmake")):
                 shutil.copy2(bin_cand, bin_dir / bin_cand.name)
                 native_found = True
                 

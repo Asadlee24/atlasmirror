@@ -3,6 +3,8 @@
 #include <QQmlContext>
 #include "backend/app_backend.h"
 
+#include <QFile>
+
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
@@ -16,7 +18,13 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("appBackend", &backend);
     engine.rootContext()->setContextProperty("backend", &backend);
 
-    const QUrl url(QStringLiteral("src/qml/Main.qml"));
+    QUrl url;
+    if (QFile::exists(QStringLiteral(":/src/qml/Main.qml"))) {
+        url = QUrl(QStringLiteral("qrc:/src/qml/Main.qml"));
+    } else {
+        url = QUrl::fromLocalFile(QStringLiteral("src/qml/Main.qml"));
+    }
+
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
                      &app, [url](QObject *obj, const QUrl &objUrl) {
         if (!obj && url == objUrl)

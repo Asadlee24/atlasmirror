@@ -4,6 +4,9 @@ project(atlasmirror_app_backend VERSION 0.1.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+
 find_package(Qt6 REQUIRED COMPONENTS Core Quick Qml RemoteObjects Gui)
 
 add_library(atlasmirror_app_backend SHARED
@@ -11,6 +14,7 @@ add_library(atlasmirror_app_backend SHARED
     src/backend/app_backend.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../atlasmirror-sdk/src/atlasmirror_sdk_impl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../atlasmirror-sdk/src/atlasmirror_sdk_impl.h
+    qml.qrc
 )
 
 target_include_directories(atlasmirror_app_backend PUBLIC
@@ -31,6 +35,7 @@ add_executable(atlasmirror-app
     src/backend/app_backend.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../atlasmirror-sdk/src/atlasmirror_sdk_impl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../atlasmirror-sdk/src/atlasmirror_sdk_impl.h
+    qml.qrc
 )
 
 target_include_directories(atlasmirror-app PUBLIC
