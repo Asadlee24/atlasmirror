@@ -19,7 +19,7 @@
     },
     "external_libraries": [],
     "cmake": {
-      "find_packages": ["Qt6 COMPONENTS Core Quick Qml RemoteObjects Gui"],
+      "find_packages": ["Qt6 COMPONENTS Core Quick Qml Gui"],
       "extra_sources": [
         "src/backend/app_backend.cpp",
         "src/backend/app_backend.h",
@@ -34,7 +34,6 @@
         "Qt6::Core",
         "Qt6::Quick",
         "Qt6::Qml",
-        "Qt6::RemoteObjects",
         "Qt6::Gui"
       ]
     }

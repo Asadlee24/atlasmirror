@@ -7,40 +7,48 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Quick Qml RemoteObjects Gui)
+find_package(Qt6 REQUIRED COMPONENTS Core Quick Qml Gui)
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../atlasmirror-sdk/src/atlasmirror_sdk_impl.cpp")
+    set(SDK_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../atlasmirror-sdk/src")
+elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../atlasmirror_sdk/src/atlasmirror_sdk_impl.cpp")
+    set(SDK_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../atlasmirror_sdk/src")
+else()
+    set(SDK_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../atlasmirror-sdk/src")
+endif()
 
 add_library(atlasmirror_app_backend SHARED
     src/backend/app_backend.cpp
     src/backend/app_backend.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../atlasmirror-sdk/src/atlasmirror_sdk_impl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../atlasmirror-sdk/src/atlasmirror_sdk_impl.h
+    ${SDK_SRC_DIR}/atlasmirror_sdk_impl.cpp
+    ${SDK_SRC_DIR}/atlasmirror_sdk_impl.h
     qml.qrc
 )
 
 target_include_directories(atlasmirror_app_backend PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/backend
-    ${CMAKE_CURRENT_SOURCE_DIR}/../atlasmirror-sdk/src
+    ${SDK_SRC_DIR}
 )
 
 target_link_libraries(atlasmirror_app_backend PRIVATE
     Qt6::Core
     Qt6::Quick
     Qt6::Qml
-    Qt6::RemoteObjects
+    Qt6::Gui
 )
 
 add_executable(atlasmirror-app
     src/main.cpp
     src/backend/app_backend.cpp
     src/backend/app_backend.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../atlasmirror-sdk/src/atlasmirror_sdk_impl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../atlasmirror-sdk/src/atlasmirror_sdk_impl.h
+    ${SDK_SRC_DIR}/atlasmirror_sdk_impl.cpp
+    ${SDK_SRC_DIR}/atlasmirror_sdk_impl.h
     qml.qrc
 )
 
 target_include_directories(atlasmirror-app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/backend
-    ${CMAKE_CURRENT_SOURCE_DIR}/../atlasmirror-sdk/src
+    ${SDK_SRC_DIR}
 )
 
 target_link_libraries(atlasmirror-app PRIVATE
@@ -48,5 +56,4 @@ target_link_libraries(atlasmirror-app PRIVATE
     Qt6::Quick
     Qt6::Qml
     Qt6::Gui
-    Qt6::RemoteObjects
 )

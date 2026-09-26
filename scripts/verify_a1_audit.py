@@ -201,7 +201,7 @@ def main():
 
     AUDIT_OUTPUT.write_text(json.dumps(audit_payload, indent=2))
     print(f"\nMachine-readable audit artifact written to: {AUDIT_OUTPUT}")
-    print(f"Summary: {audit_payload['summary']['total_verified_entries']}/25 entries verified across {len(unique_countries)}/15 countries.")
+    print(f"Summary: {audit_payload['summary']['total_verified_entries']}/25 entries verified across {len(unique_countries)} countries.")
     print(f"Audit Result: {audit_payload['summary']['audit_result']}")
 
     if mismatches:
