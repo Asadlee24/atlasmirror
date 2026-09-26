@@ -14,7 +14,7 @@ assignees: []
 
 ### Integration Architecture
 - **Integration Path Used**: [ ] `atlasmirror_sdk` (C++) / [ ] QML Import / [ ] `osm-registry-core` (Rust) / [ ] CLI Automation
-- **Target Regions Consumed**: (e.g. `asia/pakistan`, `europe/monaco`)
+- **Target Regions Consumed**: (e.g. `asia/pakistan`, `china/henan`)
 - **Key Code Links**:
   - File importing/linking AtlasMirror: 
   - CMakeLists.txt or Cargo.toml: 
