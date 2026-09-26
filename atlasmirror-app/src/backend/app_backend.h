@@ -5,6 +5,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
 #include <QtCore/QVariantList>
+#include "atlasmirror_sdk_impl.h"
 
 class AppBackend : public QObject
 {
@@ -43,7 +44,7 @@ public:
     Q_INVOKABLE QJsonArray getQueueItems();
     Q_INVOKABLE QJsonArray getDownloadItems();
 
-    // Real Operations (Replacements for console.log)
+    // Direct Operations backed by AtlasmirrorSdkImpl (zero CLI subprocess dependencies)
     Q_INVOKABLE void refreshIndex();
     Q_INVOKABLE void hostRegion(const QString &regionPath);
     Q_INVOKABLE void startBulkHost(const QJsonArray &regionPaths);
@@ -70,7 +71,6 @@ signals:
 
 private:
     void loadPredefinedCatalog();
-    void applyOnChainData(const QJsonArray &records);
 
     QString m_searchFilter;
     QString m_statusFilter{"ALL"};
@@ -81,4 +81,6 @@ private:
     QJsonArray m_queue;
     QJsonArray m_downloads;
     QJsonObject m_lastResult;
+
+    AtlasmirrorSdkImpl m_sdk;
 };

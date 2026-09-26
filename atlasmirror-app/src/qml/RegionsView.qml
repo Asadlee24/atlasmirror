@@ -8,32 +8,31 @@ Item {
 
     // Full 72 closed-set catalog data
     readonly property var allCatalogRegions: [
-        { path: "asia/pakistan", name: "Pakistan", level: "country", version: "2026-09-24", hosted: true, cid: "zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz", checksum: "5dd3c567f557b843aef1576b8973f81f", updateStatus: "UP_TO_DATE" },
-        { path: "china/henan", name: "Henan", level: "subregion", version: "2026-09-20", hosted: true, cid: "zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny", checksum: "0055ebfc7f14585c56d53a88062d5814", updateStatus: "UP_TO_DATE" },
-        { path: "africa/ethiopia", name: "Ethiopia", level: "country", version: "2026-09-20", hosted: true, cid: "zDvZRwzm7o1JcgDFrsC8zYrEYnhPkY52qThJLjojMvswjj8pVjPX", checksum: "c2e00ecddf7ae4ed89bf05bf104d3f10", updateStatus: "UP_TO_DATE" },
-        { path: "europe/bulgaria", name: "Bulgaria", level: "country", version: "2026-09-20", hosted: true, cid: "zDvZRwzm72Y7GBdMzdT7ibQWieQSmUhvk54VHfhcsUDcqnPhma51", checksum: "25801cfabc5bfe8e1ae56ded0fa5ed13", updateStatus: "UP_TO_DATE" },
-        { path: "africa/egypt", name: "Egypt", level: "country", version: "2026-09-20", hosted: true, cid: "zDvZRwzmDbJCqSLbyt1Fw4mSvrGFkJGBLaBAogpw8VF66wA469mm", checksum: "04a4d557c902a5f29ba0e7a1394e0232", updateStatus: "UP_TO_DATE" },
-        { path: "asia/iran", name: "Iran", level: "country", version: "2026-09-20", hosted: true, cid: "zDvZRwzkybLEXZoEjDetaF4yKT73jszhgkMTboXedKCt4En1gUKV", checksum: "e503562d3826bec67e6f87b899da4098", updateStatus: "UP_TO_DATE" },
-        { path: "africa/morocco", name: "Morocco", level: "country", version: "2026-09-20", hosted: true, cid: "zDvZRwzmD3VCUxT9UqAh7mXpT4XmWarwKBFR6p2eRiY7PxjQg3kt", checksum: "ac60aed8b36bac264f2c17c89a584b94", updateStatus: "UP_TO_DATE" },
-        { path: "asia/malaysia-singapore-brunei", name: "Malaysia-Singapore-Brunei", level: "country", version: "2026-09-20", hosted: true, cid: "zDvZRwzkxgamWxqXcSCp2m8Z5WicCRd79MVy8B3duQ8gCZJSc11Y", checksum: "203cebee0dbaa4e8464b777cd10698e6", updateStatus: "UP_TO_DATE" },
-        { path: "china/shandong", name: "Shandong", level: "subregion", version: "2026-09-20", hosted: true, cid: "zDvZRwzm7Yn6itgdZ4DLa6ExvHpy84ZwDwLTLNfaxZpqBzDx6d2S", checksum: "694e3251c5bd24cc2d5a4a8051386808", updateStatus: "UP_TO_DATE" },
-        { path: "china/jiangsu", name: "Jiangsu", level: "subregion", version: "2026-09-20", hosted: true, cid: "zDvZRwzky6qXkYQESyUvuWJ11ALPBtqVfQKdK95oK9fpzr8aBzBW", checksum: "8570de9c1c339879171f9ade8fc0df8c", updateStatus: "UP_TO_DATE" },
-        { path: "china/zhejiang", name: "Zhejiang", level: "subregion", version: "2026-09-20", hosted: true, cid: "zDvZRwzm6VRRAPN1VQfLYrpWdZc3bXTXXddX5QeujuGq44hTYpfL", checksum: "be6f111217e76d8315735642914fef66", updateStatus: "UP_TO_DATE" },
-        { path: "china/sichuan", name: "Sichuan", level: "subregion", version: "2026-09-20", hosted: true, cid: "zDvZRwzm5Nb3MUR3WojwiRmeogUg2UyUF6DPq4iY7cpRS51nLtk6", checksum: "285763504e474dac69ea3038798abdf6", updateStatus: "UP_TO_DATE" },
-        { path: "india/north-eastern-zone", name: "North-Eastern Zone", level: "subregion", version: "2026-09-20", hosted: true, cid: "zDvZRwzm6t9DQrYk2doTwM4XsbtMtixxRMpJQfEiZ84c3zYF6xew", checksum: "3a5f6c22fd6788db1dd27ae8608c5e64", updateStatus: "UP_TO_DATE" },
-        { path: "china/guangdong", name: "Guangdong", level: "subregion", version: "2026-09-20", hosted: true, cid: "zDvZRwzmA1UEw2JURwzmYdaJea3jahUWw5m9RNtQ88GwQ7ChjjK8", checksum: "930a06a95a4fd64700f8f120262ab59d", updateStatus: "UP_TO_DATE" },
-        { path: "india/western-zone", name: "Western Zone", level: "subregion", version: "2026-09-20", hosted: true, cid: "zDvZRwzm46k96V6HTt6uGL1Pjyg13RDUbtNsJpfsrV6fckrBFRJF", checksum: "6f243a3ece638da662db7354e2c4a9a7", updateStatus: "UP_TO_DATE" },
-        { path: "india/northern-zone", name: "Northern Zone", level: "subregion", version: "2026-09-21", hosted: true, cid: "zDvZRwzmAXm6gwKyfMoMsUjqzjbYLKwVW1ik5AYL5EE2DAvKtxwC", checksum: "dcc43d108e7a5a77e1c6dfb4e3605918", updateStatus: "UP_TO_DATE" },
-        { path: "india/eastern-zone", name: "Eastern Zone", level: "subregion", version: "2026-09-21", hosted: true, cid: "zDvZRwzkxSJ2nb8ZuBfkjb1gZQxVxu4zNwv1tvYfVQioqEVSQ1BP", checksum: "52e787e4dfa4351506787e864d43fc2e", updateStatus: "UP_TO_DATE" },
-        { path: "south-america/peru", name: "Peru", level: "country", version: "2026-09-21", hosted: true, cid: "zDvZRwzkwrj1ZxgoWFzmQ7pr2aGE7ysC9VtaWhcf412PtZvynDbE", checksum: "35b488e2b7323256ee981ae33d7f7c01", updateStatus: "UP_TO_DATE" },
-        { path: "asia/south-korea", name: "South Korea", level: "country", version: "2026-09-21", hosted: true, cid: "zDvZRwzkwQdS93ToSZKhmgEHi8kXXE3w8m8hH8XxxaeZDPTngGvS", checksum: "8becc786e5637e7c018fbb5418b6e243", updateStatus: "UP_TO_DATE" },
-        { path: "europe/hungary", name: "Hungary", level: "country", version: "2026-09-21", hosted: true, cid: "zDvZRwzm89aJWkCswGMbafiLmReHzPm651AFHrgVuM1NpzdW5eKP", checksum: "418c3773df4cea22d4d034fc1ef29e36", updateStatus: "UP_TO_DATE" },
-        { path: "asia/thailand", name: "Thailand", level: "country", version: "2026-09-21", hosted: true, cid: "zDvZRwzkwiWPZsay9EFVEYUSQiVmW7veg9MQQ4ZJNnrFzirjho8Y", checksum: "fb2caf6d2e0bc29d31c0178776676280", updateStatus: "UP_TO_DATE" },
-        { path: "europe/romania", name: "Romania", level: "country", version: "2026-09-21", hosted: true, cid: "zDvZRwzm1tt7QonUPJAYyBXSD5M2pyBFCEQtyPvbLFMSZi6Ri65A", checksum: "15be838879747572b38be7593903d501", updateStatus: "UP_TO_DATE" },
-        { path: "asia/vietnam", name: "Vietnam", level: "country", version: "2026-09-21", hosted: true, cid: "zDvZRwzkziYDq1uiBfvomQs9aypHaWNeBtBUQqzgaMBVZaCVgz9R", checksum: "8e8faf2eff113b67f28059c3b4a5c677", updateStatus: "UP_TO_DATE" },
-        { path: "south-america/colombia", name: "Colombia", level: "country", version: "2026-09-21", hosted: true, cid: "zDvZRwzm244438FG43oa2LQuT39YuWrmLJXdK4mEkRLgvuyFZDik", checksum: "cb6b9a0ae742bd746017515427623726", updateStatus: "UP_TO_DATE" },
-        { path: "europe/greece", name: "Greece", level: "country", version: "2026-09-21", hosted: true, cid: "zDvZRwzm8tXSMbkc19uqXfTF95QWhcMPHqKLeS5juG5rYMEKTeaK", checksum: "c15fda8eb7e74c93d11696719534661b", updateStatus: "UP_TO_DATE" },
-        // Remaining unhosted regions in closed set (with live central fallback)
+        { path: "asia/pakistan", name: "Pakistan", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "china/henan", name: "Henan", level: "subregion", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "africa/ethiopia", name: "Ethiopia", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "europe/bulgaria", name: "Bulgaria", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "africa/egypt", name: "Egypt", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "asia/iran", name: "Iran", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "africa/morocco", name: "Morocco", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "asia/malaysia-singapore-brunei", name: "Malaysia-Singapore-Brunei", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "china/shandong", name: "Shandong", level: "subregion", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "china/jiangsu", name: "Jiangsu", level: "subregion", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "china/zhejiang", name: "Zhejiang", level: "subregion", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "china/sichuan", name: "Sichuan", level: "subregion", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "india/north-eastern-zone", name: "North-Eastern Zone", level: "subregion", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "china/guangdong", name: "Guangdong", level: "subregion", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "india/western-zone", name: "Western Zone", level: "subregion", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "india/northern-zone", name: "Northern Zone", level: "subregion", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "india/eastern-zone", name: "Eastern Zone", level: "subregion", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "south-america/peru", name: "Peru", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "asia/south-korea", name: "South Korea", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "europe/hungary", name: "Hungary", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "asia/thailand", name: "Thailand", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "europe/romania", name: "Romania", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "asia/vietnam", name: "Vietnam", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "south-america/colombia", name: "Colombia", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
+        { path: "europe/greece", name: "Greece", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
         { path: "europe/germany", name: "Germany", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
         { path: "europe/france", name: "France", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
         { path: "europe/great-britain", name: "United Kingdom", level: "country", version: "—", hosted: false, cid: "—", checksum: "—", updateStatus: "NOT_HOSTED" },
@@ -425,9 +424,15 @@ Item {
                             onClicked: {
                                 if (typeof backend !== "undefined" && backend.updateCheck) {
                                     var res = backend.updateCheck(selectedItem.path)
-                                    statusNotification = "Update check complete for " + selectedItem.path + ": UP_TO_DATE"
+                                    try {
+                                        var obj = JSON.parse(res)
+                                        var st = obj.status || "UNKNOWN"
+                                        statusNotification = "Update check for " + selectedItem.path + ": " + st
+                                    } catch(e) {
+                                        statusNotification = "Update check: " + res
+                                    }
                                 } else {
-                                    statusNotification = "Update check: Snapshot is currently up-to-date with Geofabrik."
+                                    statusNotification = "Backend unavailable for update check."
                                 }
                             }
                         }

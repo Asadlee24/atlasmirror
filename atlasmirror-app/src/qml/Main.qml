@@ -22,23 +22,16 @@ ApplicationWindow {
     QtObject {
         id: backend
 
-        readonly property var defaultRegions: [
-            {"path": "asia/pakistan", "name": "Pakistan", "level": "Country", "parent": "", "hosted": true, "cid": "zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz", "checksum": "5dd3c567f557b843aef1576b8973f81f", "version": "2026-09-24", "updateStatus": "UP_TO_DATE"},
-            {"path": "china/henan", "name": "Henan", "level": "Subregion", "parent": "china", "hosted": true, "cid": "zDvZRwzmb2rhXLBiRXtyd74Y8MB29es8si7ZEuHL6oMBuaLQyC88", "checksum": "765edcbf39256eace4fe32828a14cc58", "version": "2026-09-24", "updateStatus": "UP_TO_DATE"},
-            {"path": "europe/germany", "name": "Germany", "level": "Country", "parent": "", "hosted": false, "cid": "—", "checksum": "—", "version": "—", "updateStatus": "NOT_HOSTED"},
-            {"path": "us/california", "name": "California", "level": "Subregion", "parent": "us", "hosted": false, "cid": "—", "checksum": "—", "version": "—", "updateStatus": "NOT_HOSTED"}
-        ]
-
-        property var regions: (cBackend && cBackend.regions && cBackend.regions.length > 0) ? cBackend.regions : defaultRegions
-        property var queue: (cBackend && cBackend.queue) ? cBackend.queue : []
-        property var downloads: (cBackend && cBackend.downloads) ? cBackend.downloads : []
+        property var regions: (typeof cBackend !== "undefined" && cBackend.regions) ? cBackend.regions : []
+        property var queue: (typeof cBackend !== "undefined" && cBackend.queue) ? cBackend.queue : []
+        property var downloads: (typeof cBackend !== "undefined" && cBackend.downloads) ? cBackend.downloads : []
 
         signal regionsUpdated()
         signal queueUpdated()
         signal downloadsUpdated()
 
         Component.onCompleted: {
-            if (cBackend) {
+            if (typeof cBackend !== "undefined") {
                 try {
                     cBackend.regionsUpdated.connect(function() {
                         backend.regions = cBackend.regions;
@@ -59,102 +52,51 @@ ApplicationWindow {
         }
 
         function refreshIndex() {
-            if (cBackend) cBackend.refreshIndex();
+            if (typeof cBackend !== "undefined") cBackend.refreshIndex();
         }
 
         function hostRegion(path) {
-            if (cBackend) {
-                cBackend.hostRegion(path);
-            } else {
-                var q = (backend.queue || []).slice();
-                q.unshift({
-                    "path": path,
-                    "status": "PROCESSING",
-                    "step": "Publishing to Logos Storage & LEZ Registry...",
-                    "progress": 55,
-                    "cid": "zDvZRwzm" + Math.random().toString(36).substring(2, 10),
-                    "canRetry": false,
-                    "canCancel": true
-                });
-                backend.queue = q;
-                backend.queueUpdated();
-            }
+            if (typeof cBackend !== "undefined") cBackend.hostRegion(path);
         }
 
         function startBulkHost(paths) {
-            if (cBackend) {
-                cBackend.startBulkHost(paths);
-            } else {
-                for (var i = 0; i < paths.length; i++) {
-                    hostRegion(paths[i]);
-                }
-            }
+            if (typeof cBackend !== "undefined") cBackend.startBulkHost(paths);
         }
 
         function cancelHost(path) {
-            if (cBackend) {
-                cBackend.cancelHost(path);
-            } else {
-                var q = (backend.queue || []).filter(function(item) { return item.path !== path; });
-                backend.queue = q;
-                backend.queueUpdated();
-            }
+            if (typeof cBackend !== "undefined") cBackend.cancelHost(path);
         }
 
         function retryHost(path) {
-            if (cBackend) cBackend.retryHost(path);
+            if (typeof cBackend !== "undefined") cBackend.retryHost(path);
         }
 
         function clearCompletedQueue() {
-            if (cBackend) {
-                cBackend.clearCompletedQueue();
-            } else {
-                backend.queue = [];
-                backend.queueUpdated();
-            }
+            if (typeof cBackend !== "undefined") cBackend.clearCompletedQueue();
         }
 
         function retryAllFailed() {
-            if (cBackend) cBackend.retryAllFailed();
+            if (typeof cBackend !== "undefined") cBackend.retryAllFailed();
         }
 
         function startDownload(path) {
-            if (cBackend) {
-                cBackend.startDownload(path);
-            } else {
-                var d = (backend.downloads || []).slice();
-                d.unshift({
-                    "path": path,
-                    "status": "DOWNLOADING",
-                    "progress": 48,
-                    "cid": "zDvZRwzm...",
-                    "retrievedBytes": 23592960,
-                    "totalBytes": 49137459,
-                    "speed": "2.8 MB/s"
-                });
-                backend.downloads = d;
-                backend.downloadsUpdated();
-            }
-        }
-
-        function openDownloadDir() {
-            if (cBackend && cBackend.openDownloadDir) cBackend.openDownloadDir();
+            if (typeof cBackend !== "undefined") cBackend.startDownload(path);
         }
 
         function copyToClipboard(text) {
-            if (cBackend) cBackend.copyToClipboard(text);
+            if (typeof cBackend !== "undefined") cBackend.copyToClipboard(text);
         }
 
         function queryRegistry(type, val) {
-            return cBackend ? cBackend.queryRegistry(type, val) : "";
+            return (typeof cBackend !== "undefined") ? cBackend.queryRegistry(type, val) : "";
         }
 
         function importLocal(path, file) {
-            return cBackend ? cBackend.importLocal(path, file) : "";
+            return (typeof cBackend !== "undefined") ? cBackend.importLocal(path, file) : "";
         }
 
         function updateCheck(path) {
-            return cBackend ? cBackend.updateCheck(path) : "";
+            return (typeof cBackend !== "undefined") ? cBackend.updateCheck(path) : "";
         }
     }
 

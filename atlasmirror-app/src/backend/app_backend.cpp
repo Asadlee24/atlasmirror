@@ -1,8 +1,8 @@
 #include "app_backend.h"
 #include <QtCore/QDebug>
 #include <QtCore/QFile>
+#include <QtCore/QDir>
 #include <QtCore/QJsonDocument>
-#include <QtCore/QProcess>
 #include <QtCore/QFileInfo>
 #include <QtCore/QCryptographicHash>
 #include <QtGui/QGuiApplication>
@@ -12,6 +12,7 @@ AppBackend::AppBackend(QObject *parent)
     : QObject(parent)
 {
     loadPredefinedCatalog();
+    refreshIndex();
 }
 
 void AppBackend::setSearchFilter(const QString &filter)
@@ -83,7 +84,7 @@ void AppBackend::loadPredefinedCatalog()
         }
     }
 
-    // If file could not be read, populate all 72 closed-set regions reliably
+    // Closed-set 72 regions baseline default if regions.json is unavailable
     if (m_regions.isEmpty()) {
         QStringList allPaths = {
             "asia/pakistan", "europe/germany", "europe/france", "europe/great-britain",
@@ -133,56 +134,6 @@ void AppBackend::loadPredefinedCatalog()
             m_regions.append(r);
         }
     }
-
-    // Apply truthful canonical hosted state
-    struct VerifiedEntry {
-        const char *path;
-        const char *cid;
-        const char *md5;
-        const char *version;
-    };
-    VerifiedEntry verified[] = {
-        {"china/henan", "zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny", "0055ebfc7f14585c56d53a88062d5814", "2026-09-20"},
-        {"africa/ethiopia", "zDvZRwzm7o1JcgDFrsC8zYrEYnhPkY52qThJLjojMvswjj8pVjPX", "c2e00ecddf7ae4ed89bf05bf104d3f10", "2026-09-20"},
-        {"asia/pakistan", "zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz", "5dd3c567f557b843aef1576b8973f81f", "2026-09-24"},
-        {"europe/bulgaria", "zDvZRwzm72Y7GBdMzdT7ibQWieQSmUhvk54VHfhcsUDcqnPhma51", "25801cfabc5bfe8e1ae56ded0fa5ed13", "2026-09-20"},
-        {"africa/egypt", "zDvZRwzmDbJCqSLbyt1Fw4mSvrGFkJGBLaBAogpw8VF66wA469mm", "04a4d557c902a5f29ba0e7a1394e0232", "2026-09-20"},
-        {"asia/iran", "zDvZRwzmBv3fXmNnBhy32eW6P817173jE48pWfNnE35g68b3n72g", "5d33dd5a92a5b28dae3e60fc8ccae1b4", "2026-09-20"},
-        {"africa/morocco", "zDvZRwzm7Q24bF5jZzE25gH7jM88pW7m53gM42s37p271b33b762", "1e66ee69e6b26ee823ba4bb248ef2e34", "2026-09-20"},
-        {"asia/malaysia-singapore-brunei", "zDvZRwzmA7m98533kFjE7jZ91mB22xW7m53gM42s37p271b33b762", "22b5133618a8b130e46eb532eb9b0499", "2026-09-20"},
-        {"china/shandong", "zDvZRwzm7Yn6itgdZ4DLa6ExvHpy84ZwDwLTLNfaxZpqBzDx6d2S", "694e3251c5bd24cc2d5a4a8051386808", "2026-09-20"},
-        {"china/jiangsu", "zDvZRwzky6qXkYQESyUvuWJ11ALPBtqVfQKdK95oK9fpzr8aBzBW", "8570de9c1c339879171f9ade8fc0df8c", "2026-09-20"},
-        {"china/zhejiang", "zDvZRwzm6VRRAPN1VQfLYrpWdZc3bXTXXddX5QeujuGq44hTYpfL", "be6f111217e76d8315735642914fef66", "2026-09-20"},
-        {"china/sichuan", "zDvZRwzm5Nb3MUR3WojwiRmeogUg2UyUF6DPq4iY7cpRS51nLtk6", "285763504e474dac69ea3038798abdf6", "2026-09-20"},
-        {"india/north-eastern-zone", "zDvZRwzm6t9DQrYk2doTwM4XsbtMtixxRMpJQfEiZ84c3zYF6xew", "3a5f6c22fd6788db1dd27ae8608c5e64", "2026-09-20"},
-        {"china/guangdong", "zDvZRwzmA1UEw2JURwzmYdaJea3jahUWw5m9RNtQ88GwQ7ChjjK8", "930a06a95a4fd64700f8f120262ab59d", "2026-09-20"},
-        {"india/western-zone", "zDvZRwzm46k96V6HTt6uGL1Pjyg13RDUbtNsJpfsrV6fckrBFRJF", "6f243a3ece638da662db7354e2c4a9a7", "2026-09-20"},
-        {"india/northern-zone", "zDvZRwzmAXm6gwKyfMoMsUjqzjbYLKwVW1ik5AYL5EE2DAvKtxwC", "dcc43d108e7a5a77e1c6dfb4e3605918", "2026-09-21"},
-        {"india/eastern-zone", "zDvZRwzkxSJ2nb8ZuBfkjb1gZQxVxu4zNwv1tvYfVQioqEVSQ1BP", "52e787e4dfa4351506787e864d43fc2e", "2026-09-21"},
-        {"south-america/peru", "zDvZRwzkwrj1ZxgoWFzmQ7pr2aGE7ysC9VtaWhcf412PtZvynDbE", "35b488e2b7323256ee981ae33d7f7c01", "2026-09-21"},
-        {"asia/south-korea", "zDvZRwzkwQdS93ToSZKhmgEHi8kXXE3w8m8hH8XxxaeZDPTngGvS", "8becc786e5637e7c018fbb5418b6e243", "2026-09-21"},
-        {"europe/hungary", "zDvZRwzm89aJWkCswGMbafiLmReHzPm651AFHrgVuM1NpzdW5eKP", "418c3773df4cea22d4d034fc1ef29e36", "2026-09-21"},
-        {"asia/thailand", "zDvZRwzkwiWPZsay9EFVEYUSQiVmW7veg9MQQ4ZJNnrFzirjho8Y", "fb2caf6d2e0bc29d31c0178776676280", "2026-09-21"},
-        {"europe/romania", "zDvZRwzm1tt7QonUPJAYyBXSD5M2pyBFCEQtyPvbLFMSZi6Ri65A", "15be838879747572b38be7593903d501", "2026-09-21"},
-        {"asia/vietnam", "zDvZRwzkziYDq1uiBfvomQs9aypHaWNeBtBUQqzgaMBVZaCVgz9R", "8e8faf2eff113b67f28059c3b4a5c677", "2026-09-21"},
-        {"south-america/colombia", "zDvZRwzm244438FG43oa2LQuT39YuWrmLJXdK4mEkRLgvuyFZDik", "cb6b9a0ae742bd746017515427623726", "2026-09-21"},
-        {"europe/greece", "zDvZRwzm8tXSMbkc19uqXfTF95QWhcMPHqKLeS5juG5rYMEKTeaK", "c15fda8eb7e74c93d11696719534661b", "2026-09-21"}
-    };
-
-    for (const auto &v : verified) {
-        for (int i = 0; i < m_regions.size(); ++i) {
-            QJsonObject r = m_regions[i].toObject();
-            if (r["path"].toString() == v.path) {
-                r["hosted"] = true;
-                r["cid"] = v.cid;
-                r["checksum"] = v.md5;
-                r["version"] = v.version;
-                r["updateStatus"] = "UP_TO_DATE";
-                m_regions[i] = r;
-                break;
-            }
-        }
-    }
 }
 
 QJsonArray AppBackend::getFilteredRegions()
@@ -223,27 +174,35 @@ QJsonArray AppBackend::getDownloadItems()
 
 void AppBackend::refreshIndex()
 {
-    // Real on-chain refresh via atlasmirror-cli lookup or direct RPC
-    QProcess proc;
-    proc.start("atlasmirror-cli", QStringList() << "regions" << "list" << "--json");
-    if (proc.waitForFinished(10000) && proc.exitCode() == 0) {
-        QJsonDocument doc = QJsonDocument::fromJson(proc.readAllStandardOutput());
-        if (doc.isArray()) {
-            QJsonArray liveList = doc.array();
-            for (const QJsonValue &lv : liveList) {
-                QJsonObject lObj = lv.toObject();
-                QString lPath = lObj["path"].toString();
-                for (int i = 0; i < m_regions.size(); ++i) {
-                    QJsonObject r = m_regions[i].toObject();
-                    if (r["path"].toString() == lPath) {
-                        r["hosted"] = lObj["hosted"].toBool();
-                        if (lObj["hosted"].toBool()) {
-                            r["cid"] = lObj["cid"].toString();
-                            r["version"] = lObj["version"].toString();
-                        }
-                        m_regions[i] = r;
-                        break;
+    // Truthful direct query to SDK without any CLI subprocess
+    m_sdk.refreshOnChainRegistry();
+    std::string jsonStr = m_sdk.discoverRegions();
+    QJsonDocument doc = QJsonDocument::fromJson(QByteArray::fromStdString(jsonStr));
+
+    if (doc.isArray()) {
+        QJsonArray liveList = doc.array();
+        for (const QJsonValue &lv : liveList) {
+            QJsonObject lObj = lv.toObject();
+            QString lPath = lObj["path"].toString();
+            for (int i = 0; i < m_regions.size(); ++i) {
+                QJsonObject r = m_regions[i].toObject();
+                if (r["path"].toString() == lPath) {
+                    bool isHosted = lObj["hosted"].toBool();
+                    r["hosted"] = isHosted;
+                    if (isHosted) {
+                        r["cid"] = lObj["cid"].toString();
+                        r["checksum"] = lObj["checksum"].toString();
+                        r["version"] = lObj["version"].toString();
+                        r["updateStatus"] = "UP_TO_DATE";
+                    } else {
+                        r["hosted"] = false;
+                        r["cid"] = "—";
+                        r["checksum"] = "—";
+                        r["version"] = "—";
+                        r["updateStatus"] = "NOT_HOSTED";
                     }
+                    m_regions[i] = r;
+                    break;
                 }
             }
         }
@@ -254,7 +213,7 @@ void AppBackend::refreshIndex()
     m_lastResult = QJsonObject{
         {"success", true},
         {"operation", "REFRESH_INDEX"},
-        {"message", QString("Index refreshed. Loaded %1 regions.").arg(m_regions.size())}
+        {"message", QString("Index refreshed via Core SDK. Loaded %1 regions.").arg(m_regions.size())}
     };
     emit operationResultChanged();
 }
@@ -263,90 +222,69 @@ void AppBackend::hostRegion(const QString &regionPath)
 {
     QJsonObject item;
     item["region"] = regionPath;
-    item["state"] = "QUEUED";
-    item["progress"] = 0.1;
+    item["state"] = "PROCESSING";
+    item["progress"] = 0.5;
     item["error"] = "";
     m_queue.append(item);
     emit queueUpdated();
 
-    // Trigger asynchronous safe execution
-    QProcess *proc = new QProcess(this);
-    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), [this, proc, regionPath](int exitCode, QProcess::ExitStatus) {
-        for (int i = 0; i < m_queue.size(); ++i) {
-            QJsonObject obj = m_queue[i].toObject();
-            if (obj["region"].toString() == regionPath) {
-                if (exitCode == 0) {
-                    obj["state"] = "COMPLETE";
-                    obj["progress"] = 1.0;
-                    obj["error"] = "";
-                    // Mark hosted in region list
-                    for (int j = 0; j < m_regions.size(); ++j) {
-                        QJsonObject r = m_regions[j].toObject();
-                        if (r["path"].toString() == regionPath) {
-                            r["hosted"] = true;
-                            m_regions[j] = r;
-                            break;
-                        }
-                    }
-                    emit regionsUpdated();
-                } else {
-                    obj["state"] = "FAILED";
-                    obj["error"] = QString::fromUtf8(proc->readAllStandardError()).trimmed();
-                }
-                m_queue[i] = obj;
-                emit queueUpdated();
-                break;
-            }
-        }
-        proc->deleteLater();
-    });
+    // Call SDK directly
+    std::string resStr = m_sdk.hostRegion(regionPath.toStdString());
+    QJsonDocument resDoc = QJsonDocument::fromJson(QByteArray::fromStdString(resStr));
+    bool success = false;
+    QString errMsg = "";
+    QString cid = "";
 
-    proc->start("atlasmirror-cli", QStringList() << "host" << regionPath << "--json");
+    if (resDoc.isObject()) {
+        QJsonObject resObj = resDoc.object();
+        if (resObj.contains("cid") && !resObj["cid"].toString().isEmpty()) {
+            success = true;
+            cid = resObj["cid"].toString();
+        } else if (resObj["success"].toBool()) {
+            success = true;
+        } else {
+            errMsg = resObj["message"].toString();
+            if (errMsg.isEmpty()) errMsg = resObj["error"].toString();
+        }
+    }
+
+    for (int i = 0; i < m_queue.size(); ++i) {
+        QJsonObject obj = m_queue[i].toObject();
+        if (obj["region"].toString() == regionPath) {
+            if (success) {
+                obj["state"] = "COMPLETE";
+                obj["progress"] = 1.0;
+                obj["error"] = "";
+                for (int j = 0; j < m_regions.size(); ++j) {
+                    QJsonObject r = m_regions[j].toObject();
+                    if (r["path"].toString() == regionPath) {
+                        r["hosted"] = true;
+                        if (!cid.isEmpty()) r["cid"] = cid;
+                        r["updateStatus"] = "UP_TO_DATE";
+                        m_regions[j] = r;
+                        break;
+                    }
+                }
+                emit regionsUpdated();
+            } else {
+                obj["state"] = "FAILED";
+                obj["error"] = errMsg.isEmpty() ? "Hosting failed" : errMsg;
+            }
+            m_queue[i] = obj;
+            emit queueUpdated();
+            break;
+        }
+    }
 }
 
 void AppBackend::startBulkHost(const QJsonArray &regionPaths)
 {
     if (regionPaths.isEmpty()) return;
 
-    QStringList args;
-    args << "host" << "--batch";
     for (const QJsonValue &val : regionPaths) {
         QString reg = val.toString();
-        args << reg;
-
-        QJsonObject queueItem{
-            {"region", reg},
-            {"state", "QUEUED"},
-            {"progress", 0},
-            {"message", "Queued for batch registration"}
-        };
-        m_queue.append(queueItem);
+        hostRegion(reg);
     }
-    args << "--json";
-    emit queueUpdated();
-
-    QProcess *proc = new QProcess(this);
-    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-            this, [this, proc, regionPaths](int exitCode, QProcess::ExitStatus) {
-        bool success = (exitCode == 0);
-        for (const QJsonValue &val : regionPaths) {
-            QString reg = val.toString();
-            for (int i = 0; i < m_queue.size(); ++i) {
-                QJsonObject obj = m_queue[i].toObject();
-                if (obj["region"].toString() == reg) {
-                    obj["state"] = success ? "COMPLETED" : "FAILED";
-                    obj["progress"] = success ? 100 : 0;
-                    obj["message"] = success ? "Batch registration complete" : "Batch registration failed";
-                    m_queue[i] = obj;
-                    break;
-                }
-            }
-        }
-        emit queueUpdated();
-        proc->deleteLater();
-    });
-
-    proc->start("atlasmirror-cli", args);
 }
 
 void AppBackend::cancelHost(const QString &regionPath)
@@ -410,35 +348,33 @@ void AppBackend::startDownload(const QString &regionPath)
 
     QJsonObject dl;
     dl["region"] = regionPath;
-    dl["source"] = "Logos Storage / Fallback";
-    dl["size"] = "Calculating...";
-    dl["progress"] = 0.05;
+    dl["source"] = "Logos Storage / Canonical Geofabrik";
+    dl["size"] = "Downloading...";
+    dl["progress"] = 0.5;
     dl["status"] = "DOWNLOADING";
     m_downloads.append(dl);
     emit downloadsUpdated();
 
-    QProcess *proc = new QProcess(this);
-    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), [this, proc, regionPath, destFile](int exitCode, QProcess::ExitStatus) {
-        for (int i = 0; i < m_downloads.size(); ++i) {
-            QJsonObject obj = m_downloads[i].toObject();
-            if (obj["region"].toString() == regionPath) {
-                if (exitCode == 0 && QFile::exists(destFile)) {
-                    qint64 sz = QFileInfo(destFile).size();
-                    obj["size"] = QString("%1 MB").arg(sz / (1024 * 1024));
-                    obj["progress"] = 1.0;
-                    obj["status"] = "VERIFIED";
-                } else {
-                    obj["status"] = "FAILED";
-                }
-                m_downloads[i] = obj;
-                emit downloadsUpdated();
-                break;
-            }
-        }
-        proc->deleteLater();
-    });
+    // Direct SDK download with checksum verification and atomic rename
+    bool ok = m_sdk.downloadRegion(regionPath.toStdString(), destFile.toStdString());
 
-    proc->start("atlasmirror-cli", QStringList() << "download" << regionPath << "--output" << destFile << "--json");
+    for (int i = 0; i < m_downloads.size(); ++i) {
+        QJsonObject obj = m_downloads[i].toObject();
+        if (obj["region"].toString() == regionPath) {
+            if (ok && QFile::exists(destFile)) {
+                qint64 sz = QFileInfo(destFile).size();
+                obj["size"] = QString("%1 MB").arg(sz / (1024 * 1024));
+                obj["progress"] = 1.0;
+                obj["status"] = "VERIFIED";
+            } else {
+                obj["status"] = "FAILED";
+                obj["progress"] = 0.0;
+            }
+            m_downloads[i] = obj;
+            emit downloadsUpdated();
+            break;
+        }
+    }
 }
 
 void AppBackend::copyToClipboard(const QString &text)
@@ -457,40 +393,15 @@ void AppBackend::copyToClipboard(const QString &text)
 
 QString AppBackend::queryRegistry(const QString &queryType, const QString &queryValue)
 {
-    QString subcmd;
+    std::string res;
     if (queryType.contains("CID", Qt::CaseInsensitive)) {
-        subcmd = "cid";
+        res = m_sdk.getByCid(queryValue.toStdString());
     } else if (queryType.contains("Parent", Qt::CaseInsensitive)) {
-        subcmd = "parent";
+        res = m_sdk.getChildren(queryValue.toStdString());
     } else {
-        subcmd = "region";
+        res = m_sdk.resolveRegion(queryValue.toStdString());
     }
-
-    QProcess proc;
-    proc.start("atlasmirror-cli", QStringList() << "lookup" << subcmd << queryValue << "--json");
-    if (proc.waitForFinished(10000) && proc.exitCode() == 0) {
-        return QString::fromUtf8(proc.readAllStandardOutput());
-    }
-
-    // Direct lookup in local catalog state
-    for (const QJsonValue &v : m_regions) {
-        QJsonObject obj = v.toObject();
-        if (obj["path"].toString() == queryValue || obj["cid"].toString() == queryValue) {
-            QJsonObject res;
-            res["program_id"] = "bcdc104271bd670da3b1afddcb758286c619de87365d6488c9c2f563947f8b4f";
-            res["target_account"] = "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci";
-            res["query_type"] = queryType;
-            res["query_value"] = queryValue;
-            res["result"] = obj;
-            return QString::fromUtf8(QJsonDocument(res).toJson(QJsonDocument::Indented));
-        }
-    }
-
-    QJsonObject err;
-    err["error"] = "NOT_FOUND";
-    err["query_type"] = queryType;
-    err["query_value"] = queryValue;
-    return QString::fromUtf8(QJsonDocument(err).toJson(QJsonDocument::Indented));
+    return QString::fromStdString(res);
 }
 
 QString AppBackend::importLocal(const QString &regionPath, const QString &localFilePath)
@@ -506,80 +417,12 @@ QString AppBackend::importLocal(const QString &regionPath, const QString &localF
         cleanPath = cleanPath.mid(7);
     }
 
-    QFileInfo fi(cleanPath);
-    if (!fi.exists() || fi.size() == 0) {
-        return "{\"success\":false,\"error\":\"LOCAL_FILE_NOT_FOUND\"}";
-    }
-
-    QFile file(cleanPath);
-    if (!file.open(QIODevice::ReadOnly)) {
-        return "{\"success\":false,\"error\":\"CANNOT_READ_FILE\"}";
-    }
-
-    QCryptographicHash hash(QCryptographicHash::Md5);
-    if (!hash.addData(&file)) {
-        return "{\"success\":false,\"error\":\"CHECKSUM_FAILED\"}";
-    }
-    QString computedMd5 = QString::fromUtf8(hash.result().toHex());
-    file.close();
-
-    QProcess proc;
-    proc.start("atlasmirror-cli", QStringList() << "host" << regionPath << "--file" << cleanPath << "--json");
-    if (!proc.waitForFinished(30000)) {
-        QJsonObject err;
-        err["success"] = false;
-        err["error"] = "PROCESS_TIMEOUT";
-        err["message"] = "atlasmirror-cli process timed out";
-        return QString::fromUtf8(QJsonDocument(err).toJson(QJsonDocument::Compact));
-    }
-
-    if (proc.exitCode() != 0) {
-        QString errStr = QString::fromUtf8(proc.readAllStandardError()).trimmed();
-        QJsonObject err;
-        err["success"] = false;
-        err["error"] = "IMPORT_FAILED";
-        err["message"] = errStr.isEmpty() ? QString("Process exited with code %1").arg(proc.exitCode()) : errStr;
-        return QString::fromUtf8(QJsonDocument(err).toJson(QJsonDocument::Compact));
-    }
-
-    QString outStr = QString::fromUtf8(proc.readAllStandardOutput()).trimmed();
-    int firstBrace = outStr.indexOf('{');
-    int lastBrace = outStr.lastIndexOf('}');
-    if (firstBrace != -1 && lastBrace > firstBrace) {
-        return outStr.mid(firstBrace, lastBrace - firstBrace + 1);
-    }
-
-    QJsonObject res;
-    res["success"] = true;
-    res["status"] = "CHECKSUM_VERIFIED";
-    res["path"] = regionPath;
-    res["computed_md5"] = computedMd5;
-    res["file_size"] = fi.size();
-    return QString::fromUtf8(QJsonDocument(res).toJson(QJsonDocument::Indented));
+    std::string res = m_sdk.importLocal(regionPath.toStdString(), cleanPath.toStdString());
+    return QString::fromStdString(res);
 }
 
 QString AppBackend::updateCheck(const QString &regionPath)
 {
-    QProcess proc;
-    proc.start("atlasmirror-cli", QStringList() << "updates" << regionPath << "--json");
-    if (proc.waitForFinished(10000) && proc.exitCode() == 0) {
-        return QString::fromUtf8(proc.readAllStandardOutput());
-    }
-
-    for (int i = 0; i < m_regions.size(); ++i) {
-        QJsonObject r = m_regions[i].toObject();
-        if (r["path"].toString() == regionPath) {
-            QString curVer = r["version"].toString();
-            bool hosted = r["hosted"].toBool();
-            QJsonObject res;
-            res["region"] = regionPath;
-            res["hosted"] = hosted;
-            res["status"] = hosted ? "UP_TO_DATE" : "NOT_HOSTED";
-            res["current_version"] = curVer;
-            res["upstream_version"] = "2026-09-20";
-            return QString::fromUtf8(QJsonDocument(res).toJson(QJsonDocument::Indented));
-        }
-    }
-
-    return "{\"status\":\"UNKNOWN_REGION\"}";
+    std::string res = m_sdk.checkUpdate(regionPath.toStdString());
+    return QString::fromStdString(res);
 }

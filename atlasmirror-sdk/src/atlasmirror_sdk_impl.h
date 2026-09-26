@@ -5,7 +5,17 @@
 #include <map>
 #include <cstdint>
 #include <algorithm>
+
+#if __has_include("logos_module_context.h")
 #include "logos_module_context.h"
+#else
+class LogosModuleContext {
+public:
+    virtual ~LogosModuleContext() = default;
+protected:
+    virtual void onContextReady() {}
+};
+#endif
 
 /**
  * @brief Public interface of the AtlasMirror Core SDK module.
@@ -108,7 +118,6 @@ private:
     };
 
     void loadPredefinedCatalog();
-    void loadVerifiedManifest();
     std::string serializeRecord(const RegionRecord &r) const;
 
     std::map<std::string, RegionRecord> m_catalog;

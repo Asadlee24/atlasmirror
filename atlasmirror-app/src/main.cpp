@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
 
     AppBackend backend;
+    engine.rootContext()->setContextProperty("cBackend", &backend);
     engine.rootContext()->setContextProperty("appBackend", &backend);
     engine.rootContext()->setContextProperty("backend", &backend);
 

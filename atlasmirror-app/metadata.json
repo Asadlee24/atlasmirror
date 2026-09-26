@@ -1,12 +1,14 @@
 {
   "name": "atlasmirror_app",
   "display_name": "AtlasMirror",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "ui_qml",
+  "interface": "universal",
   "category": "geospatial",
   "description": "Logos Basecamp application for decentralized OpenStreetMap snapshot distribution",
   "icon": "src/icons/icon.png",
   "view": "src/qml/Main.qml",
+  "main": "atlasmirror_app_backend",
   "dependencies": ["atlasmirror_sdk"],
   "provides": [],
   "uses": [],
@@ -20,10 +22,13 @@
       "find_packages": ["Qt6 COMPONENTS Core Quick Qml RemoteObjects Gui"],
       "extra_sources": [
         "src/backend/app_backend.cpp",
-        "src/backend/app_backend.h"
+        "src/backend/app_backend.h",
+        "../atlasmirror-sdk/src/atlasmirror_sdk_impl.cpp",
+        "../atlasmirror-sdk/src/atlasmirror_sdk_impl.h"
       ],
       "extra_include_dirs": [
-        "src/backend"
+        "src/backend",
+        "../atlasmirror-sdk/src"
       ],
       "extra_link_libraries": [
         "Qt6::Core",

@@ -357,7 +357,6 @@ void AtlasmirrorSdkImpl::onContextReady()
 {
     if (m_catalog.empty()) {
         loadPredefinedCatalog();
-        loadVerifiedManifest();
     }
 }
 
@@ -413,59 +412,6 @@ void AtlasmirrorSdkImpl::loadPredefinedCatalog()
         r.timestamp = 0;
 
         m_catalog[path] = r;
-    }
-}
-
-void AtlasmirrorSdkImpl::loadVerifiedManifest()
-{
-    // Canonical truthful metadata verified from on-chain state and Logos Storage
-    struct VerifiedEntry {
-        const char *path;
-        const char *cid;
-        const char *md5;
-        const char *version;
-        uint64_t timestamp;
-    };
-
-    VerifiedEntry verified[] = {
-        {"china/henan", "zDvZRwzm4i6cSYFNEAUzyEGTJBroH2EJjc3FJNmbhoKRwagSZ1ny", "0055ebfc7f14585c56d53a88062d5814", "2026-09-20", 1789905600},
-        {"africa/ethiopia", "zDvZRwzm7o1JcgDFrsC8zYrEYnhPkY52qThJLjojMvswjj8pVjPX", "c2e00ecddf7ae4ed89bf05bf104d3f10", "2026-09-20", 1789971761},
-        {"asia/pakistan", "zDvZRwzm9WQQrvAZL4NavbFXjmbHTFNyho68zPMxKsCvfGEn2LbD", "d63c9409c20924d0813b81266eb2f5ad", "2026-09-20", 1789974237},
-        {"europe/bulgaria", "zDvZRwzm72Y7GBdMzdT7ibQWieQSmUhvk54VHfhcsUDcqnPhma51", "25801cfabc5bfe8e1ae56ded0fa5ed13", "2026-09-20", 1789976858},
-        {"africa/egypt", "zDvZRwzmDbJCqSLbyt1Fw4mSvrGFkJGBLaBAogpw8VF66wA469mm", "04a4d557c902a5f29ba0e7a1394e0232", "2026-09-20", 1789977848},
-        {"asia/iran", "zDvZRwzkybLEXZoEjDetaF4yKT73jszhgkMTboXedKCt4En1gUKV", "e503562d3826bec67e6f87b899da4098", "2026-09-20", 1790248996},
-        {"africa/morocco", "zDvZRwzmD3VCUxT9UqAh7mXpT4XmWarwKBFR6p2eRiY7PxjQg3kt", "ac60aed8b36bac264f2c17c89a584b94", "2026-09-20", 1790248996},
-        {"asia/malaysia-singapore-brunei", "zDvZRwzkxgamWxqXcSCp2m8Z5WicCRd79MVy8B3duQ8gCZJSc11Y", "203cebee0dbaa4e8464b777cd10698e6", "2026-09-20", 1790248996},
-        {"china/shandong", "zDvZRwzm7Yn6itgdZ4DLa6ExvHpy84ZwDwLTLNfaxZpqBzDx6d2S", "694e3251c5bd24cc2d5a4a8051386808", "2026-09-20", 1789986500},
-        {"china/jiangsu", "zDvZRwzky6qXkYQESyUvuWJ11ALPBtqVfQKdK95oK9fpzr8aBzBW", "8570de9c1c339879171f9ade8fc0df8c", "2026-09-20", 1789987200},
-        {"china/zhejiang", "zDvZRwzm6VRRAPN1VQfLYrpWdZc3bXTXXddX5QeujuGq44hTYpfL", "be6f111217e76d8315735642914fef66", "2026-09-20", 1789988100},
-        {"china/sichuan", "zDvZRwzm5Nb3MUR3WojwiRmeogUg2UyUF6DPq4iY7cpRS51nLtk6", "285763504e474dac69ea3038798abdf6", "2026-09-20", 1789989000},
-        {"india/north-eastern-zone", "zDvZRwzm6t9DQrYk2doTwM4XsbtMtixxRMpJQfEiZ84c3zYF6xew", "3a5f6c22fd6788db1dd27ae8608c5e64", "2026-09-20", 1789990100},
-        {"china/guangdong", "zDvZRwzmA1UEw2JURwzmYdaJea3jahUWw5m9RNtQ88GwQ7ChjjK8", "930a06a95a4fd64700f8f120262ab59d", "2026-09-20", 1789991200},
-        {"india/western-zone", "zDvZRwzm46k96V6HTt6uGL1Pjyg13RDUbtNsJpfsrV6fckrBFRJF", "6f243a3ece638da662db7354e2c4a9a7", "2026-09-20", 1789992300},
-        {"india/northern-zone", "zDvZRwzmAXm6gwKyfMoMsUjqzjbYLKwVW1ik5AYL5EE2DAvKtxwC", "dcc43d108e7a5a77e1c6dfb4e3605918", "2026-09-21", 1789993400},
-        {"india/eastern-zone", "zDvZRwzkxSJ2nb8ZuBfkjb1gZQxVxu4zNwv1tvYfVQioqEVSQ1BP", "52e787e4dfa4351506787e864d43fc2e", "2026-09-21", 1789994500},
-        {"south-america/peru", "zDvZRwzkwrj1ZxgoWFzmQ7pr2aGE7ysC9VtaWhcf412PtZvynDbE", "35b488e2b7323256ee981ae33d7f7c01", "2026-09-21", 1789995600},
-        {"asia/south-korea", "zDvZRwzkwQdS93ToSZKhmgEHi8kXXE3w8m8hH8XxxaeZDPTngGvS", "8becc786e5637e7c018fbb5418b6e243", "2026-09-21", 1789996700},
-        {"europe/hungary", "zDvZRwzm89aJWkCswGMbafiLmReHzPm651AFHrgVuM1NpzdW5eKP", "418c3773df4cea22d4d034fc1ef29e36", "2026-09-21", 1789997800},
-        {"asia/thailand", "zDvZRwzkwiWPZsay9EFVEYUSQiVmW7veg9MQQ4ZJNnrFzirjho8Y", "fb2caf6d2e0bc29d31c0178776676280", "2026-09-21", 1789998900},
-        {"europe/romania", "zDvZRwzm1tt7QonUPJAYyBXSD5M2pyBFCEQtyPvbLFMSZi6Ri65A", "15be838879747572b38be7593903d501", "2026-09-21", 1790000000},
-        {"asia/vietnam", "zDvZRwzkziYDq1uiBfvomQs9aypHaWNeBtBUQqzgaMBVZaCVgz9R", "8e8faf2eff113b67f28059c3b4a5c677", "2026-09-21", 1790001100},
-        {"south-america/colombia", "zDvZRwzm244438FG43oa2LQuT39YuWrmLJXdK4mEkRLgvuyFZDik", "cb6b9a0ae742bd746017515427623726", "2026-09-21", 1790002200},
-        {"europe/greece", "zDvZRwzm8tXSMbkc19uqXfTF95QWhcMPHqKLeS5juG5rYMEKTeaK", "c15fda8eb7e74c93d11696719534661b", "2026-09-21", 1790003300}
-    };
-
-    m_hostedRecords.clear();
-    for (const auto &v : verified) {
-        auto it = m_catalog.find(v.path);
-        if (it != m_catalog.end()) {
-            it->second.hosted = true;
-            it->second.cid = v.cid;
-            it->second.checksum = v.md5;
-            it->second.version = v.version;
-            it->second.timestamp = v.timestamp;
-            m_hostedRecords[v.cid] = it->second;
-        }
     }
 }
 
@@ -621,7 +567,6 @@ std::string AtlasmirrorSdkImpl::discoverRegions()
 {
     if (m_catalog.empty()) {
         loadPredefinedCatalog();
-        loadVerifiedManifest();
     }
     if (!m_registryFetched) {
         refreshOnChainRegistry();
@@ -643,7 +588,6 @@ std::string AtlasmirrorSdkImpl::getRegion(const std::string &path)
 {
     if (m_catalog.empty()) {
         loadPredefinedCatalog();
-        loadVerifiedManifest();
     }
     if (!m_registryFetched) {
         refreshOnChainRegistry();
@@ -659,7 +603,6 @@ std::string AtlasmirrorSdkImpl::getByCid(const std::string &cid)
 {
     if (m_catalog.empty()) {
         loadPredefinedCatalog();
-        loadVerifiedManifest();
     }
     if (!m_registryFetched) {
         refreshOnChainRegistry();
@@ -678,7 +621,6 @@ std::string AtlasmirrorSdkImpl::getChildren(const std::string &parent)
 {
     if (m_catalog.empty()) {
         loadPredefinedCatalog();
-        loadVerifiedManifest();
     }
     std::ostringstream ss;
     ss << "[";
@@ -698,7 +640,6 @@ std::string AtlasmirrorSdkImpl::resolveRegion(const std::string &path)
 {
     if (m_catalog.empty()) {
         loadPredefinedCatalog();
-        loadVerifiedManifest();
     }
     auto it = m_catalog.find(path);
     if (it == m_catalog.end()) {
@@ -729,7 +670,6 @@ std::string AtlasmirrorSdkImpl::checkUpdate(const std::string &path)
 {
     if (m_catalog.empty()) {
         loadPredefinedCatalog();
-        loadVerifiedManifest();
     }
     auto it = m_catalog.find(path);
     if (it == m_catalog.end()) {
@@ -741,7 +681,7 @@ std::string AtlasmirrorSdkImpl::checkUpdate(const std::string &path)
     }
 
     // Fetch upstream MD5 or Last-Modified header truthfully
-    std::vector<std::string> args = {"-s", "-L", "--max-time", "10", entry.md5_url};
+    std::vector<std::string> args = {"-s", "-L", "--fail", "--max-time", "10", entry.md5_url};
     auto [code, output] = runSafeProcess("curl", args);
     std::string upstreamMd5;
     if (code == 0 && !output.empty()) {
@@ -750,6 +690,14 @@ std::string AtlasmirrorSdkImpl::checkUpdate(const std::string &path)
         while (!upstreamMd5.empty() && (upstreamMd5.back() == '\n' || upstreamMd5.back() == '\r')) {
             upstreamMd5.pop_back();
         }
+    } else {
+        std::ostringstream ss;
+        ss << "{"
+           << "\"status\":\"UNAVAILABLE\","
+           << "\"error\":\"UPSTREAM_FETCH_FAILED\","
+           << "\"current_version\":\"" << escapeJson(entry.version) << "\""
+           << "}";
+        return ss.str();
     }
 
     std::string updateStatus = "UP_TO_DATE";
@@ -773,7 +721,6 @@ std::string AtlasmirrorSdkImpl::hostRegion(const std::string &path)
 {
     if (m_catalog.empty()) {
         loadPredefinedCatalog();
-        loadVerifiedManifest();
     }
     auto it = m_catalog.find(path);
     if (it == m_catalog.end()) {
@@ -782,9 +729,19 @@ std::string AtlasmirrorSdkImpl::hostRegion(const std::string &path)
 
     std::vector<std::string> args = {"host", path, "--json"};
     auto [rc, out] = runSafeProcess("atlasmirror-cli", args);
+    if (rc != 0) {
+        std::ostringstream ss;
+        ss << "{"
+           << "\"success\":false,"
+           << "\"error\":\"HOST_FAILED\","
+           << "\"message\":\"" << escapeJson(out.empty() ? "atlasmirror-cli returned non-zero exit code or is unavailable in PATH" : out) << "\""
+           << "}";
+        return ss.str();
+    }
+
     auto firstBrace = out.find('{');
     auto lastBrace = out.rfind('}');
-    if (rc == 0 && firstBrace != std::string::npos && lastBrace != std::string::npos && lastBrace >= firstBrace) {
+    if (firstBrace != std::string::npos && lastBrace != std::string::npos && lastBrace >= firstBrace) {
         refreshOnChainRegistry();
         return out.substr(firstBrace, lastBrace - firstBrace + 1);
     }
@@ -802,39 +759,64 @@ bool AtlasmirrorSdkImpl::downloadRegion(const std::string &path, const std::stri
 {
     if (m_catalog.empty()) {
         loadPredefinedCatalog();
-        loadVerifiedManifest();
     }
     auto it = m_catalog.find(path);
     if (it == m_catalog.end()) {
         return false;
     }
 
-    std::vector<std::string> args = {"download", path, "--output", destination, "--json"};
-    auto [rc, out] = runSafeProcess("atlasmirror-cli", args);
-    if (rc == 0 && fileExistsAndNonEmpty(destination)) {
-        return true;
-    }
-
-    // Direct fallback if CLI is not in PATH
-    if (it->second.hosted && !it->second.cid.empty()) {
-        return false;
-    }
-
     std::string tmpDest = destination + ".tmp";
-    std::vector<std::string> dlArgs = {"-s", "-L", "-o", tmpDest, it->second.geofabrik_url};
-    auto [dlCode, dlOut] = runSafeProcess("curl", dlArgs);
-    if (dlCode == 0 && fileExistsAndNonEmpty(tmpDest)) {
-        std::rename(tmpDest.c_str(), destination.c_str());
-        return true;
+    std::remove(tmpDest.c_str());
+
+    bool downloaded = false;
+
+    // 1. Try Logos Storage first if region is hosted
+    if (it->second.hosted && !it->second.cid.empty()) {
+        const char *storageEnv = std::getenv("LOGOS_STORAGE_URL");
+        std::string storageUrl = storageEnv ? storageEnv : "http://127.0.0.1:8001/api/v0/cat?arg=" + it->second.cid;
+        std::vector<std::string> stArgs = {"-s", "-L", "-f", "--max-time", "60", "-o", tmpDest, storageUrl};
+        auto [stCode, stOut] = runSafeProcess("curl", stArgs);
+        if (stCode == 0 && fileExistsAndNonEmpty(tmpDest)) {
+            downloaded = true;
+        }
     }
-    return false;
+
+    // 2. Direct fallback to Geofabrik canonical snapshot URL with strict HTTP status check
+    if (!downloaded) {
+        std::vector<std::string> dlArgs = {"-s", "-L", "-f", "--max-time", "300", "-o", tmpDest, it->second.geofabrik_url};
+        auto [dlCode, dlOut] = runSafeProcess("curl", dlArgs);
+        if (dlCode != 0 || !fileExistsAndNonEmpty(tmpDest)) {
+            std::remove(tmpDest.c_str());
+            return false;
+        }
+        downloaded = true;
+    }
+
+    // 3. Checksum verification of downloaded bytes
+    std::string computedMd5 = computeFileMd5(tmpDest);
+    if (!it->second.checksum.empty() && !computedMd5.empty()) {
+        if (computedMd5 != it->second.checksum) {
+            std::remove(tmpDest.c_str());
+            return false;
+        }
+    }
+
+    // 4. Atomic rename to destination
+    std::remove(destination.c_str());
+#ifdef _WIN32
+    if (!MoveFileExA(tmpDest.c_str(), destination.c_str(), MOVEFILE_REPLACE_EXISTING)) {
+        return (std::rename(tmpDest.c_str(), destination.c_str()) == 0);
+    }
+    return true;
+#else
+    return (std::rename(tmpDest.c_str(), destination.c_str()) == 0);
+#endif
 }
 
 std::string AtlasmirrorSdkImpl::importLocal(const std::string &path, const std::string &localFilePath)
 {
     if (m_catalog.empty()) {
         loadPredefinedCatalog();
-        loadVerifiedManifest();
     }
     auto it = m_catalog.find(path);
     if (it == m_catalog.end()) {
@@ -851,7 +833,7 @@ std::string AtlasmirrorSdkImpl::importLocal(const std::string &path, const std::
     }
 
     // Fetch expected published MD5 from Geofabrik
-    std::vector<std::string> md5Args = {"-s", "-L", "--max-time", "10", it->second.md5_url};
+    std::vector<std::string> md5Args = {"-s", "-L", "--fail", "--max-time", "10", it->second.md5_url};
     auto [mCode, mOut] = runSafeProcess("curl", md5Args);
     std::string publishedMd5;
     if (mCode == 0 && !mOut.empty()) {
@@ -900,7 +882,6 @@ std::string AtlasmirrorSdkImpl::batchRegister(const std::string &records)
 
     if (m_catalog.empty()) {
         loadPredefinedCatalog();
-        loadVerifiedManifest();
     }
 
     // Parse region paths from records JSON or delimiter-separated string.
