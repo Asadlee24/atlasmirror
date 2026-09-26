@@ -68,6 +68,34 @@ for i in {1..30}; do
     sleep 0.5
 done
 
+# Initialize clean ephemeral wallet on the fly (zero tracked secrets)
+export LEE_WALLET_HOME_DIR="${WORK_DIR}/wallet"
+cat > "${LEE_WALLET_HOME_DIR}/wallet_config.json" <<EOF
+{
+  "sequencers": [
+    {
+      "sequencer_addr": "http://127.0.0.1:3040"
+    }
+  ],
+  "seq_poll_timeout": "30s",
+  "seq_tx_poll_max_blocks": 15,
+  "seq_poll_max_retries": 10,
+  "seq_block_poll_max_amount": 100,
+  "calibration_limit": 10
+}
+EOF
+
+WALLET_BIN=$(command -v wallet || echo "/usr/local/bin/wallet")
+EPHEMERAL_PAYER=""
+if [ -x "${WALLET_BIN}" ]; then
+    printf "\n" | "${WALLET_BIN}" account list >/dev/null 2>&1 || true
+    EPHEMERAL_PAYER=$(printf "\n" | "${WALLET_BIN}" account new public 2>/dev/null | grep -oE '[1-9A-HJ-NP-za-km-z]{43,44}' | head -n 1 || echo "")
+fi
+if [ -z "${EPHEMERAL_PAYER}" ]; then
+    EPHEMERAL_PAYER="CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r"
+fi
+echo "Ephemeral CI fee payer: ${EPHEMERAL_PAYER}" | tee -a "${EVIDENCE_FILE}"
+
 # 2. Write Standalone Sequencer Configuration
 cat > "${WORK_DIR}/sequencer_config.json" <<EOF
 {
@@ -103,13 +131,13 @@ cat > "${WORK_DIR}/sequencer_config.json" <<EOF
     "genesis": [
         {
             "supply_account": {
-                "account_id": "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r",
+                "account_id": "${EPHEMERAL_PAYER}",
                 "balance": 1000000000
             }
         },
         {
             "supply_account": {
-                "account_id": "DqyLaEh7Kso3LtVpmWM8f8dpyWHXG7C1TkKwKoKiaFn5",
+                "account_id": "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r",
                 "balance": 1000000000
             }
         },
@@ -154,28 +182,6 @@ else
     echo "[PASS] Standalone sequencer booted and responding on :3040" | tee -a "${EVIDENCE_FILE}"
 fi
 
-# 4. Set up wallet pointing to local standalone sequencer
-export LEE_WALLET_HOME_DIR="${WORK_DIR}/wallet"
-if [ -f "${REPO_ROOT}/scripts/standalone/debug_storage.json" ]; then
-    cp "${REPO_ROOT}/scripts/standalone/debug_storage.json" "${LEE_WALLET_HOME_DIR}/storage.json"
-elif [ -f "${HOME}/.lee/wallet/storage.json" ]; then
-    cp "${HOME}/.lee/wallet/storage.json" "${LEE_WALLET_HOME_DIR}/" || true
-fi
-cat > "${LEE_WALLET_HOME_DIR}/wallet_config.json" <<EOF
-{
-  "sequencers": [
-    {
-      "sequencer_addr": "http://127.0.0.1:3040"
-    }
-  ],
-  "seq_poll_timeout": "30s",
-  "seq_tx_poll_max_blocks": 15,
-  "seq_poll_max_retries": 10,
-  "seq_block_poll_max_amount": 100,
-  "calibration_limit": 10
-}
-EOF
-
 TEST_ACCOUNT="55Me6rDpyUu9vhuMhnM26ikUL4XbgKDUjrWEpdpzyv6r"
 TEST_PROGRAM_BIN="${REPO_ROOT}/osm_registry.bin"
 TEST_REGION="asia/pakistan"
@@ -193,7 +199,7 @@ REAL_TX_BIN="${REPO_ROOT}/scripts/standalone/run_real_batch_tx"
 if [ -x "${REAL_TX_BIN}" ] && [ -f "${TEST_PROGRAM_BIN}" ]; then
     echo "Executing genuine on-chain registration via: ${REAL_TX_BIN}" | tee -a "${EVIDENCE_FILE}"
     OSM_REGISTRY_BIN="${TEST_PROGRAM_BIN}" \
-    OSM_PAYER="CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r" \
+    OSM_PAYER="${EPHEMERAL_PAYER}" \
     OSM_REGISTRY_ACCOUNT="${TEST_ACCOUNT}" \
     "${REAL_TX_BIN}" 2>&1 | tee -a "${EVIDENCE_FILE}"
 elif [ -x "${RUNNER_BIN}" ] && [ -f "${TEST_PROGRAM_BIN}" ]; then
@@ -339,28 +345,25 @@ for header_id, shard_bytes_list in shards.items():
     except Exception as e:
         print(f'  Warning: error decoding shard {header_id}: {e}')
 
-# If RPC shards had records, assert exact equality on all 5 fields
-if found_record:
-    print('✔ Decoded record directly from on-chain sequencer RPC shard data:')
-    print(f'  region:    {found_record[\"region\"]} (expected: {expected_region})')
-    print(f'  cid:       {found_record[\"cid\"]} (expected: {expected_cid})')
-    print(f'  checksum:  {found_record[\"checksum\"]} (expected: {expected_checksum})')
-    print(f'  level:     {found_record[\"level\"]} (expected: {expected_level})')
-    print(f'  timestamp: {found_record[\"timestamp\"]} (expected: {expected_timestamp})')
+# Shard records MUST be present directly from on-chain sequencer RPC
+if not found_record:
+    print(f'[FAIL] Expected record {expected_region} not found in Sequencer RPC shards! RPC shards must contain genuine state.')
+    sys.exit(1)
 
-    assert found_record['region'] == expected_region, f\"Region mismatch: {found_record['region']} != {expected_region}\"
-    assert found_record['cid'] == expected_cid, f\"CID mismatch: {found_record['cid']} != {expected_cid}\"
-    assert found_record['checksum'] == expected_checksum, f\"Checksum mismatch: {found_record['checksum']} != {expected_checksum}\"
-    assert found_record['level'] == expected_level, f\"Level mismatch: {found_record['level']} != {expected_level}\"
-    assert found_record['timestamp'] == expected_timestamp, f\"Timestamp mismatch: {found_record['timestamp']} != {expected_timestamp}\"
+print('✔ Decoded record directly from on-chain sequencer RPC shard data:')
+print(f'  region:    {found_record[\"region\"]} (expected: {expected_region})')
+print(f'  cid:       {found_record[\"cid\"]} (expected: {expected_cid})')
+print(f'  checksum:  {found_record[\"checksum\"]} (expected: {expected_checksum})')
+print(f'  level:     {found_record[\"level\"]} (expected: {expected_level})')
+print(f'  timestamp: {found_record[\"timestamp\"]} (expected: {expected_timestamp})')
 
-    print('✔ All 5 fields match 100% exact equality against on-chain evidence!')
-else:
-    # If no shard record found, verify runner state (strict)
-    if expected_region not in decoded_out or expected_cid not in decoded_out:
-        print(f'[FAIL] Expected record {expected_region} not found in sequencer shard or runner state.')
-        sys.exit(1)
-    print(f'✔ Runner state verified for {expected_region}.')
+assert found_record['region'] == expected_region, f\"Region mismatch: {found_record['region']} != {expected_region}\"
+assert found_record['cid'] == expected_cid, f\"CID mismatch: {found_record['cid']} != {expected_cid}\"
+assert found_record['checksum'] == expected_checksum, f\"Checksum mismatch: {found_record['checksum']} != {expected_checksum}\"
+assert found_record['level'] == expected_level, f\"Level mismatch: {found_record['level']} != {expected_level}\"
+assert found_record['timestamp'] == expected_timestamp, f\"Timestamp mismatch: {found_record['timestamp']} != {expected_timestamp}\"
+
+print('✔ All 5 fields match 100% exact equality against on-chain evidence!')
 " | tee -a "${EVIDENCE_FILE}"
 
 echo "========================================================" | tee -a "${EVIDENCE_FILE}"
