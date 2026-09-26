@@ -1,0 +1,7 @@
+class AtlasMirrorApp
+{
+    PROP(bool initialized = true)
+    PROP(QString status = "Ready")
+    SLOT(bool queryRegion(QString region))
+    SLOT(void refreshIndex())
+}
