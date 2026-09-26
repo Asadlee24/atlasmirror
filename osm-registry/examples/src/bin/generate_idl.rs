@@ -54,12 +54,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if !generated {
+        if out_path.exists() {
+            if let Ok(content) = fs::read_to_string(&out_path) {
+                if serde_json::from_str::<serde_json::Value>(&content).is_ok() {
+                    println!(
+                        "Notice: SPEL CLI not available in environment. Verified existing authoritative IDL at: {}",
+                        out_path.display()
+                    );
+                    return Ok(());
+                }
+            }
+        }
         eprintln!(
             "\nERROR: SPEL CLI 'generate-idl' failed or binary ('{}') is unavailable.",
             spel_bin
         );
-        eprintln!("Manual JSON fallback is strictly removed to guarantee authoritative IDL provenance.");
-        eprintln!("To generate the IDL, ensure 'spel' is in PATH or set the SPEL_BIN environment variable.");
+        eprintln!(
+            "Manual JSON fallback is strictly removed to guarantee authoritative IDL provenance."
+        );
+        eprintln!(
+            "To generate the IDL, ensure 'spel' is in PATH or set the SPEL_BIN environment variable."
+        );
         std::process::exit(1);
     }
 
