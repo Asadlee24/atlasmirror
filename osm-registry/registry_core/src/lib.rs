@@ -40,6 +40,20 @@ pub enum RegistryError {
     CountryMustNotHaveParent,
     #[error("Subregion level regions must have a parent")]
     SubregionMustHaveParent,
+    #[error("Region '{0}' is not in the authoritative 72-region closed set")]
+    DisallowedRegion(String),
+    #[error("Invalid level for region '{region}': expected {expected:?}, got {actual:?}")]
+    InvalidLevelForRegion {
+        region: String,
+        expected: RegionLevel,
+        actual: RegionLevel,
+    },
+    #[error("Invalid parent for region '{region}': expected {expected:?}, got {actual:?}")]
+    InvalidParentForRegion {
+        region: String,
+        expected: Option<String>,
+        actual: Option<String>,
+    },
     #[error("Batch size {0} exceeds maximum limit of {MAX_BATCH_SIZE}")]
     BatchTooLarge(usize),
     #[error("Batch cannot be empty")]
@@ -71,6 +85,106 @@ impl std::fmt::Display for RegionLevel {
         }
     }
 }
+
+/// Authoritative closed set of 72 non-overlapping regions for Logos LP-0018.
+pub const CLOSED_SET_REGIONS: &[(&str, RegionLevel, Option<&str>)] = &[
+    ("europe/germany", RegionLevel::Country, None),
+    ("europe/france", RegionLevel::Country, None),
+    ("europe/great-britain", RegionLevel::Country, None),
+    ("europe/italy", RegionLevel::Country, None),
+    ("europe/spain", RegionLevel::Country, None),
+    ("europe/poland", RegionLevel::Country, None),
+    ("europe/netherlands", RegionLevel::Country, None),
+    ("europe/belgium", RegionLevel::Country, None),
+    ("europe/switzerland", RegionLevel::Country, None),
+    ("europe/austria", RegionLevel::Country, None),
+    ("europe/czech-republic", RegionLevel::Country, None),
+    ("europe/sweden", RegionLevel::Country, None),
+    ("europe/norway", RegionLevel::Country, None),
+    ("europe/denmark", RegionLevel::Country, None),
+    ("europe/finland", RegionLevel::Country, None),
+    ("europe/portugal", RegionLevel::Country, None),
+    ("europe/greece", RegionLevel::Country, None),
+    (
+        "europe/ireland-and-northern-ireland",
+        RegionLevel::Country,
+        None,
+    ),
+    ("europe/hungary", RegionLevel::Country, None),
+    ("europe/romania", RegionLevel::Country, None),
+    ("europe/bulgaria", RegionLevel::Country, None),
+    ("europe/ukraine", RegionLevel::Country, None),
+    ("europe/belarus", RegionLevel::Country, None),
+    ("europe/turkey", RegionLevel::Country, None),
+    ("north-america/canada", RegionLevel::Country, None),
+    ("north-america/mexico", RegionLevel::Country, None),
+    ("asia/japan", RegionLevel::Country, None),
+    ("asia/south-korea", RegionLevel::Country, None),
+    ("asia/indonesia", RegionLevel::Country, None),
+    ("asia/thailand", RegionLevel::Country, None),
+    ("asia/vietnam", RegionLevel::Country, None),
+    ("asia/malaysia-singapore-brunei", RegionLevel::Country, None),
+    ("asia/philippines", RegionLevel::Country, None),
+    ("asia/pakistan", RegionLevel::Country, None),
+    ("asia/bangladesh", RegionLevel::Country, None),
+    ("asia/iran", RegionLevel::Country, None),
+    ("australia-oceania/australia", RegionLevel::Country, None),
+    ("south-america/brazil", RegionLevel::Country, None),
+    ("south-america/argentina", RegionLevel::Country, None),
+    ("south-america/colombia", RegionLevel::Country, None),
+    ("south-america/peru", RegionLevel::Country, None),
+    ("south-america/chile", RegionLevel::Country, None),
+    ("africa/south-africa", RegionLevel::Country, None),
+    ("africa/egypt", RegionLevel::Country, None),
+    ("africa/nigeria", RegionLevel::Country, None),
+    ("africa/kenya", RegionLevel::Country, None),
+    ("africa/morocco", RegionLevel::Country, None),
+    ("africa/ethiopia", RegionLevel::Country, None),
+    ("us/california", RegionLevel::Subregion, Some("us")),
+    ("us/texas", RegionLevel::Subregion, Some("us")),
+    ("us/florida", RegionLevel::Subregion, Some("us")),
+    ("us/new-york", RegionLevel::Subregion, Some("us")),
+    ("us/washington", RegionLevel::Subregion, Some("us")),
+    ("us/illinois", RegionLevel::Subregion, Some("us")),
+    ("us/georgia", RegionLevel::Subregion, Some("us")),
+    ("us/pennsylvania", RegionLevel::Subregion, Some("us")),
+    ("india/central-zone", RegionLevel::Subregion, Some("india")),
+    ("india/eastern-zone", RegionLevel::Subregion, Some("india")),
+    (
+        "india/north-eastern-zone",
+        RegionLevel::Subregion,
+        Some("india"),
+    ),
+    ("india/northern-zone", RegionLevel::Subregion, Some("india")),
+    ("india/southern-zone", RegionLevel::Subregion, Some("india")),
+    ("india/western-zone", RegionLevel::Subregion, Some("india")),
+    ("china/guangdong", RegionLevel::Subregion, Some("china")),
+    ("china/jiangsu", RegionLevel::Subregion, Some("china")),
+    ("china/shandong", RegionLevel::Subregion, Some("china")),
+    ("china/zhejiang", RegionLevel::Subregion, Some("china")),
+    ("china/sichuan", RegionLevel::Subregion, Some("china")),
+    ("china/henan", RegionLevel::Subregion, Some("china")),
+    (
+        "russia/central-fed-district",
+        RegionLevel::Subregion,
+        Some("russia"),
+    ),
+    (
+        "russia/northwestern-fed-district",
+        RegionLevel::Subregion,
+        Some("russia"),
+    ),
+    (
+        "russia/volga-fed-district",
+        RegionLevel::Subregion,
+        Some("russia"),
+    ),
+    (
+        "russia/siberian-fed-district",
+        RegionLevel::Subregion,
+        Some("russia"),
+    ),
+];
 
 /// An immutable or updated on-chain record representing a verified OSM snapshot.
 #[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -110,7 +224,7 @@ pub struct RegisterRegionArgs {
 }
 
 impl RegisterRegionArgs {
-    /// Validates all fields according to protocol constraints.
+    /// Validates all fields according to official protocol and closed-set constraints.
     pub fn validate(&self) -> Result<(), RegistryError> {
         if self.region.is_empty() || self.region.len() > MAX_REGION_PATH_LEN {
             return Err(RegistryError::InvalidRegionPath);
@@ -120,6 +234,31 @@ impl RegisterRegionArgs {
             if p.is_empty() || p.len() > MAX_REGION_PATH_LEN {
                 return Err(RegistryError::InvalidParentPath);
             }
+        }
+
+        // Strict 72-region closed set enforcement
+        let matching = CLOSED_SET_REGIONS
+            .iter()
+            .find(|(path, _, _)| *path == self.region.as_str());
+
+        let Some((_, expected_level, expected_parent)) = matching else {
+            return Err(RegistryError::DisallowedRegion(self.region.clone()));
+        };
+
+        if self.level != *expected_level {
+            return Err(RegistryError::InvalidLevelForRegion {
+                region: self.region.clone(),
+                expected: *expected_level,
+                actual: self.level,
+            });
+        }
+
+        if self.parent.as_deref() != *expected_parent {
+            return Err(RegistryError::InvalidParentForRegion {
+                region: self.region.clone(),
+                expected: expected_parent.map(|s| s.to_string()),
+                actual: self.parent.clone(),
+            });
         }
 
         match self.level {
@@ -336,6 +475,27 @@ mod tests {
     }
 
     #[test]
+    fn test_disallowed_arbitrary_region_fails() {
+        let args = RegisterRegionArgs {
+            region: "test/arbitrary".to_string(),
+            parent: None,
+            level: RegionLevel::Country,
+            cid: "bafybeic...".to_string(),
+            source_url: "https://example.com/test.osm.pbf".to_string(),
+            checksum: "0123456789abcdef0123456789abcdef".to_string(),
+            version: "2026-09-20".to_string(),
+            hosted: true,
+            timestamp: 1000,
+        };
+        assert_eq!(
+            args.validate(),
+            Err(RegistryError::DisallowedRegion(
+                "test/arbitrary".to_string()
+            ))
+        );
+    }
+
+    #[test]
     fn test_country_with_parent_fails() {
         let args = RegisterRegionArgs {
             region: "europe/germany".to_string(),
@@ -350,15 +510,19 @@ mod tests {
         };
         assert_eq!(
             args.validate(),
-            Err(RegistryError::CountryMustNotHaveParent)
+            Err(RegistryError::InvalidParentForRegion {
+                region: "europe/germany".to_string(),
+                expected: None,
+                actual: Some("europe".to_string()),
+            })
         );
     }
 
     #[test]
-    fn test_subregion_without_parent_fails() {
+    fn test_subregion_with_wrong_parent_fails() {
         let args = RegisterRegionArgs {
             region: "us/texas".to_string(),
-            parent: None,
+            parent: Some("north-america".to_string()),
             level: RegionLevel::Subregion,
             cid: "bafybeie...".to_string(),
             source_url: "https://download.geofabrik.de/north-america/us/texas-latest.osm.pbf"
@@ -368,7 +532,14 @@ mod tests {
             hosted: true,
             timestamp: 1726747200,
         };
-        assert_eq!(args.validate(), Err(RegistryError::SubregionMustHaveParent));
+        assert_eq!(
+            args.validate(),
+            Err(RegistryError::InvalidParentForRegion {
+                region: "us/texas".to_string(),
+                expected: Some("us".to_string()),
+                actual: Some("north-america".to_string()),
+            })
+        );
     }
 
     #[test]

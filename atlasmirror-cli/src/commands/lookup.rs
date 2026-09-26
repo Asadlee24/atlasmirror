@@ -11,9 +11,12 @@ fn load_catalog() -> Vec<Value> {
         .unwrap_or_default()
 }
 
-pub fn execute_region(path: &str, json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn execute_region(
+    path: &str,
+    json_output: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     // Query genuine on-chain LEZ registry
-    if let Ok(on_chain_records) = crate::registry::query_on_chain_registry() {
+    if let Ok(on_chain_records) = crate::registry::query_on_chain_registry().await {
         if let Some(entry) = on_chain_records.iter().find(|e| e.region == path) {
             if json_output {
                 println!("{}", serde_json::to_string_pretty(entry)?);
@@ -76,9 +79,12 @@ pub fn execute_region(path: &str, json_output: bool) -> Result<(), Box<dyn std::
     std::process::exit(1);
 }
 
-pub fn execute_parent(parent: &str, json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn execute_parent(
+    parent: &str,
+    json_output: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut children = Vec::new();
-    if let Ok(on_chain_records) = crate::registry::query_on_chain_registry() {
+    if let Ok(on_chain_records) = crate::registry::query_on_chain_registry().await {
         for r in on_chain_records {
             if r.parent.as_deref() == Some(parent) {
                 children.push(json!({
@@ -136,8 +142,9 @@ pub fn execute_parent(parent: &str, json_output: bool) -> Result<(), Box<dyn std
     Ok(())
 }
 
-pub fn execute_cid(cid: &str, json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn execute_cid(cid: &str, json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
     let on_chain_records = crate::registry::query_on_chain_registry()
+        .await
         .map_err(|e| format!("Failed to query on-chain registry for CID {}: {}", cid, e))?;
 
     if let Some(entry) = on_chain_records.iter().find(|e| e.cid == cid) {
@@ -148,8 +155,8 @@ pub fn execute_cid(cid: &str, json_output: bool) -> Result<(), Box<dyn std::erro
             println!("  Region:    {}", entry.region.bold());
             println!("  Level:     {}", entry.level);
             println!("  Parent:    {}", entry.parent.as_deref().unwrap_or("None"));
-            println!("  Version:   {}", entry.version);
             println!("  Checksum:  {}", entry.checksum);
+            println!("  Version:   {}", entry.version);
             println!("  Timestamp: {}", entry.timestamp);
             println!("  Status:    {}", "HOSTED ON-CHAIN".green());
         }
@@ -157,7 +164,7 @@ pub fn execute_cid(cid: &str, json_output: bool) -> Result<(), Box<dyn std::erro
     }
 
     eprintln!(
-        "{} CID '{}' not found in on-chain registry.",
+        "{} Content Identifier '{}' not found in on-chain registry.",
         "✖".red(),
         cid
     );

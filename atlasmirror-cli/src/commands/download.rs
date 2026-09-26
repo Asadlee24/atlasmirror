@@ -15,7 +15,7 @@ pub async fn execute(
 ) -> Result<(), Box<dyn std::error::Error>> {
     println!("Querying LEZ on-chain registry for: {}", region.bold());
 
-    let on_chain_records = crate::registry::query_on_chain_registry().ok();
+    let on_chain_records = crate::registry::query_on_chain_registry().await.ok();
     let hosted_entry = on_chain_records
         .as_ref()
         .and_then(|records| records.iter().find(|e| e.region == region).cloned());

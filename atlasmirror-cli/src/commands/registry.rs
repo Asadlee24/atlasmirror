@@ -22,9 +22,12 @@ pub fn execute_program_id(json_output: bool) -> Result<(), Box<dyn std::error::E
     Ok(())
 }
 
-pub fn execute_raw(region: &str, _json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn execute_raw(
+    region: &str,
+    _json_output: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     // Try to get live on-chain record first
-    if let Ok(records) = crate::registry::query_on_chain_registry() {
+    if let Ok(records) = crate::registry::query_on_chain_registry().await {
         if let Some(r) = records.into_iter().find(|rec| rec.region == region) {
             println!("{}", serde_json::to_string_pretty(&r)?);
             return Ok(());

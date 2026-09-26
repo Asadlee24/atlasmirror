@@ -174,13 +174,17 @@ fn test_batch_register_success_and_limits() {
     let mut records = Vec::new();
 
     let mut batch_records = Vec::new();
-    for i in 0..25 {
+    for (i, (path, level, parent)) in osm_registry_core::CLOSED_SET_REGIONS
+        .iter()
+        .take(25)
+        .enumerate()
+    {
         batch_records.push(RegisterRegionArgs {
-            region: format!("region_{}", i),
-            parent: None,
-            level: RegionLevel::Country,
+            region: path.to_string(),
+            parent: parent.map(|s| s.to_string()),
+            level: *level,
             cid: format!("cid_{}", i),
-            source_url: format!("https://download.geofabrik.de/region_{}.osm.pbf", i),
+            source_url: format!("https://download.geofabrik.de/{}-latest.osm.pbf", path),
             checksum: "0123456789abcdef0123456789abcdef".to_string(),
             version: "2026-09-19".to_string(),
             hosted: true,
@@ -198,25 +202,50 @@ fn test_batch_register_success_and_limits() {
     assert_eq!(state.last_updated, 1024);
 
     // Over maximum batch size fails
+    let valid_proto = RegisterRegionArgs {
+        region: "europe/germany".to_string(),
+        parent: None,
+        level: RegionLevel::Country,
+        cid: "cid".to_string(),
+        source_url: "https://download.geofabrik.de/europe/germany-latest.osm.pbf".to_string(),
+        checksum: "0123456789abcdef0123456789abcdef".to_string(),
+        version: "2026-09-19".to_string(),
+        hosted: true,
+        timestamp: 2000,
+    };
     let too_big = BatchRegisterArgs {
-        records: vec![
-            RegisterRegionArgs {
-                region: "test".to_string(),
-                parent: None,
-                level: RegionLevel::Country,
-                cid: "cid".to_string(),
-                source_url: "url".to_string(),
-                checksum: "0123456789abcdef0123456789abcdef".to_string(),
-                version: "2026-09-19".to_string(),
-                hosted: true,
-                timestamp: 2000,
-            };
-            MAX_BATCH_SIZE + 1
-        ],
+        records: vec![valid_proto; MAX_BATCH_SIZE + 1],
     };
     let data_big = to_vec(&RegistryInstruction::BatchRegister(too_big)).unwrap();
     assert_eq!(
         process_instruction(&data_big, &mut state, &mut records),
         Err(RegistryError::BatchTooLarge(MAX_BATCH_SIZE + 1))
+    );
+}
+
+#[test]
+fn test_arbitrary_test_records_disallowed() {
+    let mut state = GlobalRegistryState::default();
+    let mut records = Vec::new();
+
+    let args = RegisterRegionArgs {
+        region: "test/arbitrary_region".to_string(),
+        parent: None,
+        level: RegionLevel::Country,
+        cid: "bafybeic7vj2k...".to_string(),
+        source_url: "https://example.com/test.osm.pbf".to_string(),
+        checksum: "378df25f824177ebcbe9aa11d88bbd6b".to_string(),
+        version: "2026-09-19".to_string(),
+        hosted: true,
+        timestamp: 1726747200,
+    };
+
+    let data = to_vec(&RegistryInstruction::RegisterRegion(args)).unwrap();
+    let res = process_instruction(&data, &mut state, &mut records);
+    assert_eq!(
+        res,
+        Err(RegistryError::DisallowedRegion(
+            "test/arbitrary_region".to_string()
+        ))
     );
 }

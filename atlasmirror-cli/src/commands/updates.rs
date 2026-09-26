@@ -6,7 +6,7 @@ pub async fn execute(
     region_opt: Option<&str>,
     json_output: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let on_chain_records = crate::registry::query_on_chain_registry().ok();
+    let on_chain_records = crate::registry::query_on_chain_registry().await.ok();
 
     let check_list: Vec<String> = match region_opt {
         Some(r) => vec![r.to_string()],
@@ -23,6 +23,7 @@ pub async fn execute(
         .build()?;
 
     let mut results = Vec::new();
+    let mut any_unavailable = false;
 
     for r in &check_list {
         let hosted_entry = on_chain_records
@@ -31,20 +32,24 @@ pub async fn execute(
 
         let live_upstream_ver = crate::geofabrik::fetch_snapshot_version(r).await;
 
+        let md5_url = crate::geofabrik::resolve_md5_url(r);
+        let upstream_info = match client.get(&md5_url).send().await {
+            Ok(resp) if resp.status().is_success() => {
+                let text = resp.text().await.unwrap_or_default();
+                let upstream_hash = text.split_whitespace().next().unwrap_or("").to_lowercase();
+                if upstream_hash.len() == 32 && upstream_hash.chars().all(|c| c.is_ascii_hexdigit())
+                {
+                    Some(upstream_hash)
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        };
+
         let (status, current_ver, upstream_ver) = if let Some(entry) = hosted_entry {
             let hosted_version = entry.version.as_str();
             let hosted_md5 = entry.checksum.as_str();
-
-            // Fetch live MD5 from Geofabrik to check for newer upstream snapshot
-            let md5_url = format!("https://download.geofabrik.de/{}-latest.osm.pbf.md5", r);
-            let upstream_info = match client.get(&md5_url).send().await {
-                Ok(resp) if resp.status().is_success() => {
-                    let text = resp.text().await.unwrap_or_default();
-                    let upstream_hash = text.split_whitespace().next().unwrap_or("").to_lowercase();
-                    Some(upstream_hash)
-                }
-                _ => None,
-            };
 
             if let Some(ref live_hash) = upstream_info {
                 if live_hash == hosted_md5 {
@@ -61,14 +66,20 @@ pub async fn execute(
                     )
                 }
             } else {
+                any_unavailable = true;
                 (
-                    "UP_TO_DATE",
+                    "UNAVAILABLE",
                     hosted_version.to_string(),
-                    hosted_version.to_string(),
+                    "UNAVAILABLE".to_string(),
                 )
             }
         } else {
-            ("NOT_HOSTED", "—".to_string(), live_upstream_ver)
+            if upstream_info.is_some() {
+                ("NOT_HOSTED", "—".to_string(), live_upstream_ver)
+            } else {
+                any_unavailable = true;
+                ("UNAVAILABLE", "—".to_string(), "UNAVAILABLE".to_string())
+            }
         };
 
         results.push(json!({
@@ -92,6 +103,7 @@ pub async fn execute(
             let status_badge = match res["status"].as_str().unwrap_or("") {
                 "UP_TO_DATE" => "UP_TO_DATE".green(),
                 "UPDATE_AVAILABLE" => "UPDATE_AVAILABLE".yellow(),
+                "UNAVAILABLE" => "UNAVAILABLE".red(),
                 _ => "NOT_HOSTED".dimmed(),
             };
 
@@ -103,6 +115,14 @@ pub async fn execute(
                 res["upstream_version"].as_str().unwrap_or("")
             );
         }
+    }
+
+    if region_opt.is_some() && any_unavailable {
+        eprintln!(
+            "{} Upstream update check failed: network unavailable or upstream returned non-success code",
+            "✖".red()
+        );
+        std::process::exit(1);
     }
 
     Ok(())

@@ -33,6 +33,13 @@ fn process_instruction(
                 state.total_regions += 1;
             }
 
+            // Ensure deterministic timestamp ordering in the on-chain shard state
+            state.records.sort_by(|a, b| {
+                a.timestamp
+                    .cmp(&b.timestamp)
+                    .then_with(|| a.region.cmp(&b.region))
+            });
+
             state.last_updated = ts;
             Ok(())
         }
@@ -57,6 +64,13 @@ fn process_instruction(
                     state.last_updated = ts;
                 }
             }
+
+            // Ensure deterministic timestamp ordering across all batch insertions
+            state.records.sort_by(|a, b| {
+                a.timestamp
+                    .cmp(&b.timestamp)
+                    .then_with(|| a.region.cmp(&b.region))
+            });
 
             Ok(())
         }

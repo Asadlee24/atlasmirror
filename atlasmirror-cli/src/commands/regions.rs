@@ -24,12 +24,14 @@ fn load_catalog() -> Vec<CatalogRegion> {
         .unwrap_or_default()
 }
 
-pub fn execute_list(
+pub async fn execute_list(
     filter: Option<&str>,
     json_output: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let catalog = load_catalog();
-    let onchain_records = crate::registry::query_on_chain_registry().unwrap_or_default();
+    let onchain_records = crate::registry::query_on_chain_registry()
+        .await
+        .unwrap_or_default();
 
     let mut display_rows = Vec::new();
 
@@ -103,7 +105,7 @@ pub fn execute_list(
     Ok(())
 }
 
-pub fn execute_show(path: &str, json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn execute_show(path: &str, json_output: bool) -> Result<(), Box<dyn std::error::Error>> {
     let catalog = load_catalog();
     let cat_item = catalog.iter().find(|r| r.path == path);
 
@@ -116,7 +118,9 @@ pub fn execute_show(path: &str, json_output: bool) -> Result<(), Box<dyn std::er
     }
     let cat_item = cat_item.unwrap();
 
-    let onchain_records = crate::registry::query_on_chain_registry().unwrap_or_default();
+    let onchain_records = crate::registry::query_on_chain_registry()
+        .await
+        .unwrap_or_default();
     let onchain = onchain_records.iter().find(|r| r.region == path);
 
     let hosted = onchain.is_some() && onchain.map(|o| o.hosted).unwrap_or(false);

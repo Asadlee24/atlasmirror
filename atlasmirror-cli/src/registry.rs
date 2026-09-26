@@ -17,16 +17,16 @@ pub struct OnChainRecord {
     pub timestamp: u64,
 }
 
-/// Queries the genuine on-chain LEZ registry.
+/// Queries the genuine on-chain LEZ registry using a pure async RPC client.
 /// Uses direct RPC call to the sequencer first, falling back to LEZ_RUNNER_BIN if configured.
-pub fn query_on_chain_registry() -> Result<Vec<OnChainRecord>, Box<dyn std::error::Error>> {
+pub async fn query_on_chain_registry() -> Result<Vec<OnChainRecord>, Box<dyn std::error::Error>> {
     let rpc_url = std::env::var("LEZ_RPC_URL")
         .unwrap_or_else(|_| "https://testnet.lez.logos.co/".to_string());
     let account_id = std::env::var("LEZ_ACCOUNT_ID")
         .unwrap_or_else(|_| "T8T4nfBcLDNUycWNQ4SyrvsduRZZ8Uxk5XSzS2XMvci".to_string());
 
-    // 1. Attempt direct RPC query
-    let client = reqwest::blocking::Client::builder()
+    // 1. Attempt direct async RPC query
+    let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(10))
         .build();
 
@@ -38,9 +38,9 @@ pub fn query_on_chain_registry() -> Result<Vec<OnChainRecord>, Box<dyn std::erro
             "params": [account_id]
         });
 
-        if let Ok(resp) = cli.post(&rpc_url).json(&payload).send() {
+        if let Ok(resp) = cli.post(&rpc_url).json(&payload).send().await {
             if resp.status().is_success() {
-                if let Ok(body) = resp.json::<serde_json::Value>() {
+                if let Ok(body) = resp.json::<serde_json::Value>().await {
                     if let Some(data_arr) = body["result"]["data"].as_array() {
                         let raw_bytes: Vec<u8> = data_arr
                             .iter()

@@ -237,3 +237,71 @@ fn current_date_string() -> String {
     }
     format!("{:04}-{:02}-{:02}", y, m + 1, d + 1)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_all_72_regions_canonical_url_resolution() {
+        let bytes = include_bytes!("../../metadata/regions.json");
+        let val: serde_json::Value =
+            serde_json::from_slice(bytes).expect("Failed to parse metadata/regions.json");
+        let regions = val
+            .get("regions")
+            .and_then(|r| r.as_array())
+            .expect("metadata/regions.json must contain 'regions' array");
+
+        assert_eq!(
+            regions.len(),
+            72,
+            "Expected exactly 72 closed-set regions in catalog"
+        );
+
+        for r in regions {
+            let path = r
+                .get("path")
+                .and_then(|p| p.as_str())
+                .expect("Region missing path");
+            let expected_pbf = r
+                .get("geofabrik_url")
+                .and_then(|u| u.as_str())
+                .expect("Region missing geofabrik_url");
+            let expected_md5 = r
+                .get("md5_url")
+                .and_then(|u| u.as_str())
+                .expect("Region missing md5_url");
+
+            let resolved_pbf = resolve_pbf_url(path);
+            let resolved_md5 = resolve_md5_url(path);
+
+            assert_eq!(
+                resolved_pbf, expected_pbf,
+                "PBF URL mismatch for region '{}'",
+                path
+            );
+            assert_eq!(
+                resolved_md5, expected_md5,
+                "MD5 URL mismatch for region '{}'",
+                path
+            );
+
+            assert!(
+                resolved_pbf.starts_with("https://download.geofabrik.de/"),
+                "PBF URL must be HTTPS canonical download.geofabrik.de for '{}'",
+                path
+            );
+            assert!(
+                resolved_pbf.ends_with("-latest.osm.pbf"),
+                "PBF URL must end with -latest.osm.pbf for '{}'",
+                path
+            );
+            assert_eq!(
+                resolved_md5,
+                format!("{}.md5", resolved_pbf),
+                "MD5 URL must match PBF URL + .md5 for '{}'",
+                path
+            );
+        }
+    }
+}

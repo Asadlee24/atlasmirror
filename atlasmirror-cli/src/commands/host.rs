@@ -2,7 +2,6 @@ use crate::storage::LogosStorageClient;
 use colored::Colorize;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
-use std::time::Duration;
 
 pub async fn execute_host_single(
     region: &str,
@@ -33,7 +32,7 @@ pub async fn execute_host_single(
     let pbf_path = cache_dir.join(format!("{}.osm.pbf", safe_name));
 
     println!("  2. Downloading snapshot & verifying integrity...");
-    let url = format!("https://download.geofabrik.de/{}-latest.osm.pbf", region);
+    let url = crate::geofabrik::resolve_pbf_url(region);
     let needs_download = if pbf_path.exists() {
         match crate::geofabrik::compute_file_md5(&pbf_path) {
             Ok(md5) => md5 != expected_md5,
@@ -44,21 +43,16 @@ pub async fn execute_host_single(
     };
 
     if needs_download {
-        let client = reqwest::Client::builder()
-            .timeout(Duration::from_secs(300))
-            .build()?;
-
-        let resp = client.get(&url).send().await?;
-        if !resp.status().is_success() {
+        if let Err(e) =
+            crate::geofabrik::download_pbf_stream(&url, &pbf_path, |_downloaded, _total| {}).await
+        {
             eprintln!(
-                "{} Failed to download snapshot from Geofabrik: HTTP {}",
+                "{} Failed to download snapshot from Geofabrik: {}",
                 "✖".red(),
-                resp.status()
+                e
             );
             std::process::exit(1);
         }
-        let bytes = resp.bytes().await?;
-        std::fs::write(&pbf_path, bytes)?;
     }
 
     let actual_md5 = crate::geofabrik::compute_file_md5(&pbf_path)?;
@@ -196,11 +190,18 @@ pub async fn execute_host_many(
         };
 
         if needs_download {
-            let client = reqwest::Client::builder()
-                .timeout(std::time::Duration::from_secs(300))
-                .build()?;
-            let bytes = client.get(&url).send().await?.bytes().await?;
-            std::fs::write(&pbf_path, bytes)?;
+            if let Err(e) =
+                crate::geofabrik::download_pbf_stream(&url, &pbf_path, |_downloaded, _total| {})
+                    .await
+            {
+                eprintln!(
+                    "{} Failed to download snapshot from Geofabrik for {}: {}",
+                    "✖".red(),
+                    r,
+                    e
+                );
+                std::process::exit(1);
+            }
         }
 
         // Pre-upload integrity verification
@@ -337,7 +338,7 @@ pub async fn execute_host_file(
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)?
         .as_secs();
-    let url = format!("https://download.geofabrik.de/{}-latest.osm.pbf", region);
+    let url = crate::geofabrik::resolve_pbf_url(region);
     let version = crate::geofabrik::fetch_snapshot_version(region).await;
 
     let tx_hash =

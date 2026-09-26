@@ -157,10 +157,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match cli.command {
         Commands::Regions(args) => match args.subcommand {
             RegionsSubcommand::List { filter } => {
-                commands::regions::execute_list(filter.as_deref(), cli.json)?;
+                commands::regions::execute_list(filter.as_deref(), cli.json).await?;
             }
             RegionsSubcommand::Show { path } => {
-                commands::regions::execute_show(&path, cli.json)?;
+                commands::regions::execute_show(&path, cli.json).await?;
             }
         },
         Commands::Host(args) => {
@@ -199,21 +199,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(sub) = args.subcommand {
                 match sub {
                     LookupSubcommand::Region { path } => {
-                        commands::lookup::execute_region(&path, cli.json)?;
+                        commands::lookup::execute_region(&path, cli.json).await?;
                     }
                     LookupSubcommand::Parent { parent } => {
-                        commands::lookup::execute_parent(&parent, cli.json)?;
+                        commands::lookup::execute_parent(&parent, cli.json).await?;
                     }
                     LookupSubcommand::Cid { cid } => {
-                        commands::lookup::execute_cid(&cid, cli.json)?;
+                        commands::lookup::execute_cid(&cid, cli.json).await?;
                     }
                 }
             } else if let Some(path) = args.region {
-                commands::lookup::execute_region(&path, cli.json)?;
+                commands::lookup::execute_region(&path, cli.json).await?;
             } else if let Some(parent) = args.parent {
-                commands::lookup::execute_parent(&parent, cli.json)?;
+                commands::lookup::execute_parent(&parent, cli.json).await?;
             } else if let Some(cid) = args.cid {
-                commands::lookup::execute_cid(&cid, cli.json)?;
+                commands::lookup::execute_cid(&cid, cli.json).await?;
             } else {
                 eprintln!("Error: Specify lookup target (region, parent, or cid)");
                 std::process::exit(1);
@@ -231,7 +231,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 commands::registry::execute_program_id(cli.json)?;
             }
             RegistrySubcommand::Raw { region } => {
-                commands::registry::execute_raw(&region, cli.json)?;
+                commands::registry::execute_raw(&region, cli.json).await?;
             }
         },
         Commands::Doctor => {
