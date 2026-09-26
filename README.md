@@ -78,17 +78,23 @@ The original OpenStreetMap data remains attributed to OpenStreetMap contributors
 - **CMake** 3.22+ & C++17 compiler (for SDK and App)
 - **Logos Basecamp** (for running the desktop GUI)
 
-### Build with Nix
+### Build
 
 ```bash
-# Build the CLI
+# Build the CLI (Rust)
+cargo build --release --manifest-path atlasmirror-cli/Cargo.toml
+
+# Or build CLI with Nix Flakes
 nix build .#atlasmirror-cli
 
-# Build the SDK module
-nix build .#atlasmirror-sdk
+# Build the SDK C++ module
+cmake -S atlasmirror-sdk -B atlasmirror-sdk/build -DCMAKE_BUILD_TYPE=Release
+cmake --build atlasmirror-sdk/build --config Release
 
-# Build the Basecamp App (.lgx package)
-nix build .#atlasmirror-app
+# Build the Basecamp App Backend and package .lgx bundle
+cmake -S atlasmirror-app -B atlasmirror-app/build -DCMAKE_BUILD_TYPE=Release
+cmake --build atlasmirror-app/build --config Release
+python3 scripts/package_app_lgx.py
 ```
 
 ### Run the CLI

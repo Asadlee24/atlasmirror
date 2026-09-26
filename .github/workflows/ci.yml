@@ -30,6 +30,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq cmake qt6-base-dev qt6-declarative-dev libgl1-mesa-dev python3
       - name: Run CLI Tests
         run: |
           cd atlasmirror-cli
@@ -43,6 +47,20 @@ jobs:
           cd osm-registry
           cargo run --bin generate_idl
           git diff --exit-code idl/osm_registry.json
+      - name: Build SDK (C++)
+        run: |
+          cmake -S atlasmirror-sdk -B atlasmirror-sdk/build -DCMAKE_BUILD_TYPE=Release
+          cmake --build atlasmirror-sdk/build --config Release
+      - name: Build Basecamp App Backend
+        run: |
+          cmake -S atlasmirror-app -B atlasmirror-app/build -DCMAKE_BUILD_TYPE=Release
+          cmake --build atlasmirror-app/build --config Release
+      - name: Package Basecamp App .lgx Bundle
+        run: |
+          python3 scripts/package_app_lgx.py
+      - name: Run A1 Audit Verification
+        run: |
+          python3 scripts/verify_a1_audit.py
 
   test-macos:
     name: Build & Test (macOS Apple Silicon)
@@ -50,11 +68,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Build CLI
+      - name: Install macOS Dependencies
+        run: |
+          brew install cmake qt@6
+      - name: Build & Test CLI
         run: |
           cd atlasmirror-cli
           cargo build --verbose
-      - name: Test CLI
-        run: |
-          cd atlasmirror-cli
           cargo test --verbose
+      - name: Build & Test Registry Core
+        run: |
+          cd osm-registry
+          cargo test --verbose
+      - name: Build SDK (macOS)
+        run: |
+          cmake -S atlasmirror-sdk -B atlasmirror-sdk/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)"
+          cmake --build atlasmirror-sdk/build --config Release
+      - name: Build Basecamp App Backend (macOS)
+        run: |
+          cmake -S atlasmirror-app -B atlasmirror-app/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)"
+          cmake --build atlasmirror-app/build --config Release
+      - name: Package Basecamp App .lgx Bundle (macOS)
+        run: |
+          python3 scripts/package_app_lgx.py
