@@ -485,7 +485,8 @@ fn run_cli(args: &[String]) -> Result<()> {
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
     if args.len() <= 1 || args[1] == "--bench" {
-        let program_path = PathBuf::from("/mnt/c/Users/Aftab/Desktop/atlasmirror/osm_registry.bin");
+        let bin_env = std::env::var("OSM_REGISTRY_BIN").unwrap_or_else(|_| "osm_registry.bin".to_string());
+        let program_path = PathBuf::from(bin_env);
         run_benchmarks(&program_path)?;
     } else {
         run_cli(&args[1..])?;

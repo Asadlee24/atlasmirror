@@ -187,23 +187,23 @@ int main() {
 }
 ```
 
-### Basecamp QML Example
+### Basecamp QML Integration (Canonical QtRO / C++ Bridge)
 
 ```qml
 import QtQuick
 import QtQuick.Controls
 
 Item {
-    property var osmSdk: logos.module("atlasmirror_sdk")
-
+    // Canonical Basecamp pattern: Native UI backend bridge (AppBackend or ConsumerBackend)
+    // injected via QtRO / QML context property (cBackend)
     Button {
         text: "Resolve & Fetch Pakistan Map"
         onClicked: {
-            if (osmSdk) {
-                let info = JSON.parse(osmSdk.resolveRegion("asia/pakistan"));
+            if (typeof cBackend !== "undefined" && cBackend) {
+                let info = JSON.parse(cBackend.resolveRegion("asia/pakistan"));
                 console.log("Storage CID:", info.cid);
                 console.log("Published Checksum:", info.checksum);
-                osmSdk.downloadRegion("asia/pakistan", "/tmp/pakistan.osm.pbf");
+                cBackend.startDownload("asia/pakistan", "/tmp/pakistan.osm.pbf");
             }
         }
     }

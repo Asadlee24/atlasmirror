@@ -86,20 +86,20 @@ To consume AtlasMirror in another Logos Basecamp module:
      "dependencies": ["atlasmirror_sdk"]
    }
    ```
-2. In your QML view:
+2. In your QML view (via canonical QtRO / C++ bridge `backend` or `cBackend`):
    ```qml
    import QtQuick
    import QtQuick.Controls
 
    Item {
-       property var osmSdk: logos.module("atlasmirror_sdk")
-
        Button {
            text: "Fetch Pakistan Map"
            onClicked: {
-               let info = JSON.parse(osmSdk.resolveRegion("asia/pakistan"));
-               console.log("Resolved CID:", info.cid);
-               osmSdk.downloadRegion("asia/pakistan", "/tmp/pakistan.osm.pbf");
+               if (typeof cBackend !== "undefined" && cBackend) {
+                   let info = JSON.parse(cBackend.resolveRegion("asia/pakistan"));
+                   console.log("Resolved CID:", info.cid);
+                   cBackend.startDownload("asia/pakistan", "/tmp/pakistan.osm.pbf");
+               }
            }
        }
    }

@@ -300,10 +300,26 @@ if [ -x "${RUNNER_BIN}" ] && [ -f "${TEST_PROGRAM_BIN}" ]; then
     sleep 2
 elif [ -x "${REAL_TX_BIN}" ] && [ -f "${TEST_PROGRAM_BIN}" ]; then
     echo "Executing genuine on-chain registration via: ${REAL_TX_BIN}" | tee -a "${EVIDENCE_FILE}"
+    BATCH_JSON="${WORK_DIR}/batch_records.json"
+    cat > "${BATCH_JSON}" <<EOF
+[
+  {
+    "region": "${TEST_REGION}",
+    "parent": null,
+    "level": "Country",
+    "cid": "${TEST_CID}",
+    "source_url": "${TEST_SOURCE}",
+    "checksum": "${TEST_MD5}",
+    "version": "${TEST_VERSION}",
+    "hosted": true,
+    "timestamp": ${TEST_TIMESTAMP}
+  }
+]
+EOF
     OSM_REGISTRY_BIN="${TEST_PROGRAM_BIN}" \
     OSM_PAYER="${EPHEMERAL_PAYER}" \
     OSM_REGISTRY_ACCOUNT="${TEST_ACCOUNT}" \
-    "${REAL_TX_BIN}" 2>&1 | tee -a "${EVIDENCE_FILE}"
+    "${REAL_TX_BIN}" "${BATCH_JSON}" 2>&1 | tee -a "${EVIDENCE_FILE}"
 elif command -v spel >/dev/null 2>&1; then
     echo "Executing via spel CLI to standalone sequencer..." | tee -a "${EVIDENCE_FILE}"
     timeout 120s spel --idl osm-registry/idl/osm_registry.json -p "${TEST_ACCOUNT}" -- initialize --state "${TEST_ACCOUNT}" 2>&1 | tee -a "${EVIDENCE_FILE}"

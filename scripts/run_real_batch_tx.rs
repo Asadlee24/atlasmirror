@@ -81,10 +81,15 @@ async fn main() -> Result<()> {
         last_block
     );
 
-    let program_bin_path =
-        PathBuf::from(std::env::var("OSM_REGISTRY_BIN").unwrap_or_else(|_| {
-            "/mnt/c/Users/Aftab/Desktop/atlasmirror/osm_registry.bin".to_string()
-        }));
+    let program_bin_path = PathBuf::from(
+        std::env::var("OSM_REGISTRY_BIN").unwrap_or_else(|_| "osm_registry.bin".to_string()),
+    );
+    if !program_bin_path.exists() {
+        anyhow::bail!(
+            "Program binary not found at '{}'. Please set OSM_REGISTRY_BIN to a valid path.",
+            program_bin_path.display()
+        );
+    }
 
     let payer_id: AccountId = std::env::var("OSM_PAYER")
         .unwrap_or_else(|_| "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r".to_string())
@@ -212,14 +217,15 @@ async fn main() -> Result<()> {
         records.len()
     );
 
-    println!(
-        "Batch item 1: {} (level: {:?}, cid: {})",
-        records[0].region, records[0].level, records[0].cid
-    );
-    println!(
-        "Batch item 2: {} (level: {:?}, cid: {})",
-        records[1].region, records[1].level, records[1].cid
-    );
+    for (idx, rec) in records.iter().enumerate() {
+        println!(
+            "Batch item {}: {} (level: {:?}, cid: {})",
+            idx + 1,
+            rec.region,
+            rec.level,
+            rec.cid
+        );
+    }
 
     let batch_instr = RegistryInstruction::BatchRegister(BatchRegisterArgs { records });
     let batch_data = Program::serialize_instruction(batch_instr)?;

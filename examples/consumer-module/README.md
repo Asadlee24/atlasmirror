@@ -14,14 +14,19 @@ A Basecamp consumer needs only the PBF files locally and the SDK to discover and
    }
    ```
 
-2. Access the SDK in QML via the standard Logos host injection:
+2. Access the SDK via the canonical `ConsumerBackend` QtRO / C++ UI bridge:
    ```qml
-   property var osmSdk: logos.module("atlasmirror_sdk")
+   // Resolves canonical ConsumerBackend bridge injected by Basecamp runtime
+   property var backend: (typeof consumerBackend !== "undefined") 
+       ? consumerBackend 
+       : ((typeof cBackend !== "undefined") ? cBackend : null)
 
    function getMap(region) {
-       let record = osmSdk.resolveRegion(region);
-       console.log("Storage CID:", record.cid);
-       osmSdk.downloadRegion(region, "/tmp/" + region.replace('/', '_') + ".osm.pbf");
+       if (backend) {
+           let record = JSON.parse(backend.resolveRegion(region));
+           console.log("Storage CID:", record.cid);
+           backend.downloadRegion(region, "/tmp/" + region.replace('/', '_') + ".osm.pbf");
+       }
    }
    ```
 

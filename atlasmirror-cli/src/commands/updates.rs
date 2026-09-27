@@ -10,12 +10,38 @@ pub async fn execute(
 
     let check_list: Vec<String> = match region_opt {
         Some(r) => vec![r.to_string()],
-        None => vec![
-            "asia/pakistan".to_string(),
-            "europe/germany".to_string(),
-            "us/california".to_string(),
-            "china/henan".to_string(),
-        ],
+        None => {
+            if let Some(ref recs) = on_chain_records {
+                let hosted: Vec<String> = recs
+                    .iter()
+                    .filter(|r| r.hosted)
+                    .map(|r| r.region.clone())
+                    .collect();
+                if !hosted.is_empty() {
+                    hosted
+                } else {
+                    recs.iter().map(|r| r.region.clone()).collect()
+                }
+            } else {
+                const CATALOG_JSON: &str = include_str!("../../../metadata/regions.json");
+                if let Ok(c) = serde_json::from_str::<serde_json::Value>(CATALOG_JSON) {
+                    c.get("regions")
+                        .and_then(|arr| arr.as_array())
+                        .map(|arr| {
+                            arr.iter()
+                                .filter_map(|item| {
+                                    item.get("path")
+                                        .and_then(|p| p.as_str())
+                                        .map(|s| s.to_string())
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default()
+                } else {
+                    Vec::new()
+                }
+            }
+        }
     };
 
     let client = reqwest::Client::builder()
