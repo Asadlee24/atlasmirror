@@ -494,15 +494,18 @@ if command -v logoscore >/dev/null 2>&1 && [ -d "${REPO_ROOT}/modules/storage_mo
     DOWNLOAD_EVENT_FILE="${WORK_DIR}/download-event.json"
     : > "${DOWNLOAD_EVENT_FILE}"
     logoscore watch storage_module --event storageDownloadDone --json > "${DOWNLOAD_EVENT_FILE}" 2>&1 &
+    DL_WATCH_PID=$!
     sleep 1
 
     logoscore call storage_module downloadToUrl "${TEST_CID}" "${ABS_RETRIEVED}" true 262144 --json >> "${EVIDENCE_FILE}" 2>&1 || true
-    for i in {1..30}; do
-        if [ -f "${RETRIEVED_FILE}" ] && [ -s "${RETRIEVED_FILE}" ]; then
+    for i in {1..60}; do
+        if grep -q "storageDownloadDone" "${DOWNLOAD_EVENT_FILE}" 2>/dev/null; then
+            echo "storageDownloadDone event confirmed at ${i}s." | tee -a "${EVIDENCE_FILE}"
             break
         fi
         sleep 1
     done
+    kill "${DL_WATCH_PID}" 2>/dev/null || true
 fi
 
 if [ ! -f "${RETRIEVED_FILE}" ] || [ ! -s "${RETRIEVED_FILE}" ]; then
