@@ -292,19 +292,18 @@ echo "Target Account: ${TEST_ACCOUNT}" | tee -a "${EVIDENCE_FILE}"
 echo "Region:         ${TEST_REGION}" | tee -a "${EVIDENCE_FILE}"
 echo "CID:            ${TEST_CID}" | tee -a "${EVIDENCE_FILE}"
 
-REAL_TX_BIN="${REPO_ROOT}/scripts/standalone/run_real_batch_tx"
-if [ -x "${REAL_TX_BIN}" ] && [ -f "${TEST_PROGRAM_BIN}" ]; then
-    echo "Executing genuine on-chain registration via: ${REAL_TX_BIN}" | tee -a "${EVIDENCE_FILE}"
-    OSM_REGISTRY_BIN="${TEST_PROGRAM_BIN}" \
-    OSM_PAYER="${EPHEMERAL_PAYER}" \
-    OSM_REGISTRY_ACCOUNT="${TEST_ACCOUNT}" \
-    "${REAL_TX_BIN}" 2>&1 | tee -a "${EVIDENCE_FILE}"
-elif [ -x "${RUNNER_BIN}" ] && [ -f "${TEST_PROGRAM_BIN}" ]; then
+if [ -x "${RUNNER_BIN}" ] && [ -f "${TEST_PROGRAM_BIN}" ]; then
     echo "Executing via standalone runner: ${RUNNER_BIN}" | tee -a "${EVIDENCE_FILE}"
     timeout 30s "${RUNNER_BIN}" "${TEST_PROGRAM_BIN}" "${TEST_ACCOUNT}" initialize 2>&1 | tee -a "${EVIDENCE_FILE}"
     sleep 1
     timeout 30s "${RUNNER_BIN}" "${TEST_PROGRAM_BIN}" "${TEST_ACCOUNT}" register "${TEST_REGION}" "${TEST_CID}" "${TEST_MD5}" "${TEST_SOURCE}" "${TEST_VERSION}" "${TEST_TIMESTAMP}" 2>&1 | tee -a "${EVIDENCE_FILE}"
     sleep 2
+elif [ -x "${REAL_TX_BIN}" ] && [ -f "${TEST_PROGRAM_BIN}" ]; then
+    echo "Executing genuine on-chain registration via: ${REAL_TX_BIN}" | tee -a "${EVIDENCE_FILE}"
+    OSM_REGISTRY_BIN="${TEST_PROGRAM_BIN}" \
+    OSM_PAYER="${EPHEMERAL_PAYER}" \
+    OSM_REGISTRY_ACCOUNT="${TEST_ACCOUNT}" \
+    "${REAL_TX_BIN}" 2>&1 | tee -a "${EVIDENCE_FILE}"
 elif command -v spel >/dev/null 2>&1; then
     echo "Executing via spel CLI to standalone sequencer..." | tee -a "${EVIDENCE_FILE}"
     timeout 120s spel --idl osm-registry/idl/osm_registry.json -p "${TEST_ACCOUNT}" -- initialize --state "${TEST_ACCOUNT}" 2>&1 | tee -a "${EVIDENCE_FILE}"
