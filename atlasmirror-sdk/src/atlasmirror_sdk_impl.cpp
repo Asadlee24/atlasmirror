@@ -1240,11 +1240,116 @@ std::string AtlasmirrorSdkImpl::batchRegister(const std::string &records)
         return "{\"success\":false,\"error\":\"NO_VALID_REGIONS_FOUND\",\"message\":\"None of the provided regions match the official 72 closed set\"}";
     }
 
+    // Step 1: For each selected region, ensure it is hosted in Logos Storage
+    std::string cacheDir = "./target/pbf_cache";
+#ifdef _WIN32
+    CreateDirectoryA("./target", NULL);
+    CreateDirectoryA(cacheDir.c_str(), NULL);
+#else
+    mkdir("./target", 0755);
+    mkdir(cacheDir.c_str(), 0755);
+#endif
+
+    uint64_t nowTs = static_cast<uint64_t>(std::time(nullptr));
+    std::string version = "2026-09-24";
+    std::ostringstream jsonPayload;
+    jsonPayload << "[";
+
+    for (size_t i = 0; i < regionList.size(); ++i) {
+        const std::string &reg = regionList[i];
+        auto it = m_catalog.find(reg);
+        if (it == m_catalog.end()) continue;
+
+        std::string cid = it->second.cid;
+        std::string checksum = it->second.checksum;
+
+        if (cid.empty() || !it->second.hosted) {
+            std::string safeName = reg;
+            std::replace(safeName.begin(), safeName.end(), '/', '_');
+            std::string pbfPath = cacheDir + "/" + safeName + ".osm.pbf";
+            std::string tmpPbf = pbfPath + ".tmp";
+
+            std::vector<std::string> md5Args = {"-s", "-L", "--fail", "--max-time", "15", it->second.md5_url};
+            auto [mCode, mOut] = runSafeProcess("curl", md5Args);
+            std::string publishedMd5;
+            if (mCode == 0 && !mOut.empty()) {
+                size_t sp = mOut.find(' ');
+                publishedMd5 = (sp != std::string::npos) ? mOut.substr(0, sp) : mOut;
+                while (!publishedMd5.empty() && (publishedMd5.back() == '\n' || publishedMd5.back() == '\r')) {
+                    publishedMd5.pop_back();
+                }
+            }
+            if (publishedMd5.empty() && !it->second.checksum.empty()) {
+                publishedMd5 = it->second.checksum;
+            }
+
+            if (!fileExistsAndNonEmpty(pbfPath) || computeFileMd5(pbfPath) != publishedMd5) {
+                std::vector<std::string> dlArgs = {"-s", "-L", "--fail", "--max-time", "600", "-o", tmpPbf, it->second.geofabrik_url};
+                auto [dlCode, dlOut] = runSafeProcess("curl", dlArgs);
+                if (dlCode != 0 || !fileExistsAndNonEmpty(tmpPbf)) {
+                    std::ostringstream errSs;
+                    errSs << "{\"success\":false,\"error\":\"DOWNLOAD_FAILED\",\"region\":\"" << escapeJson(reg) << "\"}";
+                    return errSs.str();
+                }
+                std::string dlMd5 = computeFileMd5(tmpPbf);
+                if (!publishedMd5.empty() && dlMd5 != publishedMd5) {
+                    std::ostringstream errSs;
+                    errSs << "{\"success\":false,\"error\":\"CHECKSUM_MISMATCH\",\"region\":\"" << escapeJson(reg) << "\"}";
+                    return errSs.str();
+                }
+#ifdef _WIN32
+                MoveFileExA(tmpPbf.c_str(), pbfPath.c_str(), MOVEFILE_REPLACE_EXISTING);
+#else
+                rename(tmpPbf.c_str(), pbfPath.c_str());
+#endif
+                checksum = dlMd5;
+            } else {
+                checksum = computeFileMd5(pbfPath);
+            }
+
+            auto [stOk, stRes] = uploadToLogosStorage(pbfPath);
+            if (!stOk) {
+                std::ostringstream errSs;
+                errSs << "{\"success\":false,\"error\":\"STORAGE_UPLOAD_FAILED\",\"region\":\"" << escapeJson(reg) << "\",\"message\":\"" << escapeJson(stRes) << "\"}";
+                return errSs.str();
+            }
+            cid = stRes;
+            it->second.hosted = true;
+            it->second.cid = cid;
+            it->second.checksum = checksum;
+            it->second.version = version;
+            it->second.timestamp = nowTs;
+            m_hostedRecords[cid] = it->second;
+        }
+
+        if (i > 0) jsonPayload << ",";
+        jsonPayload << "{"
+                    << "\"region\":\"" << escapeJson(reg) << "\","
+                    << "\"parent\":" << (it->second.parent.empty() ? "null" : ("\"" + escapeJson(it->second.parent) + "\"")) << ","
+                    << "\"level\":\"" << (it->second.level == "subregion" ? "Subregion" : "Country") << "\","
+                    << "\"cid\":\"" << escapeJson(cid) << "\","
+                    << "\"source_url\":\"" << escapeJson(it->second.geofabrik_url) << "\","
+                    << "\"checksum\":\"" << escapeJson(checksum) << "\","
+                    << "\"version\":\"" << escapeJson(version) << "\","
+                    << "\"hosted\":true,"
+                    << "\"timestamp\":" << nowTs
+                    << "}";
+    }
+    jsonPayload << "]";
+
+    std::string batchJsonFile = "./target/batch_records.json";
+    {
+        std::ofstream ofs(batchJsonFile);
+        if (ofs.is_open()) {
+            ofs << jsonPayload.str();
+        }
+    }
+
     std::string txHash;
     const char *batchBinEnv = std::getenv("LEZ_BATCH_TX_BIN");
     std::string batchBin = (batchBinEnv && batchBinEnv[0] != '\0') ? batchBinEnv : "./scripts/standalone/run_real_batch_tx";
     if (fileExistsAndNonEmpty(batchBin)) {
-        auto [bRc, bOut] = runSafeProcess(batchBin, {});
+        auto [bRc, bOut] = runSafeProcess(batchBin, {batchJsonFile});
         txHash = parseTxHash(bOut);
     }
 
@@ -1258,23 +1363,39 @@ std::string AtlasmirrorSdkImpl::batchRegister(const std::string &records)
             "-p", progId,
             "--",
             "batch-register",
-            "--state", accId
+            "--state", accId,
+            "--records", batchJsonFile
         };
         auto [sRc, sOut] = runSafeProcess(spel, sArgs);
         txHash = parseTxHash(sOut);
     }
 
+    // STRICT CHECK: Zero false-pass fallback! Missing or empty hash is a fatal error.
     if (txHash.empty()) {
-        txHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+        std::ostringstream ss;
+        ss << "{"
+           << "\"success\":false,"
+           << "\"error\":\"BATCH_TRANSACTION_FAILED\","
+           << "\"message\":\"BatchRegister transaction submission to LEZ sequencer failed. No transaction hash returned.\""
+           << "}";
+        return ss.str();
     }
 
     refreshOnChainRegistry();
+
+    bool allFound = true;
+    for (const auto &reg : regionList) {
+        if (m_catalog.find(reg) == m_catalog.end() || !m_catalog[reg].hosted) {
+            allFound = false;
+        }
+    }
 
     std::ostringstream ss;
     ss << "{"
        << "\"success\":true,"
        << "\"batch_size\":" << regionList.size() << ","
-       << "\"tx_hash\":\"" << txHash << "\""
+       << "\"tx_hash\":\"" << txHash << "\","
+       << "\"onchain_verified\":" << (allFound ? "true" : "false")
        << "}";
     return ss.str();
 }

@@ -1,18 +1,18 @@
 #![allow(unused_imports, clippy::all)]
 use anyhow::{Context, Result};
 use borsh::{BorshDeserialize, BorshSerialize};
-use lee::AccountId;
 use lee::program::Program;
+use lee::AccountId;
 use lee_core::account::ProgramShardSelector;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use wallet::{
-    AccountIdentity, AccountMention,
-    program_facades::program_loader::ProgramLoader,
-    WalletCore,
+    program_facades::program_loader::ProgramLoader, AccountIdentity, AccountMention, WalletCore,
 };
 
-#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(
+    BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq,
+)]
 pub enum RegionLevel {
     Country,
     Subregion,
@@ -31,7 +31,9 @@ pub struct RegionRecord {
     pub timestamp: u64,
 }
 
-#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
+#[derive(
+    BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq,
+)]
 pub struct RegistryState {
     pub total_regions: u64,
     pub last_updated: u64,
@@ -74,12 +76,15 @@ async fn main() -> Result<()> {
         .context("Failed to initialize WalletCore from environment")?;
 
     let last_block = wallet_core.get_last_block_id().await?;
-    println!("Connected to active LEZ Sequencer. Current block height: {}", last_block);
-
-    let program_bin_path = PathBuf::from(
-        std::env::var("OSM_REGISTRY_BIN")
-            .unwrap_or_else(|_| "/mnt/c/Users/Aftab/Desktop/atlasmirror/osm_registry.bin".to_string()),
+    println!(
+        "Connected to active LEZ Sequencer. Current block height: {}",
+        last_block
     );
+
+    let program_bin_path =
+        PathBuf::from(std::env::var("OSM_REGISTRY_BIN").unwrap_or_else(|_| {
+            "/mnt/c/Users/Aftab/Desktop/atlasmirror/osm_registry.bin".to_string()
+        }));
 
     let payer_id: AccountId = std::env::var("OSM_PAYER")
         .unwrap_or_else(|_| "CbgR6tj5kWx5oziiFptM7jMvrQeYY3Mzaao6ciuhSr2r".to_string())
@@ -94,12 +99,20 @@ async fn main() -> Result<()> {
         println!("\n=== [Step 1] Deploying OSM Registry Program to Sequencer ===");
         let bytecode = std::fs::read(&program_bin_path)
             .with_context(|| format!("Failed to read {}", program_bin_path.display()))?;
-        println!("Loaded ELF binary: {} ({} bytes)", program_bin_path.display(), bytecode.len());
+        println!(
+            "Loaded ELF binary: {} ({} bytes)",
+            program_bin_path.display(),
+            bytecode.len()
+        );
 
         let binary = risc0_binfmt::ProgramBinary::decode(&bytecode)
             .map_err(|e| anyhow::anyhow!("Failed to decode program binary: {:?}", e))?;
         let num_segments = (binary.user_elf.len() + 98304 - 1) / 98304;
-        println!("User ELF size: {} bytes, requiring {} segment(s)", binary.user_elf.len(), num_segments);
+        println!(
+            "User ELF size: {} bytes, requiring {} segment(s)",
+            binary.user_elf.len(),
+            num_segments
+        );
 
         let (header_acc, _) = wallet_core.create_new_account_public(None);
         println!("Header account generated: {}", header_acc);
@@ -112,12 +125,18 @@ async fn main() -> Result<()> {
         }
 
         let loader = ProgramLoader(&wallet_core);
-        println!("Submitting program segments & header deploy transaction (paid by {})...", payer_id);
+        println!(
+            "Submitting program segments & header deploy transaction (paid by {})...",
+            payer_id
+        );
         let deployed_id = loader
             .deploy(header_acc, &segment_ids, bytecode, true, Some(payer_id))
             .await
             .map_err(|e| anyhow::anyhow!("Deploy failed: {:?}", e))?;
-        println!("✔ Program successfully deployed! Header ID: {}", deployed_id);
+        println!(
+            "✔ Program successfully deployed! Header ID: {}",
+            deployed_id
+        );
         deployed_id
     };
 
@@ -136,10 +155,16 @@ async fn main() -> Result<()> {
     println!("\n=== [Step 2] Submitting Initialize Instruction ===");
     let init_instr = RegistryInstruction::Initialize;
     let init_data = Program::serialize_instruction(init_instr)?;
-    let init_mention = AccountIdentity::Public(registry_account_id).select_program_shard(program_header_id);
+    let init_mention =
+        AccountIdentity::Public(registry_account_id).select_program_shard(program_header_id);
 
     let init_tx = wallet_core
-        .send_pub_tx_paid_by(vec![init_mention], init_data, program_header_id, Some(payer_id))
+        .send_pub_tx_paid_by(
+            vec![init_mention],
+            init_data,
+            program_header_id,
+            Some(payer_id),
+        )
         .await
         .map_err(|e| anyhow::anyhow!("send_pub_tx Initialize failed: {:?}", e))?;
     println!("Initialize transaction submitted. Hash: {}", init_tx);
@@ -149,41 +174,65 @@ async fn main() -> Result<()> {
     println!("✔ Initialize confirmed in Block #{}", init_block_id);
 
     // Step 3: Single genuine BatchRegister transaction
-    println!("\n=== [Step 3] Submitting SINGLE BatchRegister Transaction (2 Regions) ===");
-    let records = vec![
-        RegisterRegionArgs {
-            region: "asia/pakistan".to_string(),
-            parent: None,
-            level: RegionLevel::Country,
-            cid: "zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz".to_string(),
-            source_url: "https://download.geofabrik.de/asia/pakistan-latest.osm.pbf".to_string(),
-            checksum: "5dd3c567f557b843aef1576b8973f81f".to_string(),
-            version: "2026-09-22".to_string(),
-            hosted: true,
-            timestamp: 1790162988,
-        },
-        RegisterRegionArgs {
-            region: "china/henan".to_string(),
-            parent: Some("china".to_string()),
-            level: RegionLevel::Subregion,
-            cid: "zDvZRwzmb2rhXLBiRXtyd74Y8MB29es8si7ZEuHL6oMBuaLQyC88".to_string(),
-            source_url: "https://download.geofabrik.de/asia/china/henan-latest.osm.pbf".to_string(),
-            checksum: "765edcbf39256eace4fe32828a14cc58".to_string(),
-            version: "2026-09-22".to_string(),
-            hosted: true,
-            timestamp: 1790162994,
-        },
-    ];
+    let cli_args: Vec<String> = std::env::args().collect();
+    let records: Vec<RegisterRegionArgs> =
+        if cli_args.len() > 1 && std::path::Path::new(&cli_args[1]).exists() {
+            let content = std::fs::read_to_string(&cli_args[1])?;
+            serde_json::from_str(&content)?
+        } else {
+            vec![
+                RegisterRegionArgs {
+                    region: "asia/pakistan".to_string(),
+                    parent: None,
+                    level: RegionLevel::Country,
+                    cid: "zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz".to_string(),
+                    source_url: "https://download.geofabrik.de/asia/pakistan-latest.osm.pbf"
+                        .to_string(),
+                    checksum: "5dd3c567f557b843aef1576b8973f81f".to_string(),
+                    version: "2026-09-22".to_string(),
+                    hosted: true,
+                    timestamp: 1790162988,
+                },
+                RegisterRegionArgs {
+                    region: "china/henan".to_string(),
+                    parent: Some("china".to_string()),
+                    level: RegionLevel::Subregion,
+                    cid: "zDvZRwzmb2rhXLBiRXtyd74Y8MB29es8si7ZEuHL6oMBuaLQyC88".to_string(),
+                    source_url: "https://download.geofabrik.de/asia/china/henan-latest.osm.pbf"
+                        .to_string(),
+                    checksum: "765edcbf39256eace4fe32828a14cc58".to_string(),
+                    version: "2026-09-22".to_string(),
+                    hosted: true,
+                    timestamp: 1790162994,
+                },
+            ]
+        };
+    println!(
+        "\n=== [Step 3] Submitting SINGLE BatchRegister Transaction ({} Regions) ===",
+        records.len()
+    );
 
-    println!("Batch item 1: {} (level: {:?}, cid: {})", records[0].region, records[0].level, records[0].cid);
-    println!("Batch item 2: {} (level: {:?}, cid: {})", records[1].region, records[1].level, records[1].cid);
+    println!(
+        "Batch item 1: {} (level: {:?}, cid: {})",
+        records[0].region, records[0].level, records[0].cid
+    );
+    println!(
+        "Batch item 2: {} (level: {:?}, cid: {})",
+        records[1].region, records[1].level, records[1].cid
+    );
 
     let batch_instr = RegistryInstruction::BatchRegister(BatchRegisterArgs { records });
     let batch_data = Program::serialize_instruction(batch_instr)?;
-    let batch_mention = AccountIdentity::Public(registry_account_id).select_program_shard(program_header_id);
+    let batch_mention =
+        AccountIdentity::Public(registry_account_id).select_program_shard(program_header_id);
 
     let batch_tx = wallet_core
-        .send_pub_tx_paid_by(vec![batch_mention], batch_data, program_header_id, Some(payer_id))
+        .send_pub_tx_paid_by(
+            vec![batch_mention],
+            batch_data,
+            program_header_id,
+            Some(payer_id),
+        )
         .await
         .map_err(|e| anyhow::anyhow!("send_pub_tx BatchRegister failed: {:?}", e))?;
     println!("✔ BatchRegister transaction submitted! Hash: {}", batch_tx);
@@ -203,8 +252,14 @@ async fn main() -> Result<()> {
     // Step 4: Query back on-chain state from Sequencer
     println!("\n=== [Step 4] Querying On-Chain State from Sequencer ===");
     let full_acc = wallet_core.get_account_public(registry_account_id).await?;
-    println!("Account nonce: {:?}, balance: {}", full_acc.nonce, full_acc.data.balance);
-    println!("Available shards on account: {:?}", full_acc.data.shards.keys().collect::<Vec<_>>());
+    println!(
+        "Account nonce: {:?}, balance: {}",
+        full_acc.nonce, full_acc.data.balance
+    );
+    println!(
+        "Available shards on account: {:?}",
+        full_acc.data.shards.keys().collect::<Vec<_>>()
+    );
 
     let shard_sel = ProgramShardSelector::new(registry_account_id, program_header_id);
     let view = wallet_core.get_account_view(shard_sel).await?;
@@ -217,7 +272,10 @@ async fn main() -> Result<()> {
 
     let state: RegistryState = borsh::from_slice(shard_data.as_ref())
         .context("Failed to deserialize on-chain RegistryState")?;
-    println!("Decoded RegistryState: total_regions={}, last_updated={}", state.total_regions, state.last_updated);
+    println!(
+        "Decoded RegistryState: total_regions={}, last_updated={}",
+        state.total_regions, state.last_updated
+    );
 
     for r in &state.records {
         println!(
@@ -226,11 +284,26 @@ async fn main() -> Result<()> {
         );
     }
 
-    assert_eq!(state.total_regions, 2, "Expected exactly 2 registered regions");
-    assert!(state.records.iter().any(|r| r.region == "asia/pakistan" && r.cid == "zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz"));
-    assert!(state.records.iter().any(|r| r.region == "china/henan" && r.cid == "zDvZRwzmb2rhXLBiRXtyd74Y8MB29es8si7ZEuHL6oMBuaLQyC88"));
+    assert_eq!(
+        state.total_regions,
+        records.len() as u64,
+        "Total regions must match submitted batch size"
+    );
+    for expected_r in &records {
+        assert!(
+            state
+                .records
+                .iter()
+                .any(|r| r.region == expected_r.region && r.cid == expected_r.cid),
+            "Registered region {} with CID {} not found in on-chain state!",
+            expected_r.region,
+            expected_r.cid
+        );
+    }
 
-    println!("\n✔ Cryptographic query-back and record validation verified with 100% exact equality.");
+    println!(
+        "\n✔ Cryptographic query-back and record validation verified with 100% exact equality."
+    );
     println!("========================================================");
 
     Ok(())

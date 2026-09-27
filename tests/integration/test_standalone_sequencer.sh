@@ -24,7 +24,9 @@ echo "========================================================" | tee -a "${EVID
 SEQ_BIN=$(command -v sequencer_service || echo "/usr/local/bin/sequencer_service")
 SPEL_BIN=$(command -v spel || echo "/usr/local/bin/spel")
 RUNNER_BIN="${REPO_ROOT}/scripts/standalone/run_osm_registry"
+REAL_TX_BIN="${REPO_ROOT}/scripts/standalone/run_real_batch_tx"
 chmod +x "${RUNNER_BIN}" 2>/dev/null || true
+chmod +x "${REAL_TX_BIN}" 2>/dev/null || true
 
 if [ ! -x "${SEQ_BIN}" ] || ! command -v r0vm >/dev/null 2>&1; then
     echo "Running setup_ci_environment.sh to ensure sequencer_service and r0vm are present..." | tee -a "${EVIDENCE_FILE}"
@@ -202,7 +204,11 @@ else
     curl -sSfL -o "${PBF_FILE}" "${TEST_SOURCE}"
 fi
 
-EXPECTED_MD5=$(curl -sSfL "${TEST_MD5_URL}" | awk '{print $1}' 2>/dev/null || md5sum "${PBF_FILE}" | awk '{print $1}')
+EXPECTED_MD5=$(curl -sSfL "${TEST_MD5_URL}" | awk '{print $1}')
+if [ -z "${EXPECTED_MD5}" ]; then
+    echo "[FAIL] Could not fetch canonical Geofabrik published MD5 from ${TEST_MD5_URL}!" | tee -a "${EVIDENCE_FILE}"
+    exit 1
+fi
 COMPUTED_MD5=$(md5sum "${PBF_FILE}" | awk '{print $1}')
 ORIGINAL_SHA256=$(sha256sum "${PBF_FILE}" | awk '{print $1}')
 
@@ -227,7 +233,8 @@ if command -v logoscore >/dev/null 2>&1 && [ -d "${REPO_ROOT}/modules/storage_mo
 fi
 
 if [ -z "${TEST_CID}" ]; then
-    TEST_CID="zDvZRwzmb2rhmbuKmxifz7mCY9PgRtFJUwyescB3xfCKzSvE61vz"
+    echo "[FAIL] Logos Storage upload did not return a valid CID! Real storage upload is required; no fallback permitted." | tee -a "${EVIDENCE_FILE}"
+    exit 1
 fi
 TEST_MD5="${COMPUTED_MD5}"
 
@@ -251,9 +258,9 @@ elif [ -x "${RUNNER_BIN}" ] && [ -f "${TEST_PROGRAM_BIN}" ]; then
     sleep 2
 elif command -v spel >/dev/null 2>&1; then
     echo "Executing via spel CLI to standalone sequencer..." | tee -a "${EVIDENCE_FILE}"
-    timeout 30s spel --idl osm-registry/idl/osm_registry.json -p "${TEST_ACCOUNT}" -- initialize --state "${TEST_ACCOUNT}" 2>&1 | tee -a "${EVIDENCE_FILE}"
+    timeout 120s spel --idl osm-registry/idl/osm_registry.json -p "${TEST_ACCOUNT}" -- initialize --state "${TEST_ACCOUNT}" 2>&1 | tee -a "${EVIDENCE_FILE}"
     sleep 1
-    timeout 30s spel --idl osm-registry/idl/osm_registry.json -p "${TEST_ACCOUNT}" -- register-region \
+    timeout 120s spel --idl osm-registry/idl/osm_registry.json -p "${TEST_ACCOUNT}" -- register-region \
         --state "${TEST_ACCOUNT}" \
         --region "${TEST_REGION}" \
         --level "Country" \
@@ -414,8 +421,9 @@ if command -v logoscore >/dev/null 2>&1 && [ -d "${REPO_ROOT}/modules/storage_mo
     sleep 2
 fi
 
-if [ ! -f "${RETRIEVED_FILE}" ]; then
-    cp "${PBF_FILE}" "${RETRIEVED_FILE}"
+if [ ! -f "${RETRIEVED_FILE}" ] || [ ! -s "${RETRIEVED_FILE}" ]; then
+    echo "[FAIL] Logos Storage roundtrip download failed! Retrieved file is missing or empty. False-pass copying is prohibited." | tee -a "${EVIDENCE_FILE}"
+    exit 1
 fi
 
 DOWNLOADED_SHA256=$(sha256sum "${RETRIEVED_FILE}" | awk '{print $1}')

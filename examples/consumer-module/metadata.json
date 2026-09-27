@@ -4,14 +4,20 @@
   "version": "0.1.0",
   "type": "ui_qml",
   "category": "examples",
-  "description": "Minimal independent Logos Basecamp module proving third-party integration of atlasmirror_sdk in under 15 minutes",
+  "description": "Minimal independent Logos Basecamp module proving third-party integration of atlasmirror_sdk via canonical C++ backend bridge",
   "view": "src/consumer_view.qml",
+  "main": "consumer_module_backend",
+  "codegen": {
+    "rep": "src/consumer_backend.rep",
+    "backend_class": "ConsumerBackend",
+    "backend_header": "src/consumer_backend.h"
+  },
   "dependencies": ["atlasmirror_sdk"],
 
   "nix": {
     "packages": {
       "build": ["cmake", "pkg-config"],
-      "runtime": ["qt6.qtdeclarative"]
+      "runtime": ["qt6.qtdeclarative", "qt6.qtbase"]
     }
   }
 }

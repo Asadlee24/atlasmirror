@@ -17,9 +17,26 @@ AtlasMirror exposes four independent integration paths:
 
 ---
 
-## 2. Basecamp QML Integration (Quickstart: < 5 Minutes)
+## 2. Basecamp QML App Integration (Canonical Architecture)
 
-In your Basecamp application QML file, you can directly resolve the `atlasmirror_sdk` to look up snapshot CIDs and trigger downloads:
+In the official Logos Basecamp module architecture, UI modules (`type: "ui_qml"`) integrate native universal libraries through a small C++ backend bridge defined in `metadata.json` under `codegen`:
+
+### `metadata.json`
+```json
+{
+  "name": "my_map_app",
+  "type": "ui_qml",
+  "dependencies": ["atlasmirror_sdk"],
+  "codegen": {
+    "rep": "src/consumer_backend.rep",
+    "backend_class": "ConsumerBackend",
+    "backend_header": "src/consumer_backend.h"
+  }
+}
+```
+
+### `ConsumerView.qml`
+In your Basecamp application QML, the C++ backend bridge (`backend`) is directly injected into the QML context:
 
 ```qml
 import QtQuick
@@ -32,10 +49,10 @@ Rectangle {
     height: 480
     color: "#000000"
 
-    // Resolves AtlasMirror SDK service without tight UI coupling
-    property var osmSdk: (typeof logos !== "undefined" && logos.module) 
-        ? logos.module("atlasmirror_sdk") 
-        : null
+    // Injected by Basecamp runtime from ConsumerBackend
+    property var backend: (typeof consumerBackend !== "undefined") 
+        ? consumerBackend 
+        : ((typeof cBackend !== "undefined") ? cBackend : null)
 
     ColumnLayout {
         anchors.centerIn: parent
@@ -44,18 +61,18 @@ Rectangle {
         Button {
             text: "Fetch Offline Map: asia/pakistan"
             onClicked: {
-                if (osmSdk) {
+                if (backend) {
                     // resolveRegion returns JSON string with on-chain metadata & CID
-                    let resStr = osmSdk.resolveRegion("asia/pakistan");
+                    let resStr = backend.resolveRegion("asia/pakistan");
                     let record = JSON.parse(resStr);
                     console.log("Resolved Storage CID:", record.cid);
                     console.log("Verified Checksum:", record.checksum);
                     
                     // Trigger verified download to application cache
-                    let ok = osmSdk.downloadRegion("asia/pakistan", "/tmp/pakistan.osm.pbf");
-                    console.log("Download success:", ok);
+                    let ok = backend.downloadRegion("asia/pakistan", "/tmp/pakistan.osm.pbf");
+                    console.log("Download triggered:", ok);
                 } else {
-                    console.warn("AtlasMirror SDK service not available in current Basecamp runtime");
+                    console.warn("AtlasMirror consumer backend bridge not available in current runtime");
                 }
             }
         }

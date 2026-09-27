@@ -1,7 +1,29 @@
 class AtlasMirrorApp
 {
-    PROP(bool initialized = true)
-    PROP(QString status = "Ready")
-    SLOT(bool queryRegion(QString region))
+    PROP(QString searchFilter = "")
+    PROP(QString statusFilter = "")
+    PROP(int maxConcurrency = 3)
+    PROP(bool telemetryEnabled = false)
+    PROP(QJsonArray regions)
+    PROP(QJsonArray queue)
+    PROP(QJsonArray downloads)
+    PROP(QJsonObject lastOperationResult)
+
+    SIGNAL(regionsUpdated())
+    SIGNAL(queueUpdated())
+    SIGNAL(downloadsUpdated())
+    SIGNAL(operationResultChanged())
+
     SLOT(void refreshIndex())
+    SLOT(void hostRegion(const QString &regionPath))
+    SLOT(void startBulkHost(const QJsonArray &regionPaths))
+    SLOT(void cancelHost(const QString &regionPath))
+    SLOT(void retryHost(const QString &regionPath))
+    SLOT(void clearCompletedQueue())
+    SLOT(void retryAllFailed())
+    SLOT(void startDownload(const QString &regionPath))
+    SLOT(void copyToClipboard(const QString &text))
+    SLOT(QString queryRegistry(const QString &queryType, const QString &queryValue))
+    SLOT(QString importLocal(const QString &regionPath, const QString &localFilePath))
+    SLOT(QString updateCheck(const QString &regionPath))
 }

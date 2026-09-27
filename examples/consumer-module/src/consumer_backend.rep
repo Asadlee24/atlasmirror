@@ -1,0 +1,15 @@
+class ConsumerBackend
+{
+    PROP(QString status = "Ready")
+    PROP(QString lastResolvedCid = "")
+    PROP(bool isBusy = false)
+
+    SIGNAL(statusChanged())
+    SIGNAL(lastResolvedCidChanged())
+    SIGNAL(isBusyChanged())
+    SIGNAL(regionResolved(const QString &regionPath, const QString &cid, const QString &checksum))
+    SIGNAL(downloadCompleted(const QString &regionPath, bool success, const QString &destPath))
+
+    SLOT(QString resolveRegion(const QString &regionPath))
+    SLOT(bool downloadRegion(const QString &regionPath, const QString &destination))
+}

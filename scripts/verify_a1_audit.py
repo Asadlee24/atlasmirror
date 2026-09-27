@@ -180,9 +180,15 @@ def main():
             byte_provenance = f"local_storage_cache ({local_cand.name})"
         else:
             ext_ret = entry.get("external_retrieval", {})
-            computed_byte_md5 = ext_ret.get("retrieved_md5", manifest_md5)
-            byte_match = (computed_byte_md5 == manifest_md5)
-            byte_provenance = "independent_peer_retrieval (Logos Storage)"
+            retrieved_md5 = ext_ret.get("retrieved_md5")
+            if not retrieved_md5 or ext_ret.get("status") != "VERIFIED_EXACT_MATCH":
+                computed_byte_md5 = "MISSING_RETRIEVAL"
+                byte_match = False
+                byte_provenance = "none (retrieval missing or unverified)"
+            else:
+                computed_byte_md5 = retrieved_md5
+                byte_match = (computed_byte_md5 == manifest_md5)
+                byte_provenance = "independent_peer_retrieval (Logos Storage)"
 
         storage_byte_pass = byte_match and (computed_byte_md5 == onchain_entry["checksum"])
 

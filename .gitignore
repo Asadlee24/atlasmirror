@@ -48,6 +48,7 @@ generated_code/
 .env.*
 *.key
 *.pem
+audit_prompt*.txt
 *.secret
 *_signing_key
 rocksdb-*

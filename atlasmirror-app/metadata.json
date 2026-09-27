@@ -9,6 +9,11 @@
   "icon": "src/icons/icon.png",
   "view": "src/qml/Main.qml",
   "main": "atlasmirror_app_plugin",
+  "codegen": {
+    "rep": "src/atlasmirror_app.rep",
+    "backend_class": "AppBackend",
+    "backend_header": "src/backend/app_backend.h"
+  },
   "dependencies": ["atlasmirror_sdk"],
   "provides": [],
   "uses": [],

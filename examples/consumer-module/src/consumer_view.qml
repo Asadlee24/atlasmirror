@@ -8,8 +8,10 @@ Rectangle {
     height: 520
     color: "#0D1117"
 
-    // Resolves genuine AtlasMirror SDK module without depending on AtlasMirror UI
-    property var osmSdk: (typeof logos !== "undefined" && logos.module) ? logos.module("atlasmirror_sdk") : (typeof atlasmirrorSdk !== "undefined" ? atlasmirrorSdk : null)
+    // Resolves canonical ConsumerBackend bridge injected by Basecamp runtime
+    property var backend: (typeof consumerBackend !== "undefined") 
+        ? consumerBackend 
+        : ((typeof cBackend !== "undefined") ? cBackend : null)
 
     ColumnLayout {
         anchors.centerIn: parent
@@ -95,8 +97,8 @@ Rectangle {
                     Text { text: "Pipeline State:"; color: "#8B949E"; font.bold: true; Layout.preferredWidth: 100 }
                     Text {
                         id: statusLabel
-                        text: osmSdk ? "SDK Initialized. Ready to query." : "Awaiting Basecamp SDK context..."
-                        color: osmSdk ? "#3FB950" : "#D29922"
+                        text: backend ? "Consumer Backend Bridge Initialized. Ready to query." : "Awaiting Basecamp Backend bridge..."
+                        color: backend ? "#3FB950" : "#D29922"
                         font.pixelSize: 12
                         Layout.fillWidth: true
                     }
@@ -114,13 +116,13 @@ Rectangle {
                 Layout.fillWidth: true
                 onClicked: {
                     var target = regionSelector.currentText
-                    if (!osmSdk) {
-                        statusLabel.text = "Error: 'atlasmirror_sdk' service is not available in current runtime."
+                    if (!backend) {
+                        statusLabel.text = "Error: 'ConsumerBackend' bridge is not available in current runtime."
                         statusLabel.color = "#F85149"
                         return
                     }
                     try {
-                        var resStr = osmSdk.resolveRegion(target)
+                        var resStr = backend.resolveRegion(target)
                         var obj = JSON.parse(resStr)
                         if (obj.hosted && obj.cid) {
                             cidLabel.text = obj.cid
@@ -149,8 +151,8 @@ Rectangle {
                 highlighted: true
                 onClicked: {
                     var target = regionSelector.currentText
-                    if (!osmSdk) {
-                        statusLabel.text = "Error: 'atlasmirror_sdk' service is not available in current runtime."
+                    if (!backend) {
+                        statusLabel.text = "Error: 'ConsumerBackend' bridge is not available in current runtime."
                         statusLabel.color = "#F85149"
                         return
                     }
@@ -161,16 +163,16 @@ Rectangle {
 
                     var ok = false
                     try {
-                        ok = osmSdk.downloadRegion(target, dest)
+                        ok = backend.downloadRegion(target, dest)
                         if (ok) {
-                            statusLabel.text = "Download verified & saved to " + dest
+                            statusLabel.text = "Download triggered & saved to " + dest
                             statusLabel.color = "#3FB950"
                         } else {
                             statusLabel.text = "Download failed: checksum mismatch or storage unreachable."
                             statusLabel.color = "#F85149"
                         }
                     } catch(e) {
-                        statusLabel.text = "SDK call failed: " + e
+                        statusLabel.text = "Backend bridge call failed: " + e
                         statusLabel.color = "#F85149"
                     }
                 }
