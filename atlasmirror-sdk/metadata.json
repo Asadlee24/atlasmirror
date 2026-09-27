@@ -7,7 +7,7 @@
   "category": "geospatial",
   "description": "Logos Core SDK module for decentralized OpenStreetMap snapshot discovery, hosting, and retrieval",
   "main": "atlasmirror_sdk_plugin",
-  "dependencies": ["storage_module"],
+  "dependencies": [],
 
   "nix": {
     "packages": {
