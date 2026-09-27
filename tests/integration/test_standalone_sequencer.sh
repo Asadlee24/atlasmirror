@@ -226,10 +226,59 @@ echo "=== [Step 3b] Uploading snapshot bytes to Logos Storage ===" | tee -a "${E
 TEST_CID=""
 if command -v logoscore >/dev/null 2>&1 && [ -d "${REPO_ROOT}/modules/storage_module" ]; then
     logoscore stop >/dev/null 2>&1 || true
-    logoscore daemon > "${WORK_DIR}/logoscore.log" 2>&1 &
+    pkill -9 -f logoscore 2>/dev/null || true
+    sleep 1
+
+    logoscore -D -m "${REPO_ROOT}/modules" > "${WORK_DIR}/logoscore.log" 2>&1 &
     sleep 2
-    UPLOAD_OUT=$(logoscore call storage_module uploadUrl "{\"path\":\"${PBF_FILE}\"}" 2>&1 || true)
-    TEST_CID=$(echo "${UPLOAD_OUT}" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('result', {}).get('value', ''))" 2>/dev/null || echo "")
+
+    logoscore load-module storage_module >> "${EVIDENCE_FILE}" 2>&1
+
+    STORAGE_DATA_DIR="${WORK_DIR}/storage_data"
+    CONFIG_FILE="${WORK_DIR}/storage_config.json"
+    cat > "${CONFIG_FILE}" <<EOF
+{
+  "data-dir": "${STORAGE_DATA_DIR}",
+  "log-level": "DEBUG",
+  "log-file": "${STORAGE_DATA_DIR}/storage.log",
+  "nat": "extip:127.0.0.1"
+}
+EOF
+    logoscore call storage_module init "@${CONFIG_FILE}" >> "${EVIDENCE_FILE}" 2>&1
+    logoscore call storage_module start >> "${EVIDENCE_FILE}" 2>&1
+    sleep 2
+
+    UPLOAD_EVENT_FILE="${WORK_DIR}/upload-event.json"
+    : > "${UPLOAD_EVENT_FILE}"
+    logoscore watch storage_module --event storageUploadDone --json > "${UPLOAD_EVENT_FILE}" 2>&1 &
+    sleep 1
+
+    ABS_PBF=$(realpath "${PBF_FILE}")
+    UPLOAD_OUT=$(logoscore call storage_module uploadUrl "${ABS_PBF}" 262144 --json 2>&1 || true)
+    echo "uploadUrl output: ${UPLOAD_OUT}" >> "${EVIDENCE_FILE}"
+
+    TEST_CID=$(echo "${UPLOAD_OUT}" | grep -o 'zDv[a-zA-Z0-9]*' | head -1 || echo "")
+    if [ -z "${TEST_CID}" ]; then
+        for i in {1..60}; do
+            if [ -s "${UPLOAD_EVENT_FILE}" ]; then
+                TEST_CID=$(grep -o 'zDv[a-zA-Z0-9]*' "${UPLOAD_EVENT_FILE}" | head -1 || echo "")
+                if [ -n "${TEST_CID}" ]; then break; fi
+            fi
+            sleep 1
+        done
+    fi
+    if [ -z "${TEST_CID}" ]; then
+        MANIFESTS_JSON=$(logoscore call storage_module manifests --json 2>&1 || echo "")
+        TEST_CID=$(python3 -c "
+import json, sys
+try:
+    m = json.loads('''${MANIFESTS_JSON}''')
+    entries = m.get('result', {}).get('value', [])
+    print(entries[-1]['cid'] if entries else '')
+except Exception:
+    print('')
+")
+    fi
 fi
 
 if [ -z "${TEST_CID}" ]; then
@@ -417,8 +466,14 @@ print('✔ All 5 fields match 100% exact equality against on-chain evidence!')
 echo "=== [Step 7] Logos Storage Roundtrip Download & Byte-for-Byte Equality Assertion ===" | tee -a "${EVIDENCE_FILE}"
 if command -v logoscore >/dev/null 2>&1 && [ -d "${REPO_ROOT}/modules/storage_module" ]; then
     echo "Downloading verified snapshot from Logos Storage using on-chain resolved CID: ${TEST_CID}..." | tee -a "${EVIDENCE_FILE}"
-    logoscore call storage_module downloadToUrl "{\"cid\":\"${TEST_CID}\",\"destination\":\"${RETRIEVED_FILE}\"}" >> "${EVIDENCE_FILE}" 2>&1 || true
-    sleep 2
+    ABS_RETRIEVED=$(realpath -m "${RETRIEVED_FILE}")
+    logoscore call storage_module downloadToUrl "${TEST_CID}" "${ABS_RETRIEVED}" true 262144 --json >> "${EVIDENCE_FILE}" 2>&1 || true
+    for i in {1..30}; do
+        if [ -f "${RETRIEVED_FILE}" ] && [ -s "${RETRIEVED_FILE}" ]; then
+            break
+        fi
+        sleep 1
+    done
 fi
 
 if [ ! -f "${RETRIEVED_FILE}" ] || [ ! -s "${RETRIEVED_FILE}" ]; then
